@@ -193,6 +193,11 @@
             color: var(--gold);
         }
 
+        /* Ações que só existem dentro do painel mobile (escondidas no desktop) */
+        .nav-mobile-actions {
+            display: none;
+        }
+
         /* ===== MENU HAMBURGUER ===== */
 
         .menu-toggle {
@@ -218,7 +223,7 @@
                 position: fixed;
                 top: 0;
                 right: -100%;
-                width: 280px;
+                width: min(280px, 80vw);
                 height: 100vh;
 
                 background: var(--surface);
@@ -247,9 +252,25 @@
                 font-size: 18px;
             }
 
-            .btn-gold,
-            .btn-outline {
+            /* Os botões somem da barra de topo... */
+            .nav-right>.btn-gold,
+            .nav-right>.btn-outline {
                 display: none;
+            }
+
+            /* ...mas reaparecem dentro do painel do menu, então continuam acessíveis */
+            .nav-mobile-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 14px;
+                width: 200px;
+                margin-top: 10px;
+                padding-top: 30px;
+                border-top: 1px solid var(--border);
+            }
+
+            .nav-mobile-actions .btn {
+                width: 100%;
             }
 
         }
@@ -268,6 +289,12 @@
         <a href="#planos">Planos</a>
         <a href="#depoimentos">Alunos</a>
         <a href="#contato">Contato</a>
+
+        <!-- Ações visíveis só quando o menu mobile está aberto -->
+        <div class="nav-mobile-actions">
+            <a href="login.php" class="btn btn-outline">Entrar</a>
+            <a href="../pages/matricula.php" class="btn btn-gold">Matricule-se</a>
+        </div>
     </div>
 
     <div class="nav-right">

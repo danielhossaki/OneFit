@@ -35,7 +35,9 @@ include '../config/conn.php';
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="../pages/home.php" class="login-logo">ONE<span>FIT</span></a>
+        <a href="../pages/home.php" class="login-logo">  
+        ONE<span>FIT</span>
+      </a>
 
         <div class="login-visual-text">
           <span class="eyebrow">Comece agora</span>
@@ -48,7 +50,9 @@ include '../config/conn.php';
     <section class="login-form-panel">
       <div class="login-form-wrap matricula-wrap" data-aos="fade-right" data-aos-delay="250">
 
-        <a href="../index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
+        <a href="../pages/home.php" class="login-logo login-logo-mobile">
+          ONE<span>FIT</span>
+        </a>
 
         <span class="tag">Junte-se à ONE FIT</span>
         <h1>Matrícula</h1>
@@ -189,19 +193,41 @@ include '../config/conn.php';
                 <label for="estado">Estado</label>
                 <select id="estado" name="estado" required>
                   <option value="">UF</option>
-                  <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
-                  <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
-                  <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
-                  <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
-                  <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
-                  <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
-                  <option>SP</option><option>SE</option><option>TO</option>
+                  <option>AC</option>
+                  <option>AL</option>
+                  <option>AP</option>
+                  <option>AM</option>
+                  <option>BA</option>
+                  <option>CE</option>
+                  <option>DF</option>
+                  <option>ES</option>
+                  <option>GO</option>
+                  <option>MA</option>
+                  <option>MT</option>
+                  <option>MS</option>
+                  <option>MG</option>
+                  <option>PA</option>
+                  <option>PB</option>
+                  <option>PR</option>
+                  <option>PE</option>
+                  <option>PI</option>
+                  <option>RJ</option>
+                  <option>RN</option>
+                  <option>RS</option>
+                  <option>RO</option>
+                  <option>RR</option>
+                  <option>SC</option>
+                  <option>SP</option>
+                  <option>SE</option>
+                  <option>TO</option>
                 </select>
               </div>
             </div>
 
             <div class="step-actions">
-              <button type="button" class="btn btn-outline" data-prev>Voltar</button>
+              <button type="button" class="btn btn-outline btn-icon-left" data-prev>
+                Voltar
+              </button>
               <button type="button" class="btn btn-gold" data-next>Continuar</button>
             </div>
           </fieldset>
@@ -248,7 +274,9 @@ include '../config/conn.php';
             </div>
 
             <div class="step-actions">
-              <button type="button" class="btn btn-outline" data-prev>Voltar</button>
+              <button type="button" class="btn btn-outline btn-icon-left" data-prev>
+                Voltar
+              </button>
               <button type="button" class="btn btn-gold" data-next>Continuar</button>
             </div>
           </fieldset>
@@ -300,7 +328,9 @@ include '../config/conn.php';
             </label>
 
             <div class="step-actions">
-              <button type="button" class="btn btn-outline" data-prev>Voltar</button>
+              <button type="button" class="btn btn-outline btn-icon-left" data-prev>
+                Voltar
+              </button>
               <button type="submit" class="btn btn-gold">Confirmar matrícula</button>
             </div>
           </fieldset>

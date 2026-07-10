@@ -701,9 +701,6 @@ footer {
 
 /* ---------- Mobile ---------- */
 @media (max-width: 860px) {
-    .nav-links {
-        display: none;
-    }
 
     .stats {
         grid-template-columns: repeat(2, 1fr);
