@@ -283,7 +283,7 @@
 
         <a href="login.php" class="btn btn-outline">Entrar</a>
 
-        <a href="#planos" class="btn btn-gold">Matricule-se</a>
+        <a href="../pages/matricula.php" class="btn btn-gold">Matricule-se</a>
 
         <button class="menu-toggle" id="menuToggle">
             ☰

@@ -1,0 +1,347 @@
+/* ==========================================================
+   LOGIN — split screen (vídeo + formulário)
+   Reaproveita as variáveis de cor/tipografia definidas em home.css
+   ========================================================== */
+
+.login-body {
+  overflow: hidden;
+}
+
+.login-page {
+  display: grid;
+  grid-template-columns: 60% 40%;
+  grid-template-rows: minmax(0, 1fr);
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ---------- Painel visual ---------- */
+.login-visual {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  min-height: 0;
+}
+
+.login-visual video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(8%) contrast(1.05);
+}
+
+.login-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 8, 6, 0.55) 0%, rgba(10, 8, 6, 0.35) 45%, rgba(10, 8, 6, 0.88) 100%),
+    radial-gradient(ellipse 700px 420px at 15% 100%, color-mix(in srgb, var(--gold) 16%, transparent), transparent 70%);
+}
+
+.login-visual-content {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px;
+}
+
+.login-visual-text h2 {
+  color: #F3EDE2;
+  font-size: clamp(34px, 4vw, 56px);
+  max-width: 480px;
+}
+
+.login-visual-text .eyebrow {
+  color: var(--gold);
+  margin-bottom: 18px;
+}
+
+/* ---------- Logo ---------- */
+.login-logo {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-weight: 900;
+  font-size: 22px;
+  letter-spacing: 0.03em;
+  color: #F3EDE2;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.login-logo span {
+  color: var(--gold);
+}
+
+.login-logo-mobile {
+  display: none;
+  color: var(--text);
+  margin-bottom: 40px;
+}
+
+/* ---------- Painel de formulário ---------- */
+.login-form-panel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--bg);
+  padding: 40px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.login-form-wrap {
+  width: 100%;
+  max-width: 380px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.login-form-wrap .tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.login-form-wrap h1 {
+  font-size: clamp(38px, 5vw, 50px);
+  margin-bottom: 12px;
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  font-size: 14.5px;
+  line-height: 1.7;
+  margin-bottom: 36px;
+}
+
+/* ---------- Form ---------- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.field input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 13px 14px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14.5px;
+  color: var(--text);
+  transition: border-color 0.25s ease, background 0.25s ease;
+}
+
+.field input::placeholder {
+  color: var(--text-muted);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--gold-dim);
+  background: var(--surface-2);
+}
+
+/* ---------- Campo de senha com toggle de visibilidade ---------- */
+.password-wrap {
+  position: relative;
+  display: flex;
+}
+
+.password-wrap input {
+  width: 100%;
+  padding-right: 44px;
+}
+
+.toggle-password {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.toggle-password:hover {
+  color: var(--gold);
+}
+
+.toggle-password:focus-visible {
+  outline: 2px solid var(--gold-dim);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+
+.toggle-password svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.toggle-password .icon-eye-off {
+  display: none;
+}
+
+.toggle-password[aria-pressed="true"] .icon-eye {
+  display: none;
+}
+
+.toggle-password[aria-pressed="true"] .icon-eye-off {
+  display: block;
+}
+
+.login-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -4px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.checkbox input {
+  accent-color: var(--gold);
+  width: 15px;
+  height: 15px;
+}
+
+.checkbox-terms {
+  align-items: flex-start;
+  line-height: 1.6;
+}
+
+.checkbox-terms input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.checkbox-terms a {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.checkbox-terms a:hover {
+  color: var(--gold-bright);
+}
+
+.forgot-link {
+  font-size: 13px;
+  color: var(--gold);
+  transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+  color: var(--gold-bright);
+}
+
+.login-footer-text {
+  margin-top: 28px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.login-footer-text a {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.login-footer-text a:hover {
+  color: var(--gold-bright);
+}
+
+/* ---------- Botões (base, caso home.css/components ainda não os defina) ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: 6px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-gold {
+  background: linear-gradient(100deg, var(--bronze), var(--gold) 45%, var(--gold-bright) 100%);
+  color: #1A1613;
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  opacity: 0.92;
+}
+
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.btn-outline:hover {
+  border-color: var(--gold-dim);
+  color: var(--gold);
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 860px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-visual {
+    display: none;
+  }
+
+  .login-logo-mobile {
+    display: block;
+  }
+
+  .login-form-panel {
+    padding: 32px 24px;
+  }
+}

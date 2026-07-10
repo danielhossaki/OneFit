@@ -22,7 +22,7 @@
     <?php include '../components/navbar.php'; ?>
   </header>
 
-  <section class="hero">
+  <section class="hero" data-aos="fade-up">
     <span class="eyebrow">Treino de alta performance</span>
     <h1>TREINE PARA<br>SER O <span class="shine">UM</span></h1>
     <p class="lead">Não existe segundo lugar no seu treino. Na ONE FIT você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.</p>
@@ -32,7 +32,7 @@
     </div>
   </section>
 
-  <div class="equip-marquee">
+  <div class="equip-marquee" data-aos="fade-up">
     <div class="track">
       <div class="group">
         <span>HALTERES</span><span class="sep">&#9670;</span>
@@ -57,7 +57,7 @@
     </div>
   </div>
 
-  <div class="stats" data-aos="fade-down">
+  <div class="stats" data-aos="fade-up">
     <div class="stat">
       <div class="num" data-target="500" data-suffix="+">0</div>
       <div class="label">Alunos ativos</div>
@@ -79,7 +79,7 @@
     </div>
   </div>
 
-  <section class="block" id="estrutura">
+  <section class="block" id="estrutura" data-aos="fade-up">
     <div class="wrap">
       <div class="section-head">
         <div>
@@ -235,7 +235,7 @@
                 <path d="M5 12l4 4 10-10" />
               </svg>Avaliação física inicial</li>
           </ul>
-          <a href="#contato" class="btn btn-outline">Escolher plano</a>
+          <a href="../pages/matricula.php" class="btn btn-outline">Escolher plano</a>
         </div>
 
         <div class="plan featured">
@@ -257,7 +257,7 @@
                 <path d="M5 12l4 4 10-10" />
               </svg>Acesso ao app de treino</li>
           </ul>
-          <a href="#contato" class="btn btn-gold">Escolher plano</a>
+          <a href="../pages/matricula.php" class="btn btn-gold">Escolher plano</a>
         </div>
 
         <div class="plan">
@@ -279,7 +279,7 @@
                 <path d="M5 12l4 4 10-10" />
               </svg>Armário fixo reservado</li>
           </ul>
-          <a href="#contato" class="btn btn-outline">Escolher plano</a>
+          <a href="../pages/matricula.php" class="btn btn-outline">Escolher plano</a>
         </div>
 
       </div>
@@ -319,11 +319,11 @@
         </div>
         <div class="testi">
           <span class="quote-mark">"</span>
-          <p>Troquei três academias antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.</p>
+          <p>Troquei três vezes de academia antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.</p>
           <div class="who">
             <div class="avatar"></div>
             <div>
-              <div class="name">Juliana Prado</div>
+              <div class="name">Gabriely Rocha</div>
               <div class="role">Aluna há 1 ano</div>
             </div>
           </div>

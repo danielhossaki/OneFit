@@ -1,0 +1,407 @@
+/* ==========================================================
+   MATRÍCULA — wizard de etapas sobre o layout de login.css
+   ========================================================== */
+
+.matricula-wrap {
+  max-width: 480px;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.field-error {
+  display: none;
+  font-size: 12.5px;
+  color: #C05B4A;
+  margin-top: -8px;
+}
+
+.field-error.visible {
+  display: block;
+}
+
+/* ---------- Validação inline ---------- */
+.field-message {
+  display: none;
+  font-size: 12.5px;
+  color: #E0806B;
+  margin-top: 7px;
+}
+
+.field.invalid input,
+.field.invalid select {
+  border-color: #C05B4A;
+}
+
+.field.invalid input:focus,
+.field.invalid select:focus {
+  border-color: #C05B4A;
+  background: var(--surface-2);
+}
+
+.field.invalid .field-message {
+  display: block;
+}
+
+.field.valid input,
+.field.valid select {
+  border-color: color-mix(in srgb, var(--gold-dim) 55%, var(--border));
+}
+
+.plan-select.invalid .plan-option {
+  border-color: #C05B4A;
+}
+
+.plan-select .field-message {
+  margin-top: 10px;
+}
+
+.checkbox-terms.invalid span {
+  color: #E0806B;
+}
+
+/* ---------- Progresso ---------- */
+.matricula-progress {
+  margin-bottom: 32px;
+}
+
+.progress-bar {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  width: 25%;
+  background: linear-gradient(90deg, var(--bronze), var(--gold-bright));
+  transition: width 0.35s ease;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+}
+
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.progress-step i {
+  font-style: normal;
+  color: var(--text-muted);
+}
+
+.progress-step.active,
+.progress-step.done {
+  color: var(--text);
+}
+
+.progress-step.active i,
+.progress-step.done i {
+  color: var(--gold);
+}
+
+.progress-step.done {
+  cursor: pointer;
+}
+
+.progress-step.done:hover {
+  color: var(--gold-bright);
+}
+
+.progress-step:not(.done) {
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .progress-step span {
+    display: none;
+  }
+}
+
+/* ---------- Etapas do formulário ---------- */
+.form-step {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.form-step.active {
+  display: flex;
+  animation: step-in 0.4s ease;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-step.active {
+    animation: none;
+  }
+}
+
+.step-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.step-actions .btn {
+  flex: 1;
+}
+
+.step-actions span:empty {
+  flex: 1;
+}
+
+#estado {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface) !important;
+  padding: 0 12px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+
+/* ---------- CEP ---------- */
+.cep-row {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.btn-cep {
+  padding: 13px 20px;
+  white-space: nowrap;
+}
+
+/* ---------- Seleção de plano ---------- */
+.plan-select {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.plan-option {
+  position: relative;
+  display: block;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  cursor: pointer;
+  background: var(--surface) !important;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.plan-option:hover {
+  border-color: var(--gold-dim);
+}
+
+.plan-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.plan-option:has(input:checked),
+.plan-option.is-checked {
+  border-color: var(--gold);
+  background: linear-gradient(160deg, var(--surface), var(--surface-2));
+}
+
+.plan-option:has(input:focus-visible) {
+  outline: 2px solid var(--gold-dim);
+  outline-offset: 2px;
+}
+
+.plan-option .badge {
+  position: absolute;
+  top: -11px;
+  right: 20px;
+  background: var(--gold);
+  color: #1A1613;
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 3px;
+}
+
+.plan-option-body {
+  display: block;
+}
+
+.plan-option-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.plan-option-name {
+  font-family: 'Big Shoulders Display', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 20px;
+}
+
+.plan-option-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
+.plan-option-price i {
+  font-style: normal;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.plan-option-desc {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ---------- Pagamento ---------- */
+.payment-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 22px;
+}
+
+.payment-tab {
+  background: transparent;
+  border: none;
+  padding: 10px 4px 14px;
+  margin-right: 18px;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+}
+
+.payment-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: transparent;
+}
+
+.payment-tab.active {
+  color: var(--text);
+}
+
+.payment-tab.active::after {
+  background: var(--gold);
+}
+
+.payment-panel {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payment-panel.active {
+  display: flex;
+}
+
+.payment-note {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 18px;
+}
+
+.checkbox-terms {
+  margin-top: 4px;
+}
+
+/* ---------- Estado de carregamento ---------- */
+.btn.is-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.btn.is-loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(26, 22, 19, 0.35);
+  border-top-color: #1A1613;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+.btn-outline.is-loading::after {
+  border: 2px solid var(--border);
+  border-top-color: var(--text);
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 480px) {
+  .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .cep-row {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-cep {
+    width: 100%;
+  }
+}
