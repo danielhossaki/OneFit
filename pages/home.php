@@ -143,9 +143,9 @@
         </div>
         <p>Seis caminhos, um mesmo objetivo: sair mais forte do que entrou. Todos com professores especialistas acompanhando cada série.</p>
       </div>
-      <div class="mod-grid">
+      <div class="mod-grid" data-aos="fade-up">
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="50">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M4 12h2M18 12h2M6 9v6M18 9v6M8 12h8" stroke-linecap="round" />
             </svg></div>
@@ -153,7 +153,7 @@
           <p>Piso completo com equipamentos livres e guiados, para hipertrofia, força e ajuste postural.</p>
         </div>
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="150">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M12 3l2 5-2 2-2-2 2-5zM12 21l-2-5 2-2 2 2-2 5zM3 12l5-2 2 2-2 2-5-2zM21 12l-5 2-2-2 2-2 5 2z" />
             </svg></div>
@@ -161,7 +161,7 @@
           <p>Treino funcional de alta intensidade em turmas pequenas, com WOD novo todos os dias.</p>
         </div>
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="200">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M12 2a5 5 0 015 5c0 3-2 4-2 7v3H9v-3c0-3-2-4-2-7a5 5 0 015-5z" />
             </svg></div>
@@ -169,7 +169,7 @@
           <p>Movimentos que imitam o dia a dia: força, equilíbrio e mobilidade trabalhados juntos.</p>
         </div>
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="250">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <circle cx="12" cy="12" r="8" />
               <path d="M12 8v4l3 2" stroke-linecap="round" />
@@ -178,7 +178,7 @@
           <p>Aulas em ritmo guiado por música, foco em resistência cardiovascular e queima calórica.</p>
         </div>
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="300">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <circle cx="12" cy="6" r="2" />
               <path d="M6 21l3-7 3 2 3-2 3 7M9 14l-2-6h10l-2 6" stroke-linecap="round" stroke-linejoin="round" />
@@ -187,7 +187,7 @@
           <p>Técnica, potência e explosão em treinos de sacos e pads, com preparo físico incluso.</p>
         </div>
 
-        <div class="mod-card">
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="350">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
               <path d="M12 3c-3 3-3 7 0 9 3-2 3-6 0-9zM7 14c0 4 2 7 5 7s5-3 5-7" stroke-linecap="round" stroke-linejoin="round" />
             </svg></div>
@@ -219,7 +219,7 @@
       </div>
       <div class="plans">
 
-        <div class="plan">
+        <div class="plan" data-aos="fade-up" data-aos-delay="50">
           <span class="plan-name">Desafiante</span>
           <h3>Iniciante</h3>
           <div class="price">R$99<span>/mês</span></div>
@@ -238,7 +238,7 @@
           <a href="../pages/matricula.php" class="btn btn-outline">Escolher plano</a>
         </div>
 
-        <div class="plan featured">
+        <div class="plan featured" data-aos="fade-up" data-aos-delay="100">
           <span class="plan-name">Campeão</span>
           <h3>Completo</h3>
           <div class="price">R$179<span>/mês</span></div>
@@ -260,7 +260,7 @@
           <a href="../pages/matricula.php" class="btn btn-gold">Escolher plano</a>
         </div>
 
-        <div class="plan">
+        <div class="plan" data-aos="fade-up" data-aos-delay="150">
           <span class="plan-name">Lenda</span>
           <h3>Elite</h3>
           <div class="price">R$289<span>/mês</span></div>
@@ -295,7 +295,7 @@
         </div>
       </div>
       <div class="testimonials">
-        <div class="testi">
+        <div class="testi" data-aos="fade-up" data-aos-delay="100">
           <span class="quote-mark">"</span>
           <p>Entrei sem nunca ter pegado num peso na vida. Em oito meses, os professores me ensinaram tudo, sem pressa e sem julgamento.</p>
           <div class="who">
@@ -306,7 +306,7 @@
             </div>
           </div>
         </div>
-        <div class="testi">
+        <div class="testi" data-aos="fade-up" data-aos-delay="200">
           <span class="quote-mark">"</span>
           <p>O CrossTraining daqui é outro nível. Turmas pequenas, WOD sempre diferente, e o pessoal se ajuda muito entre si.</p>
           <div class="who">
@@ -317,7 +317,7 @@
             </div>
           </div>
         </div>
-        <div class="testi">
+        <div class="testi" data-aos="fade-up" data-aos-delay="300">
           <span class="quote-mark">"</span>
           <p>Troquei três vezes de academia antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.</p>
           <div class="who">
@@ -332,7 +332,7 @@
     </div>
   </section>
 
-  <section class="final-cta" id="contato" data-aos="fade-up">
+  <section class="final-cta" id="contato" data-aos="fade-down">
     <span class="eyebrow">Comece agora</span>
     <h2>Sua primeira<br>aula é <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, #fff8e1 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;">grátis</span></h2>
     <p>Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.</p>
