@@ -2,6 +2,7 @@
     <style>
         :root {
             --bg: #14110E;
+            --bg2: #14110e83;
             --surface: #1E1A15;
             --surface-2: #241F18;
             --text: #F3EDE2;
@@ -17,6 +18,7 @@
 
         html[data-theme="light"] {
             --bg: #F7F4EE;
+            --bg2: #F7F4EE83;
             --surface: #FFFFFF;
             --surface-1: #f4e2b40d;
             --surface-2: #d4cab5;
@@ -44,7 +46,7 @@
             left: 0;
             right: 0;
             z-index: 100;
-            background: var(--bg);
+            background: var(--bg2);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid var(--border);
             transition: background 0.4s ease, border-color 0.4s ease;
@@ -277,10 +279,10 @@
     </style>
 </head>
 
-<nav class="nav">
+<nav class="nav" >
 
     <div class="logo">
-        <img src="../assets/img/logo/logo.webp" alt="Logo One Fit" class="logo-mark">
+        <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit" class="logo-mark">
     </div>
 
     <div class="nav-links" id="navLinks">
@@ -292,8 +294,8 @@
 
         <!-- Ações visíveis só quando o menu mobile está aberto -->
         <div class="nav-mobile-actions">
-            <a href="login.php" class="btn btn-outline">Entrar</a>
-            <a href="../pages/matricula.php" class="btn btn-gold">Matricule-se</a>
+            <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline">Entrar</a>
+            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold">Matricule-se</a>
         </div>
     </div>
 
@@ -308,9 +310,9 @@
             </span>
         </button>
 
-        <a href="login.php" class="btn btn-outline">Entrar</a>
+        <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline">Entrar</a>
 
-        <a href="../pages/matricula.php" class="btn btn-gold">Matricule-se</a>
+        <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold">Matricule-se</a>
 
         <button class="menu-toggle" id="menuToggle">
             ☰

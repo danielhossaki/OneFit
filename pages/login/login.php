@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+<?php
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+?>
+
 <html lang="pt-BR">
 
 <head>
@@ -9,12 +13,12 @@
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <!-- link do css -->
-  <link rel="stylesheet" href="../assets/css/home.css">
-  <link rel="stylesheet" href="../assets/css/login.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
   <!-- link das animações -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- link do favicon -->
-  <link rel="icon" href="../assets/img/logo/logo.webp" type="image/x-icon">
+  <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
 </head>
 
 <body class="login-body">
@@ -24,13 +28,13 @@
     <!-- Painel visual (some em telas pequenas) -->
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
-        <source src="../assets/img/videos/video-login.mp4" type="video/mp4">
+        <source src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4" type="video/mp4">
         Seu navegador não suporta vídeos.
       </video>
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="../pages/home.php" class="login-logo">ONE<span>FIT</span></a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">ONE<span>FIT</span></a>
 
         <div class="login-visual-text">
           <span class="eyebrow">Treino de alta performance</span>
@@ -43,7 +47,7 @@
     <section class="login-form-panel">
       <div class="login-form-wrap" data-aos="fade-right" data-aos-delay="250" >
 
-        <a href="../index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
+        <a href="<?php echo BASE_URL; ?>pages/index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
 
         <span class="tag">Bem-vindo de volta</span>
         <h1>Entrar</h1>
@@ -86,7 +90,7 @@
 
         </form>
 
-        <p class="login-footer-text">Ainda não treina com a gente? <a href="matricula.php">Criar conta</a></p>
+        <p class="login-footer-text">Ainda não treina com a gente? <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php">Criar conta</a></p>
 
       </div>
     </section>
@@ -94,7 +98,7 @@
   </main>
 
   <!-- Link para JavaScript -->
-  <script src="../assets/js/login.js"></script>
+  <script src="<?php echo BASE_URL; ?>assets/js/login.js"></script>
 
     <!-- Link para animações AOS JS -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
