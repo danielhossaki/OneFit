@@ -273,7 +273,7 @@
         </div>
 
         <div class="footer-bottom">
-            <span>© 2026 Desenvolvido por Ignite Software</span>
+            <span>© 2026 Desenvolvido por Grupo 1</span>
         </div>
     </div>
 </footer>
