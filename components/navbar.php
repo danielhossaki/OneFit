@@ -18,7 +18,7 @@
 
         html[data-theme="light"] {
             --bg: #F7F4EE;
-            --bg2: #F7F4EE83;
+            --bg2: rgba(255, 255, 255, 0.77) !important;
             --surface: #FFFFFF;
             --surface-1: #f4e2b40d;
             --surface-2: #d4cab5;

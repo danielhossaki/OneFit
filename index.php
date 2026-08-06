@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '/config/parametros.php';
-require __DIR__ . '/config/conn.php';
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 ?>
 
 <!DOCTYPE html>

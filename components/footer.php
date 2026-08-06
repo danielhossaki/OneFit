@@ -239,12 +239,12 @@
             <div class="footer-col">
                 <a href="" class="footer-link">Termos de uso <span class="arrow">↗</span></a>
                 <a href="" class="footer-link">Políticas de privacidade <span class="arrow">↗</span></a>
-                <a href="" class="footer-link">Ajuda e suporte <span class="arrow">↗</span></a>
+                <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="footer-link">Ajuda e suporte <span class="arrow">↗</span></a>
             </div>
 
             <div class="footer-col contact">
                 <h4>Entre em contato</h4>
-                <a href="" class="contact-btn">
+                <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="contact-btn">
                     Converse com a One... <span class="arrow">↗</span>
                 </a>
             </div>

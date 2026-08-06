@@ -83,7 +83,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
               <input type="checkbox" name="remember">
               <span>Lembrar de mim</span>
             </label>
-            <a href="#" class="forgot-link">Esqueci minha senha</a>
+            <a href="<?php echo BASE_URL; ?>pages/recuperar-senha/recuperar-senha.php" class="forgot-link">Esqueci minha senha</a>
           </div>
 
           <button type="submit" class="btn btn-gold btn-block">Entrar</button>
