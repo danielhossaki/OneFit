@@ -1,8 +1,8 @@
 <?php
-$host = "localhost";
-$user = "root";
+$host = "onefit.mysql.dbaas.com.br";
+$user = "onefit";
 $dbname = "onefit";
-$password = "";
+$password = "Academi@321";
 $conn = new mysqli($host, $user, $password, $dbname);
 if ($conn->connect_error) {
     die("Falha na conexão: " . $conn->connect_error);
