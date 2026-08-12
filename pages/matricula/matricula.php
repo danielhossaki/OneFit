@@ -2,8 +2,148 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
+// Dados de cartão (número completo / CVV) não são gravados no banco -
+// isso é dado sensível de cartão (PCI-DSS), então por enquanto nem os
+// 4 últimos dígitos estão sendo salvos (não tem coluna prevista pra isso
+// ainda). Se quiser guardar forma de pagamento, manda a estrutura da
+// tabela "pagamento" que eu conecto.
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+  $nome = $_POST['nome'] ?? null;
+  $cpf = isset($_POST['cpf']) ? preg_replace('/\D/', '', $_POST['cpf']) : null;
+  $nascimento = $_POST['nascimento'] ?? null;
+  $telefone = isset($_POST['telefone']) ? preg_replace('/\D/', '', $_POST['telefone']) : null;
+  $email = $_POST['email'] ?? null;
+  $senha = $_POST['password'] ?? null;
+  $confirmar_senha = $_POST['confirmar_senha'] ?? null;
+
+  $endereco = $_POST['endereco'] ?? null;
+  $numero = $_POST['numero'] ?? null;
+  $complemento = $_POST['complemento'] ?? '';
+  $bairro = $_POST['bairro'] ?? null;
+  $cidade = $_POST['cidade'] ?? null;
+  $estado = $_POST['estado'] ?? null;
+  $cep = isset($_POST['cep']) ? preg_replace('/\D/', '', $_POST['cep']) : '';
+
+  $plano_nome = $_POST['plano'] ?? null; // 'iniciante' | 'completo' | 'elite'
+
+  $termos = isset($_POST['termos']);
+
+  // campos obrigatórios
+  if (
+    $nome && $cpf && $nascimento && $telefone && $email && $senha && $confirmar_senha &&
+    $endereco && $numero && $bairro && $cidade && $estado && $plano_nome && $termos
+  ) {
 
 
+    // senhas não conferem
+    if ($senha !== $confirmar_senha) {
+      header("Location: matricula.php?msg=3");
+      exit;
+    }
+
+
+    // e-mail inválido
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      header("Location: matricula.php?msg=4");
+      exit;
+    }
+
+    // verifica se CPF ou e-mail já existem
+    $stmtCheck = $conn->prepare("SELECT id_usuario FROM usuarios WHERE cpf = ? OR email = ? LIMIT 1");
+    $stmtCheck->bind_param("ss", $cpf, $email);
+    $stmtCheck->execute();
+    $stmtCheck->store_result();
+
+
+    // já cadastrado
+    if ($stmtCheck->num_rows > 0) {
+      header("Location: matricula.php?msg=5");
+      exit;
+    }
+    $stmtCheck->close();
+
+    // busca o plano escolhido em cadastro_planos (case-insensitive)
+    $stmtPlano = $conn->prepare(
+      "SELECT id_plano, valor FROM cadastro_planos WHERE LOWER(nome) = LOWER(?) AND status = 'ativo' LIMIT 1"
+    );
+    $stmtPlano->bind_param("s", $plano_nome);
+    $stmtPlano->execute();
+    $resultPlano = $stmtPlano->get_result();
+    $plano = $resultPlano->fetch_assoc();
+    $stmtPlano->close();
+
+
+    // plano inválido/inexistente
+    if (!$plano) {
+      header("Location: matricula.php?msg=6");
+      exit;
+    }
+
+    $id_plano = $plano['id_plano'];
+    $valor_contratado = $plano['valor'];
+
+    $endereco_completo = $endereco . ', ' . $numero;
+    if ($complemento !== '') {
+      $endereco_completo .= ' - ' . $complemento;
+    }
+    $endereco_completo .= ' - ' . $bairro . ' - CEP ' . $cep;
+
+    $cidade_estado = $cidade . '/' . $estado;
+    $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
+
+    // ----- INSERT usuarios -----
+    $stmt = $conn->prepare(
+      "INSERT INTO usuarios
+                (nome, data_nascimento, cpf, endereco, cidade_estado, email, celular, senha, tipo_usuario, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aluno', 'ativo')"
+    );
+    $stmt->bind_param(
+      "ssssssss",
+      $nome,
+      $nascimento,
+      $cpf,
+      $endereco_completo,
+      $cidade_estado,
+      $email,
+      $telefone,
+      $senha_hash
+    );
+
+
+    // erro ao gravar usuario
+    if (!$stmt->execute()) {
+      header("Location: matricula.php?msg=2");
+      exit;
+    }
+    $id_usuario = $conn->insert_id;
+    $stmt->close();
+
+    // ----- INSERT matricula -----
+    $stmtMatricula = $conn->prepare(
+      "INSERT INTO matricula (id_usuario, id_plano, data_matricula, data_inicio, status, valor_contratado)
+      VALUES (?, ?, CURDATE(), CURDATE(), 'pendente', ?)"
+    );
+    $stmtMatricula->bind_param("iid", $id_usuario, $id_plano, $valor_contratado);
+
+    // sucesso
+    if ($stmtMatricula->execute()) {
+      header("Location: " . BASE_URL . "pages/login/login.php");
+    }
+
+    // erro ao gravar matricula
+    else {
+      header("Location: matricula.php?msg=2");
+    }
+    $stmtMatricula->close();
+  }
+
+  // campos faltando
+  else {
+    header("Location: matricula.php?msg=2");
+  }
+}
 ?>
 
 <!DOCTYPE html>
@@ -39,9 +179,9 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">  
-        ONE<span>FIT</span>
-      </a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">
+          ONE<span>FIT</span>
+        </a>
 
         <div class="login-visual-text">
           <span class="eyebrow">Comece agora</span>

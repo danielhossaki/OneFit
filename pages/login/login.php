@@ -1,6 +1,65 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+
+session_start();
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    $email = $_POST['email'] ?? null;
+    $senha = $_POST['password'] ?? null;
+    $lembrar = isset($_POST['remember']);
+
+    if ($email && $senha) {
+
+        $stmt = $conn->prepare(
+            "SELECT id_usuario, nome, senha, tipo_usuario, status FROM usuarios WHERE email = ? LIMIT 1"
+        );
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $usuario = $result->fetch_assoc();
+        $stmt->close();
+
+
+        // e-mail ou senha incorretos
+        if (!$usuario || !password_verify($senha, $usuario['senha'])) {
+            header("Location: login.php?msg=1"); // e-mail ou senha incorretos
+            exit;
+        }
+
+        // conta inativa/bloqueada
+        if ($usuario['status'] !== 'ativo') {
+            header("Location: login.php?msg=2"); // conta inativa/bloqueada
+            exit;
+        }
+
+        // login ok - inicia sessão
+        session_regenerate_id(true);
+        $_SESSION['id_usuario'] = $usuario['id_usuario'];
+        $_SESSION['nome'] = $usuario['nome'];
+        $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
+
+        // "lembrar de mim" - cookie com token válido por 30 dias
+        if ($lembrar) {
+            $token = bin2hex(random_bytes(32));
+
+            $stmtToken = $conn->prepare("UPDATE usuarios SET remember_token = ? WHERE id_usuario = ?");
+            $stmtToken->bind_param("si", $token, $usuario['id_usuario']);
+            $stmtToken->execute();
+            $stmtToken->close();
+
+            setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
+        }
+
+        header("Location: " . BASE_URL . "pages/dashboard/dashboard.php");
+        exit;
+
+    } else {
+        header("Location: login.php?msg=3"); // campos vazios
+        exit;
+    }
+}
 ?>
 
 <html lang="pt-BR">
