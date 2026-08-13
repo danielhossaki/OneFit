@@ -131,15 +131,23 @@ html[data-theme="light"] .hero {
     pointer-events: none;
 }
 
+.btn-gold {
+    background: var(--gold);
+    color: #1A1613;
+    border-radius: 1rem !important;
+}
+
 .btn-outline {
     background: transparent !important;
     border-color: rgba(124, 124, 124, 0.635);
+    border-radius: 1rem !important;
 }
 
 .hero .btn-outline {
     background: transparent !important;
     border-color: rgba(255, 255, 255, 0.238) !important;
     color: #cfc7c0 !important;
+    border-radius: 1rem !important;
 }
 
 .hero,
@@ -296,16 +304,21 @@ section.block {
     gap: 1px;
     background: var(--border);
     border: 1px solid var(--border);
+    border-radius: 2rem;
 }
 
 .mod-card {
     background: var(--surface);
     padding: 38px 30px;
-    transition: background 0.3s ease;
+    border-radius: 2rem;
+    transition: transform 0.3s ease, background 0.3s ease !important;
 }
 
 .mod-card:hover {
     background: var(--surface-2);
+    border: 1px solid var(--gold-dim);
+    transform: scale(1.05) !important;
+    z-index: 10;
 }
 
 .mod-card .icon {
@@ -340,7 +353,7 @@ section.block {
 
 .plan {
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: 2rem;
     padding: 40px 32px;
     background: var(--surface);
     display: flex;
@@ -433,6 +446,7 @@ section.block {
 
 .plan .btn {
     width: 100%;
+    border-radius: 1rem !important;
 }
 
 /* ---------- Depoimentos ---------- */
