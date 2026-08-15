@@ -13,6 +13,7 @@
  * ===================================================================== */
 
 // Tela "Usuários" — lista de alunos/usuários cadastrados na plataforma
+
 $usuarios = [
     ['id' => 1, 'nome' => 'Ana Beatriz Souza', 'email' => 'ana.souza@email.com', 'cpf' => '123.456.789-01', 'status' => 'ativo', 'matricula' => 'MAT-0001', 'dataInicial' => '2025-01-10', 'dataFinal' => '2026-01-10', 'acesso' => 'Liberado', 'observacao' => ''],
     ['id' => 2, 'nome' => 'Bruno Carvalho Lima', 'email' => 'bruno.lima@email.com', 'cpf' => '234.567.890-12', 'status' => 'ativo', 'matricula' => 'MAT-0002', 'dataInicial' => '2025-02-15', 'dataFinal' => '2026-02-15', 'acesso' => 'Liberado', 'observacao' => ''],

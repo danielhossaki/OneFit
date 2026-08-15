@@ -31,6 +31,7 @@ const BO_PERFIS = {
             { key: 'produtos', label: 'Produtos', icon: 'bi-box-seam' },
             { key: 'planos', label: 'Cadastro de Planos', icon: 'bi-clipboard-check' },
             { key: 'profissionais', label: 'Profissionais', icon: 'bi-person-badge' },
+            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
     profissional: {
@@ -42,6 +43,7 @@ const BO_PERFIS = {
             { key: 'agenda', label: 'Agenda', icon: 'bi-calendar3' },
             { key: 'cashback', label: 'Meu cashback', icon: 'bi-wallet2' },
             { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
+            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
     aluno: {
@@ -53,13 +55,17 @@ const BO_PERFIS = {
             { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
             { key: 'treino', label: 'Treino', icon: 'bi-lightning-charge' },
             { key: 'agenda', label: 'Minha agenda', icon: 'bi-calendar3' },
+            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
 };
 
-// Estado atual da tela: qual perfil está sendo visualizado e qual seção do menu
-let boPerfilAtual = 'admin';
-let boSectionAtual = 'dashboard';
+// Estado atual da tela: qual perfil está sendo visualizado e qual seção do menu.
+// boPerfilAtual começa no perfil REAL do usuário logado (BO_PERFIL_LOGADO,
+// definido no <script> inline do dashboard.php a partir da sessão/tipo_usuario)
+// — só o admin pode trocar isso depois, pelo dropdown do header.
+let boPerfilAtual = (typeof BO_PERFIL_LOGADO !== 'undefined') ? BO_PERFIL_LOGADO : 'aluno';
+let boSectionAtual = null; // definida no DOMContentLoaded, com base no 1º item do menu do perfil
 let boFormModalInstance = null; // instância do Modal do Bootstrap (definida no DOMContentLoaded)
 
 /* ---------- Esquemas do modal de formulário genérico ----------
@@ -383,6 +389,10 @@ function boRenderSidebar() {
  * 3 visões durante o desenvolvimento/testes do backoffice.)
  */
 function boRenderPerfilMenu() {
+    // Só o admin vê/usa o seletor de perfil (ver header.php) — pra qualquer
+    // outro perfil, #boPerfilMenu existe só como placeholder vazio (.d-none).
+    if (!BO_IS_ADMIN) return;
+
     const menu = document.getElementById('boPerfilMenu');
     menu.innerHTML = '';
     Object.keys(BO_PERFIS).forEach((key) => {
@@ -397,21 +407,194 @@ function boRenderPerfilMenu() {
     });
 }
 
+/* ---------- Perfil e busca global ---------- */
+const BO_SEARCH_ALIASES = {
+    dashboard: ['início', 'inicio', 'visão geral', 'resumo'],
+    perfil: ['meu perfil', 'conta', 'dados cadastrais', 'editar perfil'],
+    historico: ['histórico', 'historico', 'pagamentos', 'movimentações', 'movimentacoes'],
+    cashback: ['saldo', 'benefícios', 'beneficios'],
+    compras: ['minhas compras', 'pedidos', 'compras', 'histórico de compras'],
+    treino: ['treinos', 'exercícios', 'exercicios', 'ficha'],
+    agenda: ['agenda', 'agendamentos', 'horários', 'horarios'],
+    configuracoes: ['configurações', 'configuracoes', 'ajustes', 'tema', 'conta'],
+    profissionais: ['profissionais', 'equipe', 'personal trainer', 'nutricionista'],
+    usuarios: ['usuários', 'usuarios', 'alunos'],
+    planos: ['planos', 'assinaturas'],
+    pagamentos: ['pagamentos', 'financeiro'],
+};
+
+let boSearchItems = [];
+let boSearchActiveIndex = -1;
+let boSearchDebounceTimer = null;
+
+function boNormalizeSearch(value) {
+    return (value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+function boCloseSearch() {
+    const results = document.getElementById('boSearchResults');
+    const input = document.getElementById('boHeaderSearch');
+    if (!results || !input) return;
+    results.hidden = true;
+    results.innerHTML = '';
+    input.setAttribute('aria-expanded', 'false');
+    clearTimeout(boSearchDebounceTimer);
+    boSearchItems = [];
+    boSearchActiveIndex = -1;
+}
+
+function boGetSearchPages() {
+    const pages = BO_PERFIS[boPerfilAtual].menus.map((item) => ({
+        type: 'page',
+        key: item.key,
+        title: item.label,
+        subtitle: 'Página do painel',
+        icon: item.icon,
+        terms: [item.label, ...(BO_SEARCH_ALIASES[item.key] || [])],
+    }));
+
+    if (!pages.some((page) => page.key === 'perfil')) {
+        pages.unshift({
+            type: 'page', key: 'perfil', title: 'Meu perfil', subtitle: 'Dados da sua conta', icon: 'bi-person-circle',
+            terms: ['perfil', ...(BO_SEARCH_ALIASES.perfil || [])],
+        });
+    }
+
+    return pages;
+}
+
+function boBuildSearchResult(result, index) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'bo-search-result' + (index === boSearchActiveIndex ? ' is-active' : '');
+    button.setAttribute('role', 'option');
+    button.setAttribute('aria-selected', index === boSearchActiveIndex ? 'true' : 'false');
+    button.innerHTML = `<i class="bi ${result.icon}"></i><span><strong></strong><small></small></span>`;
+    button.querySelector('strong').textContent = result.title;
+    button.querySelector('small').textContent = result.subtitle;
+    button.addEventListener('click', () => boOpenSearchResult(result));
+    return button;
+}
+
+function boRenderSearch(query) {
+    const resultsBox = document.getElementById('boSearchResults');
+    const input = document.getElementById('boHeaderSearch');
+    if (!resultsBox || !input) return;
+
+    const term = boNormalizeSearch(query);
+    if (!term) {
+        boCloseSearch();
+        return;
+    }
+
+    const pages = boGetSearchPages().filter((page) => boNormalizeSearch(page.terms.join(' ')).includes(term));
+    const professionals = (typeof BO_PROFISSIONAIS_SEARCH !== 'undefined' ? BO_PROFISSIONAIS_SEARCH : [])
+        .filter((professional) => boNormalizeSearch(`${professional.nome} ${professional.funcao} ${professional.especialidade}`).includes(term))
+        .map((professional) => ({
+            type: 'professional', id: professional.id, title: professional.nome,
+            subtitle: professional.especialidade || professional.funcao, icon: 'bi-person-badge',
+        }));
+
+    boSearchItems = [...professionals, ...pages];
+    boSearchActiveIndex = boSearchItems.length ? 0 : -1;
+    resultsBox.innerHTML = '';
+
+    const appendGroup = (label, group, offset) => {
+        if (!group.length) return;
+        const heading = document.createElement('span');
+        heading.className = 'bo-search-group-label';
+        heading.textContent = label;
+        resultsBox.appendChild(heading);
+        group.forEach((item, index) => resultsBox.appendChild(boBuildSearchResult(item, offset + index)));
+    };
+
+    if (boSearchItems.length) {
+        appendGroup('Profissionais', professionals, 0);
+        appendGroup('Páginas', pages, professionals.length);
+    } else {
+        const empty = document.createElement('span');
+        empty.className = 'bo-search-empty';
+        empty.textContent = 'Nenhum resultado encontrado';
+        resultsBox.appendChild(empty);
+    }
+
+    resultsBox.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+}
+
+function boOpenSearchResult(result) {
+    if (result.type === 'professional') {
+        boShowProfessional(result.id);
+    } else {
+        boGoToSection(result.key);
+    }
+    document.getElementById('boHeaderSearch').value = '';
+    boCloseSearch();
+}
+
+function boOpenProfileEdit() {
+    boOpenForm('perfilEdit', 'Editar perfil', {
+        nome: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.nome) || '',
+        email: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.email) || '',
+    });
+}
+
+function boShowProfessional(id, updateRoute = true) {
+    const professional = (typeof BO_PROFISSIONAIS_SEARCH !== 'undefined' ? BO_PROFISSIONAIS_SEARCH : [])
+        .find((item) => Number(item.id) === Number(id));
+    if (!professional) {
+        boGoToSection(BO_PERFIS[boPerfilAtual].menus[0].key, false);
+        return false;
+    }
+
+    let section = document.getElementById('boProfessionalProfileSection');
+    if (!section) {
+        section = document.createElement('section');
+        section.id = 'boProfessionalProfileSection';
+        section.className = 'bo-content-section';
+        document.querySelector('.bo-main').appendChild(section);
+    }
+    section.innerHTML = '<div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-person-badge"></i> Profissional</span><h1></h1><p></p></div></div><div class="bo-settings-card bo-profile-settings"><div class="bo-settings-heading"><span class="bo-metric-icon"><i class="bi bi-person-workspace"></i></span><div><h2></h2><p></p></div></div></div>';
+    section.querySelector('.bo-page-title h1').textContent = professional.nome;
+    section.querySelector('.bo-page-title p').textContent = 'Perfil profissional disponível no painel ONE FIT.';
+    section.querySelector('.bo-settings-heading h2').textContent = professional.funcao;
+    section.querySelector('.bo-settings-heading p').textContent = professional.especialidade || professional.funcao;
+
+    document.querySelectorAll('.bo-content-section').forEach((item) => item.classList.remove('active'));
+    section.classList.add('active');
+    boSectionAtual = 'profissional';
+    document.querySelectorAll('#boNav .bo-nav-item').forEach((btn) => btn.classList.remove('active'));
+    document.getElementById('boSidebar').classList.remove('active');
+    document.getElementById('boSidebarBackdrop').classList.remove('active');
+
+    if (updateRoute) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('section', 'profissional');
+        url.searchParams.set('profissional', professional.id);
+        window.history.pushState({}, '', url);
+    }
+    return true;
+}
+
 /**
  * Troca a seção visível dentro do perfil atual. Procura uma
  * <section data-perfil="X" data-section="Y"> já pronta no HTML; se não
  * existir, mostra a seção de fallback "Em construção" com o título certo.
  */
-function boGoToSection(sectionKey) {
+function boGoToSection(sectionKey, updateRoute = true) {
+    const isSpecialSection = sectionKey === 'configuracoes' || sectionKey === 'perfil';
+    if (!isSpecialSection && !BO_PERFIS[boPerfilAtual].menus.some((item) => item.key === sectionKey)) return;
     boSectionAtual = sectionKey;
 
     document.querySelectorAll('#boNav .bo-nav-item').forEach((btn) => {
         btn.classList.toggle('active', btn.getAttribute('data-section') === sectionKey);
     });
 
-    const prebuilt = document.querySelector(
-        `.bo-content-section[data-perfil="${boPerfilAtual}"][data-section="${sectionKey}"]`
-    );
+    const prebuilt = sectionKey === 'configuracoes'
+        ? document.getElementById('boSettingsSection')
+        : sectionKey === 'perfil'
+            ? document.getElementById('boProfileSection')
+            : document.querySelector(`.bo-content-section[data-perfil="${boPerfilAtual}"][data-section="${sectionKey}"]`);
 
     document.querySelectorAll('.bo-content-section').forEach((section) => section.classList.remove('active'));
 
@@ -428,6 +611,13 @@ function boGoToSection(sectionKey) {
     // Fecha a sidebar mobile ao navegar (não faz nada se já estiver fechada/desktop)
     document.getElementById('boSidebar').classList.remove('active');
     document.getElementById('boSidebarBackdrop').classList.remove('active');
+
+    if (updateRoute) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('section', sectionKey);
+        url.searchParams.delete('profissional');
+        window.history.pushState({}, '', url);
+    }
 }
 
 /**
@@ -435,6 +625,11 @@ function boGoToSection(sectionKey) {
  * remonta o menu lateral e abre a primeira seção do novo perfil.
  */
 function boTrocarPerfil(perfilKey) {
+    // Segunda camada de proteção: mesmo que alguém force a chamada dessa
+    // função pelo console do navegador, só o admin consegue trocar de perfil.
+    // A proteção "de verdade" é o servidor só mandar o HTML das seções que
+    // o tipo_usuario da sessão tem direito a ver (ver dashboard.php).
+    if (!BO_IS_ADMIN) return;
     if (!BO_PERFIS[perfilKey] || perfilKey === boPerfilAtual) return;
 
     boPerfilAtual = perfilKey;
@@ -452,7 +647,110 @@ document.addEventListener('DOMContentLoaded', () => {
 
     boRenderSidebar();
     boRenderPerfilMenu();
-    boGoToSection('dashboard');
+    // A primeira seção depende do perfil: admin/profissional começam em
+    // "dashboard", mas o Aluno não tem essa chave — o dele é "perfil".
+    // Por isso pegamos sempre o primeiro item do MENU DO PERFIL ATUAL,
+    // em vez de um valor fixo.
+    const routeParams = new URLSearchParams(window.location.search);
+    const routeSection = routeParams.get('section');
+    const routeProfessional = routeParams.get('profissional');
+    if (routeSection === 'profissional' && routeProfessional) {
+        boShowProfessional(routeProfessional, false);
+    } else {
+        const initialSection = (routeSection === 'perfil' || routeSection === 'configuracoes' || BO_PERFIS[boPerfilAtual].menus.some((item) => item.key === routeSection))
+            ? routeSection
+            : BO_PERFIS[boPerfilAtual].menus[0].key;
+        boGoToSection(initialSection, false);
+    }
+
+    const applyTheme = (theme) => {
+        document.documentElement.setAttribute('data-theme', theme);
+        try { localStorage.setItem('onefit-theme', theme); } catch (e) { /* armazenamento indisponível */ }
+        document.querySelectorAll('[data-bo-theme]').forEach((button) => {
+            button.classList.toggle('active', button.getAttribute('data-bo-theme') === theme);
+        });
+    };
+
+    let savedTheme = 'dark';
+    try { savedTheme = localStorage.getItem('onefit-theme') || 'dark'; } catch (e) { /* usa o padrão escuro */ }
+    applyTheme(savedTheme === 'light' ? 'light' : 'dark');
+    document.querySelectorAll('[data-bo-theme]').forEach((button) => {
+        button.addEventListener('click', () => applyTheme(button.getAttribute('data-bo-theme')));
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            document.getElementById('boHeaderSearch')?.focus();
+        }
+    });
+
+    const searchInput = document.getElementById('boHeaderSearch');
+    const searchWrap = document.getElementById('boHeaderSearchWrap');
+    searchInput.addEventListener('input', () => {
+        clearTimeout(boSearchDebounceTimer);
+        boSearchDebounceTimer = setTimeout(() => boRenderSearch(searchInput.value), 180);
+    });
+    searchInput.addEventListener('search', () => {
+        if (!searchInput.value) boCloseSearch();
+    });
+    searchInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            boCloseSearch();
+            searchInput.blur();
+            return;
+        }
+        if (!['ArrowDown', 'ArrowUp', 'Enter'].includes(event.key) || !boSearchItems.length) return;
+        event.preventDefault();
+        if (event.key === 'Enter') {
+            boOpenSearchResult(boSearchItems[boSearchActiveIndex < 0 ? 0 : boSearchActiveIndex]);
+            return;
+        }
+        const nextIndex = event.key === 'ArrowDown'
+            ? (boSearchActiveIndex + 1) % boSearchItems.length
+            : (boSearchActiveIndex - 1 + boSearchItems.length) % boSearchItems.length;
+        boRenderSearch(searchInput.value);
+        // boRenderSearch seleciona o primeiro resultado por padrão; restaura
+        // a seleção escolhida pelo teclado para manter a navegação previsível.
+        boSearchActiveIndex = nextIndex;
+        document.querySelectorAll('.bo-search-result').forEach((button, index) => {
+            const active = index === boSearchActiveIndex;
+            button.classList.toggle('is-active', active);
+            button.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+    });
+
+    const avatar = document.getElementById('boAvatar');
+    const userMenu = document.getElementById('boUserMenu');
+    const userMenuWrap = document.getElementById('boUserMenuWrap');
+    const closeUserMenu = () => {
+        userMenu.classList.remove('is-open');
+        userMenu.setAttribute('aria-hidden', 'true');
+        avatar.setAttribute('aria-expanded', 'false');
+    };
+    avatar.addEventListener('click', () => {
+        const willOpen = !userMenu.classList.contains('is-open');
+        userMenu.classList.toggle('is-open', willOpen);
+        userMenu.setAttribute('aria-hidden', willOpen ? 'false' : 'true');
+        avatar.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!searchWrap.contains(event.target)) boCloseSearch();
+        if (!userMenuWrap.contains(event.target)) closeUserMenu();
+    });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') closeUserMenu();
+    });
+
+    window.addEventListener('popstate', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('section') === 'profissional' && params.get('profissional')) {
+            boShowProfessional(params.get('profissional'), false);
+        } else {
+            boGoToSection(params.get('section') || BO_PERFIS[boPerfilAtual].menus[0].key, false);
+        }
+    });
 
     // Clique num item do dropdown de perfil (header) -> troca de perfil
     document.getElementById('boPerfilMenu').addEventListener('click', (event) => {

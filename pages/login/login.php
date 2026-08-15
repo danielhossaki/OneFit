@@ -38,6 +38,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         session_regenerate_id(true);
         $_SESSION['id_usuario'] = $usuario['id_usuario'];
         $_SESSION['nome'] = $usuario['nome'];
+        $_SESSION['email'] = $email;
         $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
 
         // "lembrar de mim" - cookie com token válido por 30 dias
@@ -142,7 +143,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <input type="checkbox" name="remember">
               <span>Lembrar de mim</span>
             </label>
-            <a href="<?php echo BASE_URL; ?>pages/recuperar-senha/recuperar-senha.php" class="forgot-link">Esqueci minha senha</a>
+            <a href="<?php echo BASE_URL; ?>pages/esqueci_senha/esqueci_senha.php" class="forgot-link">Esqueci minha senha</a>
           </div>
 
           <button type="submit" class="btn btn-gold btn-block">Entrar</button>

@@ -14,5 +14,9 @@
 <div class="bo-sidebar-backdrop" id="boSidebarBackdrop"></div>
 
 <aside class="bo-sidebar" id="boSidebar">
+    <a class="bo-side-brand" href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php" aria-label="ONE FIT">
+        <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit">
+        <span>One Fit</span>
+    </a>
     <nav class="bo-nav" id="boNav"></nav>
 </aside>

@@ -15,23 +15,26 @@
         <button class="bo-sidebar-toggle d-lg-none" id="boSidebarToggle" aria-label="Abrir menu">
             <i class="bi bi-list"></i>
         </button>
-        <div class="bo-logo">
-            <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit">
-            <span>One Fit</span>
+        <div class="bo-header-search-wrap" id="boHeaderSearchWrap">
+            <label class="bo-header-search" for="boHeaderSearch">
+                <i class="bi bi-search"></i>
+                <input id="boHeaderSearch" type="search" placeholder="Pesquisar no painel" aria-label="Pesquisar no painel" autocomplete="off" aria-autocomplete="list" aria-controls="boSearchResults" aria-expanded="false">
+                <kbd>Ctrl K</kbd>
+            </label>
+            <div class="bo-search-results" id="boSearchResults" role="listbox" aria-label="Resultados da pesquisa" hidden></div>
         </div>
     </div>
 
     <div class="bo-user">
-        <div class="dropdown bo-perfil-switch">
-            <button class="btn-bo-outline dropdown-toggle" type="button" id="boPerfilBtn"
-                data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="bi bi-person-badge"></i>
-                <span id="boPerfilLabel">Administrador</span>
-            </button>
-            <!-- Itens do dropdown (Administrador/Profissional/Aluno) são gerados
-                 dinamicamente pelo JS em boRenderPerfilMenu() -->
-            <ul class="dropdown-menu dropdown-menu-end bo-perfil-menu" id="boPerfilMenu" aria-labelledby="boPerfilBtn"></ul>
+        <button class="btn-bo-icon bo-header-settings" type="button" onclick="boGoToSection('configuracoes')" aria-label="Abrir configurações" title="Configurações">
+            <i class="bi bi-gear"></i>
+        </button>
+        <div class="bo-user-menu-wrap" id="boUserMenuWrap">
+            <button class="bo-avatar" id="boAvatar" type="button" aria-label="Abrir menu do usuário" aria-expanded="false" aria-controls="boUserMenu"><?php echo strtoupper(substr($_SESSION['nome'] ?? $perfilLogado, 0, 1)); ?></button>
+            <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=perfil" role="menuitem"><i class="bi bi-person"></i> Editar perfil</a>
+                <a href="<?php echo BASE_URL; ?>config/logout.php" role="menuitem" class="bo-user-menu-logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+            </div>
         </div>
-        <div class="bo-avatar" id="boAvatar">A</div>
     </div>
 </header>

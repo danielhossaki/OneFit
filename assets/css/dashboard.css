@@ -1,0 +1,1408 @@
+/* =========================================================================
+   dashboard.css
+   Estilos do painel da ONE FIT.
+   
+     1. Variáveis de tema (dourado escuro = padrão / claro = data-theme="light")
+     2. Base (body)
+     3. Header (topo fixo + busca)
+     4. Sidebar (menu lateral + marca)
+     5. Área principal / título de página / aviso (notice)
+     6. Cards (indicador simples e "metric card" com ícone)
+     7. Botões
+     8. Filtros + Tabela
+     9. Modais
+    10. Tela "em construção" (stub) e painel vazio (empty panel)
+    11. Listas simples
+    12. Agenda
+    13. Bloco de perfil (aluno) + IMC
+    14. Toast
+    15. Pagamento Pix
+    16. Cartão de configurações (troca de tema)
+    17. Backdrop mobile + visibilidade das seções
+    18. Responsivo
+   ========================================================================= */
+
+/* =========================================================================
+   1. VARIÁVEIS DE TEMA
+   ========================================================================= */
+
+/* Tema padrão: dourado sobre fundo escuro */
+:root {
+    --bg: #0e0c0a;
+    --surface: #1e1a15;
+    --surface-2: #241f18;
+    --border: rgba(243, 237, 226, 0.12);
+    --text: #f3ede2;
+    --text-muted: #b0a896;
+    --gold: #d4af37;
+    --gold-bright: #f4c430;
+    --gold-dim: #8a6b21;
+    --danger: #e42e2e;
+    --success: #4caf50;
+
+    --sidebar-w: 268px;
+    --header-h: 76px;
+    --header-bg: rgba(14, 12, 10, 0.94);
+    --sidebar-bg: #12100e;
+}
+
+/* Tema claro: mesma identidade visual (dourado), mas em cima de fundo
+   claro/branco — por isso o dourado fica mais escuro/saturado aqui
+   (senão perde contraste em cima de branco), e não é só o dark invertido. */
+html[data-theme="light"] {
+    --bg: #f8f5f0;
+    --surface: #fffdfa;
+    --surface-2: #f5f0e8;
+    --border: #e8dfd3;
+    --text: #29251f;
+    --text-muted: #766e63;
+    --gold: #b98618;
+    --gold-bright: #a87308;
+    --gold-dim: #e4c98d;
+    --danger: #c11d1d;
+    --success: #2f8132;
+
+    --header-bg: #fffdfa;
+    --sidebar-bg: #fcf8f1;
+}
+
+/* No tema claro, o conteúdo fica leve e neutro, enquanto a navegação segue
+   em cinza-grafite para criar a mesma hierarquia visual da referência. */
+html[data-theme="light"] .bo-header { border-color: #383c43; }
+html[data-theme="light"] .bo-header-search { background: #1d2025; border-color: #40454f; color: var(--gold); }
+html[data-theme="light"] .bo-header-search input { color: #f5f6f7; }
+html[data-theme="light"] .bo-header-search input::placeholder,
+html[data-theme="light"] .bo-header-search kbd { color: #aeb4be; }
+html[data-theme="light"] .bo-header-search kbd { background: #30343b; border-color: #484d56; }
+html[data-theme="light"] .bo-sidebar { border-color: #383c43; }
+html[data-theme="light"] .bo-side-brand { border-color: #383c43; }
+html[data-theme="light"] .bo-nav-item { color: #bac0c9; }
+html[data-theme="light"] .bo-nav-item:hover { background: #30343a; color: #ffffff; }
+html[data-theme="light"] .bo-nav-item.active { color: #f5c76e; }
+html[data-theme="light"] .bo-sidebar .bo-nav-item i { color: #b7bdc7; }
+html[data-theme="light"] .bo-sidebar .bo-nav-item.active i { color: #f5c76e; }
+html[data-theme="light"] .bo-sidebar-toggle,
+html[data-theme="light"] .bo-user .btn-bo-outline { color: #f5f6f7; }
+html[data-theme="light"] .bo-user .btn-bo-outline { border-color: #4a4e56; }
+html[data-theme="light"] .bo-header .btn-bo-icon { background: #30343a; border-color: #4a4e56; color: #c8cdd4; }
+html[data-theme="light"] .bo-header .btn-bo-icon:hover { border-color: var(--gold); color: var(--gold-bright); }
+
+/* Ajustes visuais do tema claro: superfície quente e neutra, sem glow. */
+html[data-theme="light"] body { background: var(--bg); }
+html[data-theme="light"] .bo-header { border-color: var(--border); box-shadow: none; }
+html[data-theme="light"] .bo-sidebar { border-color: #e5d4b2; }
+html[data-theme="light"] .bo-side-brand { border-color: var(--border); }
+html[data-theme="light"] .bo-header-search { background: #fffdfa; border-color: var(--border); color: var(--gold); }
+html[data-theme="light"] .bo-header-search input { color: var(--text); }
+html[data-theme="light"] .bo-header-search input::placeholder,
+html[data-theme="light"] .bo-header-search kbd { color: var(--text-muted); }
+html[data-theme="light"] .bo-header-search kbd { background: var(--surface-2); border-color: var(--border); }
+html[data-theme="light"] .bo-header-search:focus-within { box-shadow: none; }
+html[data-theme="light"] .bo-nav-item { color: #4b453d; }
+html[data-theme="light"] .bo-nav-item:hover { background: #f6efe3; color: var(--text); }
+html[data-theme="light"] .bo-nav-item.active { background: #fff7e7; border-color: #edcf91; color: var(--gold-bright); }
+html[data-theme="light"] .bo-sidebar .bo-nav-item i { color: #8c6d31; }
+html[data-theme="light"] .bo-sidebar .bo-nav-item.active i { color: var(--gold-bright); }
+html[data-theme="light"] .bo-sidebar-toggle { color: var(--text); }
+html[data-theme="light"] .bo-user .btn-bo-outline { background: #fffdfa; border-color: var(--border); color: var(--text); }
+html[data-theme="light"] .bo-header .btn-bo-icon { background: #fffdfa; border-color: var(--border); color: #75581d; }
+html[data-theme="light"] .bo-header .btn-bo-icon:hover { border-color: var(--gold); color: var(--gold-bright); }
+html[data-theme="light"] .bo-metric-card,
+html[data-theme="light"] .bo-data-panel,
+html[data-theme="light"] .bo-settings-card,
+html[data-theme="light"] .bo-card,
+html[data-theme="light"] .bo-table-wrap,
+html[data-theme="light"] .bo-profile-block { background: var(--surface); box-shadow: none; }
+html[data-theme="light"] .bo-notice { background: #fff9ed; border-color: #efd9aa; }
+html[data-theme="light"] .bo-theme-choice { background: #fffdfa; }
+html[data-theme="light"] .bo-theme-choice:hover,
+html[data-theme="light"] .bo-theme-choice.active { background: #fff9ed; }
+html[data-theme="light"] .bo-toast { box-shadow: none; }
+html[data-theme="light"] .bo-filters .form-control:focus,
+html[data-theme="light"] .bo-filters .form-select:focus,
+html[data-theme="light"] .bo-modal .form-control:focus,
+html[data-theme="light"] .bo-modal .form-select:focus { box-shadow: none; }
+
+/* =========================================================================
+   2. BASE
+   ========================================================================= */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: radial-gradient(circle at 78% -20%, rgba(212, 175, 55, 0.13), transparent 35%), var(--bg);
+    color: var(--text);
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    min-height: 100vh;
+}
+
+/* =========================================================================
+   3. HEADER
+   Barra fixa no topo, deslocada para começar depois da sidebar (a sidebar
+   ocupa a altura inteira da tela, ver bloco 4). Contém: botão de menu
+   mobile, busca rápida e o seletor/rótulo de perfil (ver components/header.php).
+   ========================================================================= */
+.bo-header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-w);
+    right: 0;
+    height: var(--header-h);
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 30px;
+}
+
+.bo-sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+
+/* Campo de busca rápida no header (opcional — só aparece se o HTML tiver
+   um .bo-header-search; não é obrigatório usar em toda página) */
+.bo-header-search {
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--gold);
+    display: flex;
+    gap: 9px;
+    height: 42px;
+    padding: 0 9px 0 12px;
+    width: min(350px, 40vw);
+}
+
+.bo-header-search-wrap {
+    position: relative;
+}
+
+.bo-header-search input {
+    background: transparent;
+    border: 0;
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    min-width: 0;
+    outline: 0;
+    width: 100%;
+}
+
+.bo-header-search input::placeholder {
+    color: var(--text-muted);
+}
+
+.bo-header-search:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, .12);
+}
+
+.bo-header-search kbd {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 5px;
+    white-space: nowrap;
+}
+
+.bo-search-results {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, .24);
+    left: 0;
+    margin-top: 8px;
+    max-height: min(390px, calc(100vh - 105px));
+    min-width: min(350px, 78vw);
+    overflow-y: auto;
+    padding: 7px;
+    position: absolute;
+    top: 100%;
+    transform: translateY(-5px);
+    transition: opacity .16s ease, transform .16s ease;
+    width: min(440px, 78vw);
+    z-index: 1040;
+}
+
+.bo-search-results[hidden] {
+    display: none;
+}
+
+.bo-search-group-label {
+    color: var(--text-muted);
+    display: block;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    padding: 8px 10px 5px;
+    text-transform: uppercase;
+}
+
+.bo-search-result {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 8px;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    text-align: left;
+    width: 100%;
+}
+
+.bo-search-result:hover,
+.bo-search-result.is-active {
+    background: rgba(212, 175, 55, .11);
+    color: var(--text);
+}
+
+.bo-search-result > i {
+    color: var(--gold-bright);
+    font-size: 17px;
+    width: 19px;
+}
+
+.bo-search-result strong,
+.bo-search-result small {
+    display: block;
+}
+
+.bo-search-result strong {
+    font-size: 13px;
+}
+
+.bo-search-result small,
+.bo-search-empty {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.bo-search-empty {
+    display: block;
+    padding: 18px 10px;
+    text-align: center;
+}
+
+.bo-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.bo-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold-dim));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #14110e;
+    border: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.bo-avatar:focus-visible,
+.bo-search-result:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, .42);
+    outline-offset: 2px;
+}
+
+.bo-user-menu-wrap {
+    position: relative;
+}
+
+.bo-user-menu {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, .22);
+    min-width: 175px;
+    opacity: 0;
+    overflow: hidden;
+    padding: 5px;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 9px);
+    transform: translateY(-5px);
+    transition: opacity .16s ease, transform .16s ease;
+    visibility: hidden;
+    z-index: 1040;
+}
+
+.bo-user-menu.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.bo-user-menu a {
+    align-items: center;
+    border-radius: 7px;
+    color: var(--text);
+    display: flex;
+    font-size: 13px;
+    gap: 9px;
+    padding: 9px 10px;
+    text-decoration: none;
+}
+
+.bo-user-menu a:hover {
+    background: var(--surface-2);
+    color: var(--gold-bright);
+}
+
+.bo-user-menu .bo-user-menu-logout:hover {
+    color: var(--danger);
+}
+
+/* Dropdown "Administrador / Profissional / Aluno" no header — só existe
+   (e só funciona) para o perfil admin; ver components/header.php e
+   backoffice.js > boRenderPerfilMenu() */
+.bo-perfil-menu.dropdown-menu {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    min-width: 200px;
+}
+
+.bo-perfil-menu .dropdown-item {
+    color: var(--text);
+    border-radius: 6px;
+    font-size: 14px;
+    padding: 8px 12px;
+}
+
+.bo-perfil-menu .dropdown-item:hover {
+    background: var(--surface-2);
+    color: var(--gold-bright);
+}
+
+.bo-perfil-menu .dropdown-item.active {
+    background: rgba(212, 175, 55, 0.15);
+    color: var(--gold-bright);
+}
+
+/* =========================================================================
+   4. SIDEBAR
+   Ocupa a altura inteira da tela (inclusive atrás do header). Os itens de
+   menu (.bo-nav-item) são montados dinamicamente pelo JS conforme o perfil
+   ativo — ver backoffice.js > boRenderSidebar().
+   ========================================================================= */
+.bo-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 22px 14px;
+    z-index: 1025;
+    transition: transform 0.3s ease;
+
+    /* Esconde a barra de rolagem (Firefox / IE-Edge antigo) */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+/* Esconde a barra de rolagem (Chrome / Edge / Safari) */
+.bo-sidebar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Bloco de marca/logo no topo da sidebar (opcional — usar quando o logo
+   ficar dentro do menu lateral em vez do header) */
+.bo-side-brand {
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    display: flex;
+    gap: 10px;
+    margin: -2px 0 20px;
+    padding: 0 10px 20px;
+    text-decoration: none;
+}
+
+.bo-side-brand img {
+    height: 42px;
+    object-fit: contain;
+    width: 42px;
+}
+
+.bo-side-brand span {
+    color: var(--gold);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.bo-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 14px;
+    border-radius: 11px;
+    color: var(--text-muted);
+    text-decoration: none;
+    margin-bottom: 5px;
+    font-size: 14px;
+    font-weight: 600;
+    border: 1px solid transparent;
+    cursor: pointer;
+    background: none;
+    width: 100%;
+    text-align: left;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.bo-nav-item i {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    color: var(--gold-dim);
+}
+
+.bo-nav-item:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.bo-nav-item.active {
+    background: linear-gradient(100deg, rgba(212, 175, 55, .20), rgba(212, 175, 55, .06));
+    border-color: rgba(212, 175, 55, .4);
+    color: var(--gold-bright);
+}
+
+.bo-nav-item.active i {
+    color: var(--gold-bright);
+}
+
+/* =========================================================================
+   5. ÁREA PRINCIPAL / TÍTULO DE PÁGINA / EYEBROW / NOTICE
+   ========================================================================= */
+.bo-main {
+    margin-left: var(--sidebar-w);
+    margin-top: var(--header-h);
+    padding: 34px 38px 64px;
+    min-height: calc(100vh - var(--header-h));
+}
+
+/* Cabeçalho de cada tela (título + descrição + botões de ação) */
+.bo-page-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 26px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.bo-page-title h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -.04em;
+    text-transform: none;
+    color: var(--text);
+    margin: 0;
+}
+
+.bo-page-title p {
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 610px;
+    margin: 4px 0 0;
+}
+
+.bo-page-title .bo-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Rótulo pequeno em destaque acima de um título (opcional) */
+.bo-eyebrow {
+    align-items: center;
+    color: var(--gold);
+    display: inline-flex;
+    font-size: 12px;
+    font-weight: 800;
+    gap: 7px;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+/* Aviso/banner de destaque (ex: "esta tela ainda usa dados de exemplo") */
+.bo-notice {
+    align-items: flex-start;
+    background: linear-gradient(110deg, rgba(212, 175, 55, .13), rgba(212, 175, 55, .035));
+    border: 1px solid rgba(212, 175, 55, .28);
+    border-radius: 15px;
+    display: flex;
+    gap: 13px;
+    margin-bottom: 18px;
+    padding: 17px 19px;
+}
+
+.bo-notice>i {
+    color: var(--gold-bright);
+    font-size: 20px;
+}
+
+.bo-notice strong,
+.bo-notice span {
+    display: block;
+}
+
+.bo-notice strong {
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 3px;
+}
+
+.bo-notice span {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* =========================================================================
+   6. CARDS
+   ========================================================================= */
+
+/* Card simples de indicador (usado nos dashboards originais) */
+.bo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    height: 100%;
+}
+
+.bo-card-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.bo-card-value {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.bo-card-sub {
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 600;
+}
+
+/* Grade de "metric cards" (versão com ícone, usada nos dashboards novos) */
+.bo-metric-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-bottom: 18px;
+}
+
+.bo-metric-card,
+.bo-data-panel,
+.bo-settings-card {
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
+.bo-metric-card {
+    align-items: flex-start;
+    display: flex;
+    gap: 13px;
+    min-height: 142px;
+    padding: 20px;
+}
+
+.bo-metric-icon {
+    align-items: center;
+    background: rgba(212, 175, 55, .13);
+    border: 1px solid rgba(212, 175, 55, .16);
+    border-radius: 11px;
+    color: var(--gold-bright);
+    display: inline-flex;
+    flex: 0 0 42px;
+    font-size: 18px;
+    height: 42px;
+    justify-content: center;
+    width: 42px;
+}
+
+.bo-metric-card .bo-card-label {
+    display: block;
+    margin: 2px 0 8px;
+}
+
+.bo-metric-card strong {
+    color: var(--text);
+    display: block;
+    font-size: 27px;
+    line-height: 1;
+}
+
+.bo-metric-card small {
+    color: var(--text-muted);
+    display: block;
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+/* =========================================================================
+   7. BOTÕES
+   ========================================================================= */
+.btn-bo-gold {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(120deg, var(--gold-dim), var(--gold) 45%, var(--gold-bright) 60%, var(--gold) 75%, var(--gold-dim));
+    background-size: 250% 100%;
+    color: #14110e;
+    cursor: pointer;
+    transition: background-position 0.3s ease, transform 0.2s ease;
+}
+
+.btn-bo-gold:hover {
+    background-position: 100% 0;
+    color: #14110e;
+    transform: translateY(-1px);
+}
+
+.logout-button{
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(189, 5, 5, 0.301) !important;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+}
+
+.logout-button:hover{
+    background: rgba(114, 3, 3, 0.301) !important;
+    
+}
+
+.btn-bo-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 18px;
+    font-weight: 600;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-bo-outline:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+}
+
+.btn-bo-icon {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-bo-icon:hover {
+    border-color: var(--gold);
+    color: var(--gold-bright);
+}
+
+.btn-bo-icon.danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* =========================================================================
+   8. FILTROS + TABELA
+   ========================================================================= */
+.bo-filters {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.bo-filters .form-control,
+.bo-filters .form-select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.bo-filters .form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.bo-filters .form-control:focus,
+.bo-filters .form-select:focus {
+    background: var(--surface-2);
+    border-color: var(--gold);
+    color: var(--text);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.bo-filters .bo-daterange {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.bo-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.bo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.bo-table thead th {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.bo-table tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+.bo-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.bo-table tbody tr:hover {
+    background: var(--surface-2);
+}
+
+/* Miniatura de imagem (foto de produto/profissional) dentro da tabela */
+.bo-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 16px;
+    overflow: hidden;
+}
+
+.bo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Badge de status (ativo/inativo, disponível/indisponível) — ver helpers.php > bo_badge() */
+.bo-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.bo-badge-active {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success);
+}
+
+.bo-badge-inactive {
+    background: rgba(228, 87, 46, 0.15);
+    color: var(--danger);
+}
+
+.bo-table-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Linha "nenhum resultado encontrado", mostrada pelo JS quando o filtro zera a lista */
+.bo-empty-row td {
+    text-align: center;
+    padding: 40px 16px;
+    color: var(--text-muted);
+}
+
+/* =========================================================================
+   9. MODAIS
+   ========================================================================= */
+.bo-modal .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 14px;
+}
+
+.bo-modal .modal-header,
+.bo-modal .modal-footer {
+    border-color: var(--border);
+}
+
+.bo-modal .form-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.bo-modal .form-control,
+.bo-modal .form-select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.bo-modal .form-control:focus,
+.bo-modal .form-select:focus {
+    background: var(--surface-2);
+    border-color: var(--gold);
+    color: var(--text);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+.bo-modal .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.6);
+}
+
+/* No tema claro o botão de fechar do Bootstrap já nasce escuro — não
+   precisa do filtro de inverter cor (que foi pensado pro tema escuro) */
+html[data-theme="light"] .bo-modal .btn-close {
+    filter: none;
+}
+
+/* Pré-visualização de imagem nos campos do tipo "image" (upload/URL) */
+.bo-modal img[data-bo-preview] {
+    max-height: 140px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    display: none;
+    object-fit: cover;
+}
+
+/* =========================================================================
+   10. TELA "EM CONSTRUÇÃO" (stub) + PAINEL VAZIO (empty panel)
+   ========================================================================= */
+.bo-stub {
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 60px 32px;
+    text-align: center;
+}
+
+.bo-stub i {
+    font-size: 40px;
+    color: var(--gold);
+    margin-bottom: 16px;
+}
+
+.bo-stub h2 {
+    font-size: 18px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+}
+
+.bo-stub p {
+    color: var(--text-muted);
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+/* Painel vazio "genérico" (mesma ideia do stub, mas dentro de um
+   .bo-data-panel — usado quando uma tabela/lista de dados reais ainda
+   não tem nenhum registro) */
+.bo-data-panel {
+    min-height: 270px;
+    padding: 28px;
+}
+
+.bo-empty-panel {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+}
+
+.bo-empty-panel>i {
+    color: var(--gold);
+    font-size: 34px;
+    margin-bottom: 13px;
+}
+
+.bo-empty-panel h2 {
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0 0 7px;
+}
+
+.bo-empty-panel p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+    max-width: 440px;
+}
+
+/* =========================================================================
+   11. LISTAS SIMPLES (usadas em "Funções" e "Categorias" — sem tabela, só linhas)
+   ========================================================================= */
+.bo-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.bo-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+}
+
+.bo-list-item:last-child {
+    border-bottom: none;
+}
+
+.bo-list-item .bo-list-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.bo-list-item .bo-list-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* =========================================================================
+   12. AGENDA (cards de horário agendado/disponível — profissional e aluno)
+   ========================================================================= */
+.bo-agenda-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+/* Borda tracejada para diferenciar horários "disponíveis" dos já agendados */
+.bo-agenda-card.disponivel {
+    border-style: dashed;
+}
+
+.bo-agenda-card .bo-agenda-title {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.bo-agenda-card .bo-agenda-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Título pequeno usado para separar grupos dentro de uma mesma seção
+   (ex: "Agendados" / "Disponíveis" na tela de Agenda) */
+.bo-section-heading {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 24px 0 12px;
+    font-weight: 700;
+}
+
+.bo-section-heading:first-child {
+    margin-top: 0;
+}
+
+/* =========================================================================
+   13. PERFIL DO ALUNO (bloco de dados cadastrais + bloco de avaliação física/IMC)
+   ========================================================================= */
+.bo-profile-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
+
+.bo-profile-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    gap: 12px;
+}
+
+.bo-profile-row:last-child {
+    border-bottom: none;
+}
+
+.bo-profile-row span:first-child {
+    color: var(--text-muted);
+}
+
+.bo-imc-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================================
+   14. TOAST (aviso flutuante no canto inferior direito)
+   ========================================================================= */
+.bo-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    z-index: 2000;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+}
+
+.bo-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================================================================
+   15. PAGAMENTO PIX (QR code simulado + campo "copia e cola")
+   ========================================================================= */
+.bo-pix-box {
+    background: var(--surface-2);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+}
+
+.bo-qr-placeholder {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 12px;
+    border-radius: 8px;
+    background:
+        repeating-linear-gradient(45deg, var(--gold-dim) 0 8px, transparent 8px 16px),
+        var(--surface);
+    border: 1px solid var(--border);
+}
+
+/* =========================================================================
+   16. CARTÃO DE CONFIGURAÇÕES (troca de tema claro/escuro)
+   ========================================================================= */
+.bo-settings-card {
+    max-width: 760px;
+    padding: 26px;
+}
+
+.bo-settings-heading {
+    align-items: center;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.bo-settings-heading h2 {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0 0 4px;
+}
+
+.bo-settings-heading p {
+    color: var(--text-muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+.bo-theme-choices {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.bo-theme-choice {
+    align-items: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    text-align: left;
+    transition: border-color .2s, background .2s;
+}
+
+.bo-theme-choice:hover,
+.bo-theme-choice.active {
+    background: rgba(212, 175, 55, .09);
+    border-color: var(--gold);
+}
+
+.bo-theme-choice>i:first-child {
+    color: var(--gold-bright);
+    font-size: 20px;
+}
+
+.bo-theme-choice span {
+    flex: 1;
+}
+
+.bo-theme-choice strong,
+.bo-theme-choice small {
+    display: block;
+}
+
+.bo-theme-choice strong {
+    font-size: 14px;
+}
+
+.bo-theme-choice small {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.bo-theme-check {
+    color: var(--gold-bright);
+    display: none;
+    font-size: 18px;
+}
+
+.bo-theme-choice.active .bo-theme-check {
+    display: block;
+}
+
+.bo-settings-logout {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-top: 23px;
+    padding-top: 20px;
+}
+
+.bo-settings-logout strong,
+.bo-settings-logout span {
+    display: block;
+}
+
+.bo-settings-logout strong {
+    color: var(--text);
+    font-size: 14px;
+}
+
+.bo-settings-logout span {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.bo-logout-button:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+/* =========================================================================
+   17. BACKDROP MOBILE + VISIBILIDADE DAS SEÇÕES
+   ========================================================================= */
+
+/* Camada escura atrás da sidebar quando aberta no mobile (fecha ao clicar fora) */
+.bo-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1024;
+}
+
+/* Cada "página" do backoffice é uma <section data-perfil="..." data-section="...">
+   escondida por padrão; o JS mostra só a seção ativa trocando essa classe */
+.bo-content-section {
+    display: none;
+}
+
+.bo-content-section.active {
+    display: block;
+}
+
+/* =========================================================================
+   18. RESPONSIVO
+   ========================================================================= */
+@media (max-width: 1199px) {
+    .bo-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991px) {
+
+    /* Sidebar vira um painel deslizante (off-canvas) em telas menores */
+    .bo-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .bo-sidebar.active {
+        transform: translateX(0);
+    }
+
+    .bo-sidebar-backdrop.active {
+        display: block;
+    }
+
+    .bo-header {
+        left: 0;
+        padding: 0 18px;
+    }
+
+    .bo-main {
+        margin-left: 0;
+        padding: 26px 18px 48px;
+    }
+}
+
+@media (max-width: 560px) {
+
+    /* Esconde o texto "One Fit · Backoffice" no header, mantém só a logo */
+    .bo-logo span {
+        display: none;
+    }
+
+    .bo-header-search {
+        width: min(260px, 50vw);
+    }
+
+    .bo-metric-grid,
+    .bo-theme-choices {
+        grid-template-columns: 1fr;
+    }
+
+    .bo-metric-card {
+        min-height: 112px;
+    }
+
+    .bo-header-settings {
+        display: none;
+    }
+
+    .bo-user {
+        gap: 8px;
+    }
+
+    .bo-search-results {
+        left: min(-52px, -18vw);
+        width: min(340px, calc(100vw - 28px));
+    }
+
+    .bo-settings-logout {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .btn-bo-outline {
+        padding: 8px 11px;
+    }
+}
