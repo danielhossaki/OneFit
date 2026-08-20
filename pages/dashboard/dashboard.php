@@ -20,7 +20,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require __DIR__ . '/includes/helpers.php';
 require __DIR__ . '/includes/mock-data.php';
 
-// Sem sessão -> manda pro login. O acesso ao backoffice inteiro depende de
+// Sem sessão -> manda pro login. O acesso ao dashboard inteiro depende de
 // estar logado (id_usuario e tipo_usuario são gravados em processa_login.php).
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: ' . BASE_URL . 'pages/login/login.php');
@@ -38,6 +38,7 @@ if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno'], true)) {
 $usuarioDashboard = [
     'nome' => $_SESSION['nome'] ?? 'Usuário ONE FIT',
     'email' => $_SESSION['email'] ?? '',
+    'genero' => $_SESSION['genero'] ?? '',
 ];
 
 // Até que exista a consulta real da equipe, a busca usa apenas os campos
@@ -60,7 +61,7 @@ $profissionaisPesquisa = array_values(array_map(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel — ONE FIT</title>
+    <title>Painel · ONE FIT</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -96,19 +97,20 @@ $profissionaisPesquisa = array_values(array_map(
 
     <script>
         // Essas duas listas vêm do PHP (categorias e planos cadastrados) e
-        // precisam existir ANTES de backoffice.js carregar, porque os
+        // precisam existir ANTES de dashboard.js carregar, porque os
         // schemas de formulário (BO_FORM_SCHEMAS.produtoForm e .planoAlterar)
         // usam elas direto ao montar os <select> de categoria/plano.
         const BO_CATEGORIAS_OPTIONS = [];
         const BO_PLANOS_OPTIONS = [];
 
         // Perfil real do usuário logado (vindo da sessão, não escolhido por ele).
-        // backoffice.js usa isso pra: (1) abrir direto na seção certa,
+        // dashboard.js usa isso pra: (1) abrir direto na seção certa,
         // (2) só o admin conseguir usar o seletor de perfil no header.
         const BO_PERFIL_LOGADO = "<?php echo $perfilLogado; ?>";
         // A visualização passa a respeitar apenas o perfil real da sessão.
         // Não há mais alternância de perfis de demonstração no painel.
         const BO_IS_ADMIN = false;
+        const BO_MARKETPLACE_URL = <?php echo json_encode(BASE_URL . 'pages/marketplace/marketplace.php'); ?>;
         const BO_CURRENT_USER = <?php echo json_encode($usuarioDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_PROFISSIONAIS_SEARCH = <?php echo json_encode($profissionaisPesquisa, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>

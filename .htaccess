@@ -1,0 +1,7 @@
+Options -MultiViews
+
+# Mantém o status HTTP 404 e exibe a página padrão para qualquer arquivo,
+# URL ou rota inexistente. O ErrorDocument é servido internamente pelo
+# Apache, evitando um novo redirecionamento caso a própria página de erro
+# falhe.
+ErrorDocument 404 /AN25/OneFit/pages/errors/404.php

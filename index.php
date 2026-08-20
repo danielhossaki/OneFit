@@ -9,7 +9,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ONE FIT — Treino de Alta Performance</title>
+  <title>ONE FIT · Treino de Alta Performance</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">

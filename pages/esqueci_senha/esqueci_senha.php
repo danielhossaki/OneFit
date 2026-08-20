@@ -11,7 +11,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Esqueci minha senha — ONE FIT</title>
+  <title>Esqueci minha senha · ONE FIT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
@@ -24,7 +24,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
-        <source src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4" type="video/mp4">
+        <source src="<?php echo BASE_URL; ?>assets/img/videos/video-esqueci-senha.mp4" type="video/mp4">
         Seu navegador não suporta vídeos.
       </video>
       <div class="login-visual-overlay"></div>

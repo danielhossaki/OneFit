@@ -13,6 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $nome = $_POST['nome'] ?? null;
   $cpf = isset($_POST['cpf']) ? preg_replace('/\D/', '', $_POST['cpf']) : null;
   $nascimento = $_POST['nascimento'] ?? null;
+  $genero = strtolower(trim($_POST['genero'] ?? ''));
   $telefone = isset($_POST['telefone']) ? preg_replace('/\D/', '', $_POST['telefone']) : null;
   $email = $_POST['email'] ?? null;
   $senha = $_POST['password'] ?? null;
@@ -32,7 +33,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   // campos obrigatórios
   if (
-    $nome && $cpf && $nascimento && $telefone && $email && $senha && $confirmar_senha &&
+    $nome && $cpf && $nascimento && $genero && $telefone && $email && $senha && $confirmar_senha &&
     $endereco && $numero && $bairro && $cidade && $estado && $plano_nome && $termos
   ) {
 
@@ -47,6 +48,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // e-mail inválido
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
       header("Location: matricula.php?msg=4");
+      exit;
+    }
+
+    // Aceita somente as opções expostas no formulário antes de persistir.
+    if (!in_array($genero, ['masculino', 'feminino'], true)) {
+      header("Location: matricula.php?msg=2");
       exit;
     }
 
@@ -96,13 +103,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // ----- INSERT usuarios -----
     $stmt = $conn->prepare(
       "INSERT INTO usuarios
-                (nome, data_nascimento, cpf, endereco, cidade_estado, email, celular, senha, tipo_usuario, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'aluno', 'ativo')"
+                (nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, celular, senha, tipo_usuario, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aluno', 'ativo')"
     );
     $stmt->bind_param(
-      "ssssssss",
+      "sssssssss",
       $nome,
       $nascimento,
+      $genero,
       $cpf,
       $endereco_completo,
       $cidade_estado,
@@ -152,7 +160,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matrícula — ONE FIT</title>
+  <title>Matrícula · ONE FIT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -240,6 +248,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <label for="nascimento">Data de nascimento</label>
                 <input type="date" id="nascimento" name="nascimento" required>
               </div>
+            </div>
+
+            <div class="field">
+              <label for="genero">Gênero</label>
+              <select id="genero" name="genero" required>
+                <option value="">Selecione</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+              </select>
             </div>
 
             <div class="field-row">

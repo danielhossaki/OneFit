@@ -13,7 +13,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ($email && $senha) {
 
         $stmt = $conn->prepare(
-            "SELECT id_usuario, nome, senha, tipo_usuario, status FROM usuarios WHERE email = ? LIMIT 1"
+            "SELECT id_usuario, nome, senha, tipo_usuario, status, genero FROM usuarios WHERE email = ? LIMIT 1"
         );
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -24,13 +24,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // e-mail ou senha incorretos
         if (!$usuario || !password_verify($senha, $usuario['senha'])) {
-            header("Location: login.php?msg=1"); // e-mail ou senha incorretos
+            header("Location: login.php?msg=1"); 
             exit;
         }
 
         // conta inativa/bloqueada
         if ($usuario['status'] !== 'ativo') {
-            header("Location: login.php?msg=2"); // conta inativa/bloqueada
+            header("Location: login.php?msg=2");
             exit;
         }
 
@@ -40,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $_SESSION['nome'] = $usuario['nome'];
         $_SESSION['email'] = $email;
         $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
+        $_SESSION['genero'] = $usuario['genero'];
 
         // "lembrar de mim" - cookie com token válido por 30 dias
         if ($lembrar) {
@@ -68,7 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Entrar — ONE FIT</title>
+  <title>Entrar · ONE FIT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">

@@ -26,13 +26,12 @@
     </div>
 
     <div class="bo-user">
-        <button class="btn-bo-icon bo-header-settings" type="button" onclick="boGoToSection('configuracoes')" aria-label="Abrir configurações" title="Configurações">
-            <i class="bi bi-gear"></i>
-        </button>
         <div class="bo-user-menu-wrap" id="boUserMenuWrap">
             <button class="bo-avatar" id="boAvatar" type="button" aria-label="Abrir menu do usuário" aria-expanded="false" aria-controls="boUserMenu"><?php echo strtoupper(substr($_SESSION['nome'] ?? $perfilLogado, 0, 1)); ?></button>
             <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">
                 <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=perfil" role="menuitem"><i class="bi bi-person"></i> Editar perfil</a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=alterar-senha" role="menuitem"><i class="bi bi-key"></i> Alterar senha</a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=configuracoes" role="menuitem"><i class="bi bi-gear"></i> Configurações</a>
                 <a href="<?php echo BASE_URL; ?>config/logout.php" role="menuitem" class="bo-user-menu-logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
             </div>
         </div>

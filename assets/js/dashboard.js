@@ -43,6 +43,7 @@ const BO_PERFIS = {
             { key: 'agenda', label: 'Agenda', icon: 'bi-calendar3' },
             { key: 'cashback', label: 'Meu cashback', icon: 'bi-wallet2' },
             { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
+            { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
             { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
@@ -55,6 +56,7 @@ const BO_PERFIS = {
             { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
             { key: 'treino', label: 'Treino', icon: 'bi-lightning-charge' },
             { key: 'agenda', label: 'Minha agenda', icon: 'bi-calendar3' },
+            { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
             { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
@@ -180,7 +182,7 @@ const BO_FORM_SCHEMAS = {
         { key: 'telefone', label: 'Telefone', type: 'text', col: 6 },
         { key: 'nacionalidade', label: 'Nacionalidade', type: 'text', col: 6 },
         { key: 'nascimento', label: 'Data de nascimento', type: 'date', col: 6 },
-        { key: 'genero', label: 'Gênero', type: 'select', options: ['Masculino', 'Feminino'], col: 6 },
+        { key: 'genero', label: 'Gênero', type: 'select', options: ['masculino', 'feminino'], optionLabels: ['Masculino', 'Feminino'], col: 6 },
         { key: 'endereco', label: 'Endereço', type: 'text', col: 12 },
         { key: 'cidade', label: 'Cidade', type: 'text', col: 6 },
         { key: 'estado', label: 'Estado', type: 'text', col: 6 },
@@ -373,13 +375,17 @@ function boRenderSidebar() {
     const nav = document.getElementById('boNav');
     nav.innerHTML = '';
     BO_PERFIS[boPerfilAtual].menus.forEach((item) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'bo-nav-item' + (item.key === boSectionAtual ? ' active' : '');
-        btn.setAttribute('data-section', item.key);
-        btn.innerHTML = `<i class="bi ${item.icon}"></i><span>${item.label}</span>`;
-        btn.addEventListener('click', () => boGoToSection(item.key));
-        nav.appendChild(btn);
+        const itemElement = document.createElement(item.href ? 'a' : 'button');
+        if (item.href) {
+            itemElement.href = item.href;
+        } else {
+            itemElement.type = 'button';
+            itemElement.addEventListener('click', () => boGoToSection(item.key));
+        }
+        itemElement.className = 'bo-nav-item' + (item.key === boSectionAtual ? ' active' : '');
+        itemElement.setAttribute('data-section', item.key);
+        itemElement.innerHTML = `<i class="bi ${item.icon}"></i><span>${item.label}</span>`;
+        nav.appendChild(itemElement);
     });
 }
 
@@ -447,8 +453,9 @@ function boGetSearchPages() {
     const pages = BO_PERFIS[boPerfilAtual].menus.map((item) => ({
         type: 'page',
         key: item.key,
+        href: item.href,
         title: item.label,
-        subtitle: 'Página do painel',
+        subtitle: item.href ? 'Abrir Marketplace' : 'Página do painel',
         icon: item.icon,
         terms: [item.label, ...(BO_SEARCH_ALIASES[item.key] || [])],
     }));
@@ -523,7 +530,9 @@ function boRenderSearch(query) {
 }
 
 function boOpenSearchResult(result) {
-    if (result.type === 'professional') {
+    if (result.href) {
+        window.location.assign(result.href);
+    } else if (result.type === 'professional') {
         boShowProfessional(result.id);
     } else {
         boGoToSection(result.key);
@@ -536,6 +545,7 @@ function boOpenProfileEdit() {
     boOpenForm('perfilEdit', 'Editar perfil', {
         nome: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.nome) || '',
         email: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.email) || '',
+        genero: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.genero) || '',
     });
 }
 

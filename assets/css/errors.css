@@ -85,6 +85,7 @@
     display: flex;
     gap: 16px;
     justify-content: center;
+    align-items: center;
     flex-wrap: wrap;
     margin-bottom: 64px;
 }
@@ -123,4 +124,30 @@
     .error-page {
         padding: 120px 20px 80px;
     }
+}
+
+#btn_voltar{
+    background-color: var(--gold);
+    color: #1A1613 !important;
+    border: 1px solid var(--gold);
+    padding: 10px 20px !important;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+#btn_voltar:hover{
+    background-color: var(--gold-dim);
+    color: #1A1613 !important;
+    border: 1px solid var(--gold-dim);
+}
+
+.btn_outline{
+    background-color: transparent;
+    color: var(--gold) !important;
+    border: 1px solid var(--gold);
+    padding: 10px 20px !important;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s ease;
 }

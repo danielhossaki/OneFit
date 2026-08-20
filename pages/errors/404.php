@@ -65,7 +65,7 @@ $logLine = sprintf(
     <p class="lead">A página que você procura não existe, mudou de lugar ou foi removida. Sem excesso de carga — volte para o início e recomece o treino do jeito certo.</p>
  
     <div class="error-actions">
-      <a href="<?php echo BASE_URL; ?>" class="btn btn-gold">Voltar para o início</a>
+      <a href="<?php echo BASE_URL; ?>" class="btn btn-gold" id="btn_voltar">Voltar para o início</a>
       <a href="<?php echo BASE_URL; ?>index.php#planos" class="btn btn-outline">Ver planos</a>
     </div>
  
