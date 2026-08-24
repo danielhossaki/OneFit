@@ -4,13 +4,37 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
 session_start();
 
+$mensagensLogin = [
+  '1' => ['tipo' => 'erro', 'texto' => 'E-mail ou senha incorretos. Confira os dados e tente novamente.'],
+  '2' => ['tipo' => 'erro', 'texto' => 'Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT.'],
+  '3' => ['tipo' => 'erro', 'texto' => 'Preencha o e-mail e a senha para entrar.'],
+  '4' => ['tipo' => 'sucesso', 'texto' => 'Cadastro realizado com sucesso! Agora você já pode entrar.'],
+  '5' => ['tipo' => 'erro', 'texto' => 'Digite um endereço de e-mail válido.'],
+];
+
+$mensagemLogin = $mensagensLogin[(string) ($_GET['msg'] ?? '')] ?? null;
+
+if (!$mensagemLogin && !empty($_SESSION['login_msg'])) {
+  $mensagemLogin = [
+    'tipo' => $_SESSION['login_tipo'] ?? 'sucesso',
+    'texto' => $_SESSION['login_msg'],
+  ];
+}
+
+unset($_SESSION['login_msg'], $_SESSION['login_tipo']);
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-  $email = $_POST['email'] ?? null;
+  $email = trim($_POST['email'] ?? '');
   $senha = $_POST['password'] ?? null;
   $lembrar = isset($_POST['remember']);
 
   if ($email && $senha) {
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      header("Location: login.php?msg=5");
+      exit;
+    }
 
     $stmt = $conn->prepare(
       "SELECT id_usuario, nome, senha, tipo_usuario, status, genero FROM usuarios WHERE email = ? LIMIT 1"
@@ -22,19 +46,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt->close();
 
 
-    // e-mail ou senha incorretos
+    // Usa uma mensagem única para não revelar se o e-mail está cadastrado.
     if (!$usuario || !password_verify($senha, $usuario['senha'])) {
       header("Location: login.php?msg=1");
       exit;
     }
 
-    // conta inativa/bloqueada
+    // Impede o acesso de contas que não estão ativas.
     if ($usuario['status'] !== 'ativo') {
       header("Location: login.php?msg=2");
       exit;
     }
 
-    // login ok - inicia sessão
+    // Renova a sessão antes de armazenar os dados do usuário autenticado.
     session_regenerate_id(true);
     $_SESSION['id_usuario'] = $usuario['id_usuario'];
     $_SESSION['nome'] = $usuario['nome'];
@@ -42,7 +66,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
     $_SESSION['genero'] = $usuario['genero'];
 
-    // "lembrar de mim" - cookie com token válido por 30 dias
+    // Mantém a autenticação por 30 dias quando o usuário solicita.
     if ($lembrar) {
       $token = bin2hex(random_bytes(32));
 
@@ -57,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     header("Location: " . BASE_URL . "pages/dashboard/dashboard.php");
     exit;
   } else {
-    header("Location: login.php?msg=3"); // campos vazios
+    header("Location: login.php?msg=3"); // Informa que e-mail ou senha não foram enviados.
     exit;
   }
 }
@@ -70,22 +94,26 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Entrar · ONE FIT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <!-- link da fonte -->
+  <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <!-- link do css -->
+  <!-- Estilos globais e específicos do login. -->
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
-  <!-- link das animações -->
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
+  <!-- Biblioteca de animações de entrada. -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
-  <!-- link do favicon -->
+  <!-- Ícone exibido na aba do navegador. -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
 </head>
 
-<body class="login-body">
+<body class="login-body"
+  <?php if ($mensagemLogin): ?>
+    data-form-message="<?php echo htmlspecialchars($mensagemLogin['texto'], ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message-type="<?php echo htmlspecialchars($mensagemLogin['tipo'], ENT_QUOTES, 'UTF-8'); ?>"
+  <?php endif; ?>>
 
   <main class="login-page">
 
-    <!-- Painel visual (some em telas pequenas) -->
+    <!-- Painel institucional ocultado em telas pequenas. -->
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
         <source src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4" type="video/mp4">
@@ -103,7 +131,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </section>
 
-    <!-- Painel de preenchimento -->
+    <!-- Formulário responsável pela autenticação. -->
     <section class="login-form-panel">
       <div class="login-form-wrap" data-aos="fade-right" data-aos-delay="250">
 
@@ -117,22 +145,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           Acesse sua conta para acompanhar treinos, planos e agendamentos.
         </p>
 
-        <?php if (!empty($_SESSION['login_msg'])): ?>
-
-          <p class="form-msg form-msg-<?php echo htmlspecialchars($_SESSION['login_tipo'] ?? 'sucesso'); ?>">
-            <?php echo htmlspecialchars($_SESSION['login_msg']); ?>
-          </p>
-
-          <?php
-          unset(
-            $_SESSION['login_msg'],
-            $_SESSION['login_tipo']
-          );
-          ?>
-
-        <?php endif; ?>
-
-        <form class="login-form" action="#" method="POST">
+        <form class="login-form" action="#" method="POST" novalidate>
           <div class="field">
             <label for="email">E-mail</label>
             <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
@@ -175,13 +188,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   </main>
 
-  <!-- Link para JavaScript -->
-  <script src="<?php echo BASE_URL; ?>assets/js/login.js"></script>
+  <!-- Controla senha visível e mensagens retornadas pelo PHP. -->
+  <script src="<?php echo BASE_URL; ?>assets/js/login.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/login.js'); ?>"></script>
 
-  <!-- Link para animações AOS JS -->
+  <!-- Carrega e inicializa as animações de entrada. -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
-  <!-- Animacão do AOS JS -->
+  <!-- Configuração das animações desta página. -->
   <script>
     AOS.init({
       duration: 800,

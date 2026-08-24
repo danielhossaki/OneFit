@@ -2,11 +2,22 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
-// Dados de cartão (número completo / CVV) não são gravados no banco -
-// isso é dado sensível de cartão (PCI-DSS), então por enquanto nem os
-// 4 últimos dígitos estão sendo salvos (não tem coluna prevista pra isso
-// ainda). Se quiser guardar forma de pagamento, manda a estrutura da
-// tabela "pagamento" que eu conecto.
+$mensagensMatricula = [
+  '2' => 'Não foi possível concluir o cadastro. Confira os campos obrigatórios e tente novamente.',
+  '3' => 'As senhas não coincidem. Digite a mesma senha nos dois campos.',
+  '4' => 'Digite um endereço de e-mail válido.',
+  '5' => 'Este CPF ou e-mail já está cadastrado. Tente entrar na sua conta.',
+  '6' => 'O plano selecionado não está disponível. Escolha outro plano.',
+  '7' => 'A senha precisa ter pelo menos 8 caracteres.',
+  '8' => 'Digite um CPF válido com 11 números.',
+  '9' => 'Não foi possível registrar o pagamento. Tente novamente.',
+  '10' => 'Para se matricular na One Fit, é necessário ter ao menos 18 anos de idade ou 12 com autorização dos pais ou responsáveis.',
+];
+
+$mensagemMatricula = $mensagensMatricula[(string) ($_GET['msg'] ?? '')] ?? null;
+
+// O servidor grava apenas os dados da cobrança. Número do cartão e CVV não
+// são persistidos porque são informações sensíveis protegidas pelo PCI-DSS.
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
@@ -27,51 +38,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $estado = $_POST['estado'] ?? null;
   $cep = isset($_POST['cep']) ? preg_replace('/\D/', '', $_POST['cep']) : '';
 
-  $plano_nome = $_POST['plano'] ?? null; // 'iniciante' | 'completo' | 'elite'
+  $plano_nome = $_POST['plano'] ?? null; // Nome usado para localizar o plano ativo no banco.
+  $forma_pagamento = strtolower(trim($_POST['forma_pagamento'] ?? ''));
 
   $termos = isset($_POST['termos']);
 
-  // campos obrigatórios
+  // Impede o processamento quando algum dado obrigatório não foi enviado.
   if (
     $nome && $cpf && $nascimento && $genero && $telefone && $email && $senha && $confirmar_senha &&
-    $endereco && $numero && $bairro && $cidade && $estado && $plano_nome && $termos
+    $endereco && $numero && $bairro && $cidade && $estado && $plano_nome && $forma_pagamento && $termos
   ) {
 
 
-    // senhas não conferem
+    // A confirmação deve ser idêntica à senha informada.
     if ($senha !== $confirmar_senha) {
       header("Location: matricula.php?msg=3");
       exit;
     }
 
+    if (strlen($senha) < 8) {
+      header("Location: matricula.php?msg=7");
+      exit;
+    }
 
-    // e-mail inválido
+    if (strlen($cpf) !== 11) {
+      header("Location: matricula.php?msg=8");
+      exit;
+    }
+
+    $dataNascimento = DateTime::createFromFormat('!Y-m-d', $nascimento);
+    $dataMinima = (new DateTime('today'))->modify('-12 years');
+
+    if (!$dataNascimento || $dataNascimento > $dataMinima) {
+      header("Location: matricula.php?msg=10");
+      exit;
+    }
+
+
+    // Valida o formato antes de consultar ou gravar o e-mail.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
       header("Location: matricula.php?msg=4");
       exit;
     }
 
-    // Aceita somente as opções expostas no formulário antes de persistir.
+    // Aceita somente valores de gênero disponíveis no formulário.
     if (!in_array($genero, ['masculino', 'feminino'], true)) {
       header("Location: matricula.php?msg=2");
       exit;
     }
 
-    // verifica se CPF ou e-mail já existem
+    if (!in_array($forma_pagamento, ['pix', 'cartao'], true)) {
+      header("Location: matricula.php?msg=9");
+      exit;
+    }
+
+    // CPF e e-mail identificam uma conta e não podem ser reutilizados.
     $stmtCheck = $conn->prepare("SELECT id_usuario FROM usuarios WHERE cpf = ? OR email = ? LIMIT 1");
     $stmtCheck->bind_param("ss", $cpf, $email);
     $stmtCheck->execute();
     $stmtCheck->store_result();
 
 
-    // já cadastrado
+    // Interrompe o cadastro quando um dos identificadores já existe.
     if ($stmtCheck->num_rows > 0) {
       header("Location: matricula.php?msg=5");
       exit;
     }
     $stmtCheck->close();
 
-    // busca o plano escolhido em cadastro_planos (case-insensitive)
+    // Localiza o plano ativo sem diferenciar letras maiúsculas e minúsculas.
     $stmtPlano = $conn->prepare(
       "SELECT id_plano, valor FROM cadastro_planos WHERE LOWER(nome) = LOWER(?) AND status = 'ativo' LIMIT 1"
     );
@@ -82,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmtPlano->close();
 
 
-    // plano inválido/inexistente
+    // Impede matrícula em plano inexistente ou inativo.
     if (!$plano) {
       header("Location: matricula.php?msg=6");
       exit;
@@ -100,7 +135,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $cidade_estado = $cidade . '/' . $estado;
     $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
 
-    // ----- INSERT usuarios -----
+    $etapaPersistencia = 'cadastro';
+
+    try {
+      $conn->begin_transaction();
+
+    // Cria a conta que será vinculada à matrícula.
     $stmt = $conn->prepare(
       "INSERT INTO usuarios
                 (nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, celular, senha, tipo_usuario, status)
@@ -120,34 +160,69 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     );
 
 
-    // erro ao gravar usuario
+    // Reverte a transação se a conta não puder ser criada.
     if (!$stmt->execute()) {
+      $conn->rollback();
       header("Location: matricula.php?msg=2");
       exit;
     }
     $id_usuario = $conn->insert_id;
     $stmt->close();
 
-    // ----- INSERT matricula -----
+    // Cria a matrícula pendente com o valor atual do plano.
     $stmtMatricula = $conn->prepare(
       "INSERT INTO matricula (id_usuario, id_plano, data_matricula, data_inicio, status, valor_contratado)
       VALUES (?, ?, CURDATE(), CURDATE(), 'pendente', ?)"
     );
     $stmtMatricula->bind_param("iid", $id_usuario, $id_plano, $valor_contratado);
 
-    // sucesso
-    if ($stmtMatricula->execute()) {
-      header("Location: " . BASE_URL . "pages/login/login.php");
-    }
-
-    // erro ao gravar matricula
-    else {
+    if (!$stmtMatricula->execute()) {
+      $conn->rollback();
       header("Location: matricula.php?msg=2");
+      exit;
     }
+    $id_matricula = $conn->insert_id;
     $stmtMatricula->close();
+
+    // Cria a cobrança pendente sem armazenar os dados sensíveis do cartão.
+    $data_vencimento = date('Y-m-d');
+    $codigo_transacao = 'MAT-' . $id_matricula . '-' . strtoupper(bin2hex(random_bytes(6)));
+
+    $etapaPersistencia = 'pagamento';
+    $stmtPagamento = $conn->prepare(
+      "INSERT INTO pagamento
+        (id_matricula, valor, data_vencimento, forma_pagamento, status, codigo_transacao)
+       VALUES (?, ?, ?, ?, 'pendente', ?)"
+    );
+    $stmtPagamento->bind_param(
+      "idsss",
+      $id_matricula,
+      $valor_contratado,
+      $data_vencimento,
+      $forma_pagamento,
+      $codigo_transacao
+    );
+
+    if (!$stmtPagamento->execute()) {
+      $stmtPagamento->close();
+      $conn->rollback();
+      header("Location: matricula.php?msg=9");
+      exit;
+    }
+    $stmtPagamento->close();
+
+    $conn->commit();
+    header("Location: " . BASE_URL . "pages/login/login.php?msg=4");
+    exit;
+    } catch (Throwable $erro) {
+      $conn->rollback();
+      $codigoMensagem = $etapaPersistencia === 'pagamento' ? 9 : 2;
+      header("Location: matricula.php?msg=" . $codigoMensagem);
+      exit;
+    }
   }
 
-  // campos faltando
+  // Retorna uma mensagem genérica quando faltam campos obrigatórios.
   else {
     header("Location: matricula.php?msg=2");
   }
@@ -162,23 +237,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Matrícula · ONE FIT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <!-- link da fonte -->
+  <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <!-- link do css -->
+  <!-- Estilos globais e específicos da matrícula. -->
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/matricula.css">
-  <!-- link das animações -->
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/matricula.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/matricula.css'); ?>">
+  <!-- Biblioteca de animações de entrada. -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
-  <!-- link do favicon -->
+  <!-- Ícone exibido na aba do navegador. -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
 </head>
 
-<body class="login-body">
+<body class="login-body"
+  <?php if ($mensagemMatricula): ?>
+    data-form-message="<?php echo htmlspecialchars($mensagemMatricula, ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message-type="erro"
+  <?php endif; ?>>
 
   <main class="login-page matricula-page">
 
-    <!-- Painel visual (some em telas pequenas) -->
+    <!-- Painel institucional ocultado em telas pequenas. -->
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
         <source src="<?php echo BASE_URL; ?>assets/img/videos/video-cadastro.mp4" type="video/mp4">
@@ -198,7 +277,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       </div>
     </section>
 
-    <!-- Painel de preenchimento -->
+    <!-- Formulário de matrícula dividido em quatro etapas. -->
     <section class="login-form-panel">
       <div class="login-form-wrap matricula-wrap" data-aos="fade-right" data-aos-delay="250">
 
@@ -210,7 +289,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <h1>Matrícula</h1>
         <p class="login-subtitle" id="step-subtitle">Preencha seus dados para começar a treinar com a gente.</p>
 
-        <!-- Progresso -->
+        <!-- Indica a etapa atual e as etapas já concluídas. -->
         <div class="matricula-progress">
           <div class="progress-bar"><span id="progress-fill"></span></div>
           <div class="progress-steps">
@@ -448,8 +527,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="payment-tabs" role="tablist">
               <button type="button" class="payment-tab active" data-payment="cartao">Cartão de crédito</button>
               <button type="button" class="payment-tab" data-payment="pix">Pix</button>
-              <button type="button" class="payment-tab" data-payment="boleto">Boleto</button>
             </div>
+
+            <input type="hidden" id="forma-pagamento" name="forma_pagamento" value="cartao">
 
             <div class="payment-panel active" data-payment-panel="cartao">
 
@@ -479,10 +559,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <p class="payment-note">O código Pix é gerado após a confirmação da matrícula e enviado para o seu e-mail, com validade de 30 minutos.</p>
             </div>
 
-            <div class="payment-panel" data-payment-panel="boleto">
-              <p class="payment-note">O boleto é gerado após a confirmação da matrícula, com vencimento em até 3 dias úteis.</p>
-            </div>
-
             <label class="checkbox checkbox-terms">
               <input type="checkbox" name="termos" required>
               <span>Li e aceito os <a href="#">termos de uso</a> e a <a href="#">política de privacidade</a></span>
@@ -505,14 +581,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
   </main>
 
-  <!-- Link para JavaScript -->
-  <script src="<?php echo BASE_URL; ?>assets/js/login.js"></script>
-  <script src="<?php echo BASE_URL; ?>assets/js/matricula.js"></script>
+  <!-- Comportamentos compartilhados e controle do formulário em etapas. -->
+  <script src="<?php echo BASE_URL; ?>assets/js/login.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/login.js'); ?>"></script>
+  <script src="<?php echo BASE_URL; ?>assets/js/matricula.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/matricula.js'); ?>"></script>
 
-  <!-- Link para animações AOS JS -->
+  <!-- Carrega e inicializa as animações de entrada. -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
-  <!-- Animacão do AOS JS -->
+  <!-- Configuração das animações desta página. -->
   <script>
     AOS.init({
       duration: 800,

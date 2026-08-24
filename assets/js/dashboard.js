@@ -70,6 +70,16 @@ let boPerfilAtual = (typeof BO_PERFIL_LOGADO !== 'undefined') ? BO_PERFIL_LOGADO
 let boSectionAtual = null; // definida no DOMContentLoaded, com base no 1º item do menu do perfil
 let boFormModalInstance = null; // instância do Modal do Bootstrap (definida no DOMContentLoaded)
 
+// Converte todos os códigos ISO 3166-1 em nomes de países no idioma do painel.
+// O nome selecionado é armazenado como nacionalidade no perfil do usuário.
+const BO_COUNTRY_CODES = `AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW`.split(' ');
+const boRegionNames = typeof Intl.DisplayNames === 'function'
+    ? new Intl.DisplayNames(['pt-BR'], { type: 'region' })
+    : null;
+const BO_NATIONALITY_OPTIONS = BO_COUNTRY_CODES
+    .map((code) => boRegionNames ? boRegionNames.of(code) : code)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
 /* ---------- Esquemas do modal de formulário genérico ----------
    Cada chave corresponde ao 1º argumento passado em boOpenForm(schemaKey, ...)
    nos botões "onclick" do HTML. A lista de campos aqui é usada por
@@ -176,19 +186,19 @@ const BO_FORM_SCHEMAS = {
         { key: 'plano', label: 'Novo plano', type: 'select', options: BO_PLANOS_OPTIONS, col: 12 },
     ],
     perfilEdit: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 6 },
-        { key: 'documento', label: 'Documento', type: 'text', col: 6 },
-        { key: 'email', label: 'E-mail', type: 'email', col: 6 },
-        { key: 'telefone', label: 'Telefone', type: 'text', col: 6 },
-        { key: 'nacionalidade', label: 'Nacionalidade', type: 'text', col: 6 },
-        { key: 'nascimento', label: 'Data de nascimento', type: 'date', col: 6 },
-        { key: 'genero', label: 'Gênero', type: 'select', options: ['masculino', 'feminino'], optionLabels: ['Masculino', 'Feminino'], col: 6 },
-        { key: 'endereco', label: 'Endereço', type: 'text', col: 12 },
-        { key: 'cidade', label: 'Cidade', type: 'text', col: 6 },
-        { key: 'estado', label: 'Estado', type: 'text', col: 6 },
-        { key: 'altura', label: 'Altura (m)', type: 'number', col: 6 },
-        { key: 'peso', label: 'Peso (kg)', type: 'number', col: 6 },
-        { key: 'foto', label: 'Foto (upload ou URL)', type: 'image', col: 12 },
+        { key: 'nome', label: 'Nome', type: 'text', col: 6, required: true },
+        { key: 'documento', label: 'Documento', type: 'text', col: 6, required: true },
+        { key: 'email', label: 'E-mail', type: 'email', col: 6, required: true },
+        { key: 'telefone', label: 'Telefone', type: 'text', col: 6, required: true },
+        { key: 'nacionalidade', label: 'Nacionalidade', type: 'select', options: BO_NATIONALITY_OPTIONS, col: 6, required: true },
+        { key: 'nascimento', label: 'Data de nascimento', type: 'date', col: 6, required: true },
+        { key: 'genero', label: 'Gênero', type: 'select', options: ['masculino', 'feminino', 'outro'], optionLabels: ['Masculino', 'Feminino', 'Outro'], col: 6, required: true },
+        { key: 'endereco', label: 'Endereço', type: 'text', col: 12, required: true },
+        { key: 'cidade', label: 'Cidade', type: 'text', col: 6, required: true },
+        { key: 'estado', label: 'Estado (UF)', type: 'text', col: 6, required: true },
+        { key: 'altura', label: 'Altura (m)', type: 'number', col: 6, min: 0.5, max: 3, step: 0.01 },
+        { key: 'peso', label: 'Peso (kg)', type: 'number', col: 6, min: 1, max: 500, step: 0.1 },
+        { key: 'foto', label: 'URL da foto', type: 'url', col: 12 },
     ],
     treinoExercicio: [
         { key: 'nome', label: 'Exercício', type: 'text', col: 12 },
@@ -290,6 +300,14 @@ function boBuildField(field) {
         wrap.appendChild(input);
     }
 
+    const control = wrap.querySelector(`[data-bo-field="${field.key}"]`);
+    if (control) {
+        if (field.required) control.required = true;
+        if (field.min !== undefined) control.min = field.min;
+        if (field.max !== undefined) control.max = field.max;
+        if (field.step !== undefined) control.step = field.step;
+    }
+
     return wrap;
 }
 
@@ -326,7 +344,13 @@ function boOpenForm(schemaKey, title, values, options) {
             return;
         }
         const el = form.querySelector(`[data-bo-field="${field.key}"]`);
-        if (el && values[field.key] !== undefined) el.value = values[field.key];
+        if (el && values[field.key] !== undefined) {
+            // Preserva valores antigos que ainda não façam parte da lista atual.
+            if (field.type === 'select' && values[field.key] && !Array.from(el.options).some((option) => option.value === values[field.key])) {
+                el.add(new Option(values[field.key], values[field.key]));
+            }
+            el.value = values[field.key];
+        }
         if (field.type === 'image' && values[field.key]) {
             const preview = form.querySelector(`[data-bo-preview="${field.key}"]`);
             if (preview) {
@@ -343,12 +367,52 @@ function boOpenForm(schemaKey, title, values, options) {
     saveBtn.textContent = 'Salvar';
 
     let confirmStep = 0;
-    saveBtn.addEventListener('click', () => {
+    saveBtn.addEventListener('click', async () => {
         if (options.doubleConfirm && confirmStep === 0) {
             confirmStep = 1;
             saveBtn.textContent = 'Clique novamente para confirmar';
             return;
         }
+
+        if (!form.reportValidity()) return;
+
+        if (schemaKey === 'perfilEdit') {
+            const profileValues = {};
+            fields.forEach((field) => {
+                const input = form.querySelector(`[data-bo-field="${field.key}"]`);
+                profileValues[field.key] = input ? input.value.trim() : '';
+            });
+
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Salvando...';
+
+            try {
+                const response = await fetch(BO_PROFILE_UPDATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...profileValues, csrf_token: BO_CSRF_TOKEN }),
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) throw new Error(result.message || 'Não foi possível atualizar o perfil.');
+
+                Object.assign(BO_CURRENT_USER, profileValues);
+                document.getElementById('boProfileName').textContent = profileValues.nome;
+                document.getElementById('boProfileEmail').textContent = profileValues.email;
+                const gender = document.getElementById('boProfileGender');
+                if (gender) gender.textContent = `Gênero: ${profileValues.genero.charAt(0).toUpperCase()}${profileValues.genero.slice(1)}`;
+                document.getElementById('boAvatar').textContent = profileValues.nome.charAt(0).toUpperCase();
+
+                boFormModalInstance.hide();
+                boToast(result.message);
+            } catch (error) {
+                boToast(error.message);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Salvar';
+            }
+            return;
+        }
+
         boFormModalInstance.hide();
         boToast('Alterações salvas.');
     });
@@ -542,11 +606,7 @@ function boOpenSearchResult(result) {
 }
 
 function boOpenProfileEdit() {
-    boOpenForm('perfilEdit', 'Editar perfil', {
-        nome: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.nome) || '',
-        email: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.email) || '',
-        genero: (typeof BO_CURRENT_USER !== 'undefined' && BO_CURRENT_USER.genero) || '',
-    });
+    boOpenForm('perfilEdit', 'Editar perfil', typeof BO_CURRENT_USER !== 'undefined' ? BO_CURRENT_USER : {});
 }
 
 function boShowProfessional(id, updateRoute = true) {

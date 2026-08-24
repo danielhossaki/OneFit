@@ -1,6 +1,4 @@
-// ==========================================================
-// MATRÍCULA — wizard de etapas com validação inline
-// ==========================================================
+// Controla as etapas, a validação e os campos auxiliares da matrícula.
 
 (() => {
   const form = document.querySelector('.matricula-form');
@@ -22,7 +20,7 @@
   let current = 1;
   let maxReached = 1;
 
-  // ---------- Navegação entre etapas ----------
+  // Exibe uma etapa e sincroniza o progresso, o subtítulo e o foco.
   function goToStep(n, { focus = true } = {}) {
     steps.forEach((step) => {
       step.classList.toggle('active', Number(step.dataset.step) === n);
@@ -45,7 +43,7 @@
       const activeStep = steps.find((s) => Number(s.dataset.step) === n);
       const firstField = activeStep?.querySelector('input, select');
       if (firstField && window.innerWidth > 860) {
-        // Só rouba o foco em telas maiores, pra não abrir teclado no mobile sem o usuário pedir
+        // Evita abrir o teclado virtual automaticamente em dispositivos móveis.
         firstField.focus({ preventScroll: true });
       }
     }
@@ -54,7 +52,7 @@
     if (wrap) wrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ---------- Mensagens de validação customizadas ----------
+  // Traduz os estados da validação nativa em mensagens objetivas.
   function messageFor(input) {
     const v = input.validity;
     if (v.valueMissing) return 'Preencha este campo.';
@@ -81,7 +79,7 @@
   }
 
   function validateField(input) {
-    // Ignora campos de pagamento de abas inativas
+    // Campos ocultos de outra forma de pagamento não participam da validação.
     const panel = input.closest('.payment-panel');
     if (panel && !panel.classList.contains('active')) return true;
 
@@ -90,7 +88,7 @@
     return valid;
   }
 
-  // Validação em tempo real ao sair do campo, e ao digitar depois de já ter sido marcado inválido
+  // Valida ao sair do campo e revalida durante a correção de um erro.
   form.querySelectorAll('input, select').forEach((input) => {
     input.addEventListener('blur', () => validateField(input));
     input.addEventListener('input', () => {
@@ -109,7 +107,7 @@
       if (!validateField(input)) valid = false;
     });
 
-    // Confirmação de senha (etapa 1)
+    // Confere as duas senhas porque essa regra não existe na validação nativa.
     if (n === 1) {
       const senha = document.getElementById('password');
       const confirmar = document.getElementById('confirmar-senha');
@@ -119,7 +117,7 @@
       }
     }
 
-    // Plano (etapa 3): garante feedback visual mesmo com radios "required" nativos
+    // Aplica feedback visual ao grupo de planos quando nenhum está selecionado.
     if (n === 3) {
       const planWrap = step.querySelector('.plan-select');
       const checked = step.querySelector('input[name="plano"]:checked');
@@ -127,7 +125,7 @@
       if (!checked) valid = false;
     }
 
-    // Foca o primeiro campo inválido pra guiar o usuário
+    // Direciona o usuário ao primeiro campo que precisa de correção.
     if (!valid) {
       const firstInvalid = step.querySelector('.field.invalid input, .field.invalid select');
       firstInvalid?.focus({ preventScroll: false });
@@ -149,7 +147,7 @@
     });
   });
 
-  // Progresso clicável — só permite voltar a etapas já concluídas
+  // O indicador permite retornar apenas às etapas já alcançadas.
   progressSteps.forEach((el) => {
     el.addEventListener('click', () => {
       const stepNum = Number(el.dataset.stepLabel);
@@ -165,7 +163,7 @@
     });
   });
 
-  // Enter avança de etapa em vez de submeter o formulário direto
+  // Enter avança no fluxo e só envia o formulário na última etapa.
   form.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     if (e.target.tagName === 'TEXTAREA') return;
@@ -189,7 +187,7 @@
     submitBtn?.classList.add('is-loading');
   });
 
-  // ---------- Seleção visual do plano ----------
+  // Mantém o destaque visual sincronizado com o plano selecionado.
   const planOptions = Array.from(form.querySelectorAll('.plan-option'));
   function refreshPlanSelection() {
     planOptions.forEach((opt) => {
@@ -203,13 +201,15 @@
   });
   refreshPlanSelection();
 
-  // ---------- Abas de pagamento ----------
+  // Alterna o painel de pagamento e atualiza o valor enviado ao PHP.
   const paymentTabs = Array.from(form.querySelectorAll('.payment-tab'));
   const paymentPanels = Array.from(form.querySelectorAll('.payment-panel'));
+  const paymentMethod = document.getElementById('forma-pagamento');
 
   paymentTabs.forEach((tab) => {
     tab.addEventListener('click', () => {
       const target = tab.dataset.payment;
+      if (paymentMethod) paymentMethod.value = target;
 
       paymentTabs.forEach((t) => t.classList.toggle('active', t === tab));
       paymentPanels.forEach((panel) => {
@@ -218,7 +218,7 @@
     });
   });
 
-  // ---------- Máscaras ----------
+  // Formata campos numéricos sem alterar os valores tratados pelo PHP.
   const onlyDigits = (v) => v.replace(/\D/g, '');
 
   function mask(id, formatter, maxDigits) {
@@ -254,7 +254,7 @@
 
   mask('cartao-cvv', (d) => d, 4);
 
-  // ---------- Busca de CEP (ViaCEP) ----------
+  // Consulta o ViaCEP e preenche os campos de endereço disponíveis.
   const buscarCepBtn = document.getElementById('buscar-cep');
   if (buscarCepBtn) {
     buscarCepBtn.addEventListener('click', async () => {
@@ -285,7 +285,7 @@
           document.getElementById('numero').focus();
         }
       } catch (err) {
-        // Sem conexão ou serviço fora do ar: usuário preenche manualmente
+        // Mantém os campos liberados para preenchimento manual se a consulta falhar.
       } finally {
         buscarCepBtn.classList.remove('is-loading');
         buscarCepBtn.disabled = false;

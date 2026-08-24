@@ -17,6 +17,7 @@
 
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require __DIR__ . '/includes/helpers.php';
 require __DIR__ . '/includes/mock-data.php';
 
@@ -35,10 +36,41 @@ if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno'], true)) {
     $perfilLogado = 'aluno'; // valor desconhecido -> cai no perfil mais restrito
 }
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// Carrega o perfil real do usuário autenticado para preencher a tela e o modal.
+$stmtUsuario = $conn->prepare(
+    'SELECT nome, nacionalidade, data_nascimento, genero, cpf, endereco,
+            cidade_estado, email, celular, altura, peso, foto
+     FROM usuarios WHERE id_usuario = ? LIMIT 1'
+);
+$stmtUsuario->bind_param('i', $_SESSION['id_usuario']);
+$stmtUsuario->execute();
+$usuarioBanco = $stmtUsuario->get_result()->fetch_assoc();
+$stmtUsuario->close();
+
+if (!$usuarioBanco) {
+    header('Location: ' . BASE_URL . 'config/logout.php');
+    exit;
+}
+
+$cidadeEstado = explode('/', $usuarioBanco['cidade_estado'] ?? '', 2);
 $usuarioDashboard = [
-    'nome' => $_SESSION['nome'] ?? 'Usuário ONE FIT',
-    'email' => $_SESSION['email'] ?? '',
-    'genero' => $_SESSION['genero'] ?? '',
+    'nome' => $usuarioBanco['nome'],
+    'documento' => $usuarioBanco['cpf'],
+    'email' => $usuarioBanco['email'],
+    'telefone' => $usuarioBanco['celular'],
+    'nacionalidade' => $usuarioBanco['nacionalidade'],
+    'nascimento' => $usuarioBanco['data_nascimento'],
+    'genero' => $usuarioBanco['genero'],
+    'endereco' => $usuarioBanco['endereco'],
+    'cidade' => trim($cidadeEstado[0] ?? ''),
+    'estado' => trim($cidadeEstado[1] ?? ''),
+    'altura' => $usuarioBanco['altura'],
+    'peso' => $usuarioBanco['peso'],
+    'foto' => $usuarioBanco['foto'],
 ];
 
 // Até que exista a consulta real da equipe, a busca usa apenas os campos
@@ -112,10 +144,12 @@ $profissionaisPesquisa = array_values(array_map(
         const BO_IS_ADMIN = false;
         const BO_MARKETPLACE_URL = <?php echo json_encode(BASE_URL . 'pages/marketplace/marketplace.php'); ?>;
         const BO_CURRENT_USER = <?php echo json_encode($usuarioDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        const BO_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token']); ?>;
+        const BO_PROFILE_UPDATE_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/update-profile.php'); ?>;
         const BO_PROFISSIONAIS_SEARCH = <?php echo json_encode($profissionaisPesquisa, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>
 
-    <script src="<?php echo BASE_URL; ?>assets/js/dashboard.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/dashboard.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/dashboard.js'); ?>"></script>
 
 </body>
 
