@@ -6,61 +6,60 @@ session_start();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-    $email = $_POST['email'] ?? null;
-    $senha = $_POST['password'] ?? null;
-    $lembrar = isset($_POST['remember']);
+  $email = $_POST['email'] ?? null;
+  $senha = $_POST['password'] ?? null;
+  $lembrar = isset($_POST['remember']);
 
-    if ($email && $senha) {
+  if ($email && $senha) {
 
-        $stmt = $conn->prepare(
-            "SELECT id_usuario, nome, senha, tipo_usuario, status, genero FROM usuarios WHERE email = ? LIMIT 1"
-        );
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $usuario = $result->fetch_assoc();
-        $stmt->close();
+    $stmt = $conn->prepare(
+      "SELECT id_usuario, nome, senha, tipo_usuario, status, genero FROM usuarios WHERE email = ? LIMIT 1"
+    );
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $usuario = $result->fetch_assoc();
+    $stmt->close();
 
 
-        // e-mail ou senha incorretos
-        if (!$usuario || !password_verify($senha, $usuario['senha'])) {
-            header("Location: login.php?msg=1"); 
-            exit;
-        }
-
-        // conta inativa/bloqueada
-        if ($usuario['status'] !== 'ativo') {
-            header("Location: login.php?msg=2");
-            exit;
-        }
-
-        // login ok - inicia sessão
-        session_regenerate_id(true);
-        $_SESSION['id_usuario'] = $usuario['id_usuario'];
-        $_SESSION['nome'] = $usuario['nome'];
-        $_SESSION['email'] = $email;
-        $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
-        $_SESSION['genero'] = $usuario['genero'];
-
-        // "lembrar de mim" - cookie com token válido por 30 dias
-        if ($lembrar) {
-            $token = bin2hex(random_bytes(32));
-
-            $stmtToken = $conn->prepare("UPDATE usuarios SET remember_token = ? WHERE id_usuario = ?");
-            $stmtToken->bind_param("si", $token, $usuario['id_usuario']);
-            $stmtToken->execute();
-            $stmtToken->close();
-
-            setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
-        }
-
-        header("Location: " . BASE_URL . "pages/dashboard/dashboard.php");
-        exit;
-
-    } else {
-        header("Location: login.php?msg=3"); // campos vazios
-        exit;
+    // e-mail ou senha incorretos
+    if (!$usuario || !password_verify($senha, $usuario['senha'])) {
+      header("Location: login.php?msg=1");
+      exit;
     }
+
+    // conta inativa/bloqueada
+    if ($usuario['status'] !== 'ativo') {
+      header("Location: login.php?msg=2");
+      exit;
+    }
+
+    // login ok - inicia sessão
+    session_regenerate_id(true);
+    $_SESSION['id_usuario'] = $usuario['id_usuario'];
+    $_SESSION['nome'] = $usuario['nome'];
+    $_SESSION['email'] = $email;
+    $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
+    $_SESSION['genero'] = $usuario['genero'];
+
+    // "lembrar de mim" - cookie com token válido por 30 dias
+    if ($lembrar) {
+      $token = bin2hex(random_bytes(32));
+
+      $stmtToken = $conn->prepare("UPDATE usuarios SET remember_token = ? WHERE id_usuario = ?");
+      $stmtToken->bind_param("si", $token, $usuario['id_usuario']);
+      $stmtToken->execute();
+      $stmtToken->close();
+
+      setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
+    }
+
+    header("Location: " . BASE_URL . "pages/dashboard/dashboard.php");
+    exit;
+  } else {
+    header("Location: login.php?msg=3"); // campos vazios
+    exit;
+  }
 }
 ?>
 
@@ -106,16 +105,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <!-- Painel de preenchimento -->
     <section class="login-form-panel">
-      <div class="login-form-wrap" data-aos="fade-right" data-aos-delay="250" >
+      <div class="login-form-wrap" data-aos="fade-right" data-aos-delay="250">
 
         <a href="<?php echo BASE_URL; ?>pages/index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
 
         <span class="tag">Bem-vindo de volta</span>
         <h1>Entrar</h1>
-        <p class="login-subtitle">Acesse sua conta para acompanhar treinos, planos e agendamentos.</p>
 
-        <form class="login-form" action="#" method="POST" >
 
+        <p class="login-subtitle">
+          Acesse sua conta para acompanhar treinos, planos e agendamentos.
+        </p>
+
+        <?php if (!empty($_SESSION['login_msg'])): ?>
+
+          <p class="form-msg form-msg-<?php echo htmlspecialchars($_SESSION['login_tipo'] ?? 'sucesso'); ?>">
+            <?php echo htmlspecialchars($_SESSION['login_msg']); ?>
+          </p>
+
+          <?php
+          unset(
+            $_SESSION['login_msg'],
+            $_SESSION['login_tipo']
+          );
+          ?>
+
+        <?php endif; ?>
+
+        <form class="login-form" action="#" method="POST">
           <div class="field">
             <label for="email">E-mail</label>
             <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
@@ -161,7 +178,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <!-- Link para JavaScript -->
   <script src="<?php echo BASE_URL; ?>assets/js/login.js"></script>
 
-    <!-- Link para animações AOS JS -->
+  <!-- Link para animações AOS JS -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
   <!-- Animacão do AOS JS -->
