@@ -301,10 +301,17 @@ section.block {
 .mod-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+
+    /* Bloqueia o tamanho das linhas */
+    grid-auto-rows: 250px;
+
     gap: 1px;
     background: var(--border);
     border: 1px solid var(--border);
     border-radius: 2rem;
+
+    /* Impede conteúdo de estourar o grid */
+    overflow: hidden;
 }
 
 .mod-card {
@@ -317,8 +324,6 @@ section.block {
 .mod-card:hover {
     background: var(--surface-2);
     border: 1px solid var(--gold-dim);
-    transform: scale(1.05) !important;
-    z-index: 10;
 }
 
 .mod-card .icon {

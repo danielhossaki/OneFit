@@ -200,6 +200,13 @@
             .footer-grid {
                 grid-template-columns: 1fr 1fr;
                 row-gap: 40px;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .footer-col {
+                align-items: center;
+                text-align: center;
             }
 
             .social-title {
@@ -215,6 +222,8 @@
         @media (max-width: 520px) {
             .footer-grid {
                 grid-template-columns: 1fr;
+                justify-content: center;
+                align-items: center;
             }
         }
     </style>
