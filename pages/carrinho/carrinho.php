@@ -2,15 +2,146 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
-// Sem sessão -> manda pro login. O acesso ao backoffice inteiro depende de
-// estar logado (id_usuario e tipo_usuario são gravados em processa_login.php).
-// if (!isset($_SESSION['id_usuario'])) { header('Location: ' . BASE_URL . 'pages/login/login.php'); exit; }
-
 session_start();
+
+// Finalizar a compra grava pedido/pagamento/cashback reais no banco, então
+// exige usuário autenticado (id_usuario vem da sessão de login).
+if (!isset($_SESSION['id_usuario'])) {
+    header('Location: ' . BASE_URL . 'pages/login/login.php');
+    exit;
+}
+$idUsuarioLogado = (int) $_SESSION['id_usuario'];
 
 function cart_money($v)
 {
     return 'R$ ' . number_format((float) $v, 2, ',', '.');
+}
+
+/**
+ * Processa o checkout: revalida os itens do carrinho contra o banco (nunca
+ * confia em valores vindos do POST), grava pedido + itens + baixa de
+ * estoque + lançamentos de cashback (uso e ganho) em uma transação, limpa
+ * o carrinho da sessão e redireciona. Sempre termina o script (redirect + exit).
+ */
+function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
+{
+    if (empty($_SESSION['carrinho'])) {
+        header('Location: carrinho.php');
+        exit;
+    }
+
+    $formaPagamento = in_array($post['forma_pagamento'] ?? '', ['pix', 'cartao'], true)
+        ? $post['forma_pagamento']
+        : 'pix';
+
+    // Recarrega os produtos do carrinho direto do banco (preço/estoque/status atuais).
+    $ids = array_map('intval', array_keys($_SESSION['carrinho']));
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
+    $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_percentual, estoque, status FROM produtos WHERE id_produto IN ($placeholders)");
+    $stmt->bind_param($types, ...$ids);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $produtosBanco = [];
+    while ($row = $res->fetch_assoc()) {
+        $produtosBanco[(int) $row['id_produto']] = $row;
+    }
+    $stmt->close();
+
+    $itens = [];
+    $totalCompra = 0.0;
+    $cashbackGanho = 0.0;
+    foreach ($_SESSION['carrinho'] as $produtoId => $quantidade) {
+        if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
+            continue;
+        }
+        $p = $produtosBanco[$produtoId];
+        $quantidade = min((int) $quantidade, (int) $p['estoque']);
+        if ($quantidade <= 0) {
+            continue;
+        }
+        $valorFinal = $p['desconto'] > 0
+            ? round((float) $p['preco'] * (1 - (float) $p['desconto'] / 100), 2)
+            : (float) $p['preco'];
+        $subtotal = round($valorFinal * $quantidade, 2);
+
+        $itens[] = [
+            'id' => $produtoId,
+            'quantidade' => $quantidade,
+            'precoUnitario' => $valorFinal,
+            'subtotal' => $subtotal,
+            'cashbackPercentual' => (float) $p['cashback_percentual'],
+        ];
+        $totalCompra += $subtotal;
+        $cashbackGanho += round($subtotal * ((float) $p['cashback_percentual']) / 100, 2);
+    }
+
+    if (empty($itens)) {
+        header('Location: carrinho.php?erro=1');
+        exit;
+    }
+
+    // Saldo real de cashback do usuário (créditos - débitos, ignorando cancelados).
+    $stmtSaldo = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
+    $stmtSaldo->bind_param('i', $idUsuario);
+    $stmtSaldo->execute();
+    $saldoAtual = (float) ($stmtSaldo->get_result()->fetch_assoc()['saldo'] ?? 0);
+    $stmtSaldo->close();
+
+    $cashbackUsado = round(max(0, min((float) ($post['cashback_usado'] ?? 0), $saldoAtual, $totalCompra)), 2);
+
+    $conn->begin_transaction();
+    try {
+        $stmtPedido = $conn->prepare('INSERT INTO pedido (id_usuario, valor_total, forma_pagamento, status, data_pedido) VALUES (?, ?, ?, "aguardando", NOW())');
+        $stmtPedido->bind_param('ids', $idUsuario, $totalCompra, $formaPagamento);
+        $stmtPedido->execute();
+        $idPedido = (int) $conn->insert_id;
+        $stmtPedido->close();
+
+        $stmtItem = $conn->prepare('INSERT INTO pedido_item (id_pedido, id_produto, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?)');
+        $stmtEstoque = $conn->prepare('UPDATE produtos SET estoque = estoque - ? WHERE id_produto = ?');
+        foreach ($itens as $item) {
+            $stmtItem->bind_param('iiidd', $idPedido, $item['id'], $item['quantidade'], $item['precoUnitario'], $item['subtotal']);
+            $stmtItem->execute();
+            $stmtEstoque->bind_param('ii', $item['quantidade'], $item['id']);
+            $stmtEstoque->execute();
+        }
+        $stmtItem->close();
+        $stmtEstoque->close();
+
+        if ($cashbackUsado > 0) {
+            $descUso = 'Uso de cashback no pedido #' . $idPedido;
+            $stmtCbUso = $conn->prepare('INSERT INTO cashback (id_usuario, valor, tipo, origem, descricao, status, data_criacao) VALUES (?, ?, "debito", "uso", ?, "utilizado", NOW())');
+            $stmtCbUso->bind_param('ids', $idUsuario, $cashbackUsado, $descUso);
+            $stmtCbUso->execute();
+            $stmtCbUso->close();
+        }
+
+        if ($cashbackGanho > 0) {
+            $descGanho = 'Cashback do pedido #' . $idPedido;
+            $stmtCbGanho = $conn->prepare('INSERT INTO cashback (id_usuario, valor, tipo, origem, descricao, status, data_criacao) VALUES (?, ?, "credito", "produto", ?, "disponivel", NOW())');
+            $stmtCbGanho->bind_param('ids', $idUsuario, $cashbackGanho, $descGanho);
+            $stmtCbGanho->execute();
+            $stmtCbGanho->close();
+        }
+
+        $conn->commit();
+    } catch (\Throwable $e) {
+        $conn->rollback();
+        header('Location: carrinho.php?erro=1');
+        exit;
+    }
+
+    $_SESSION['carrinho'] = [];
+    $_SESSION['ultimo_pedido'] = [
+        'id' => $idPedido,
+        'total' => $totalCompra,
+        'cashbackUsado' => $cashbackUsado,
+        'cashbackGanho' => $cashbackGanho,
+        'formaPagamento' => $formaPagamento,
+    ];
+    header('Location: carrinho.php?sucesso=1');
+    exit;
 }
 
 if (!isset($_SESSION['carrinho']) || !is_array($_SESSION['carrinho'])) {
@@ -43,6 +174,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
                 }
             }
             break;
+
+        case 'finalizar':
+            cart_finalizar_compra($conn, $idUsuarioLogado, $_POST);
+            // cart_finalizar_compra sempre redireciona (sucesso ou erro) e encerra o script.
+            break;
     }
 
     header('Location: carrinho.php');
@@ -53,7 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 $itens = [];
 $totalGeral = 0.0;
 $cashbackTotal = 0.0;
-$carrinhoDemonstracao = false;
 
 if (!empty($_SESSION['carrinho'])) {
     $ids = array_map('intval', array_keys($_SESSION['carrinho']));
@@ -62,7 +197,7 @@ if (!empty($_SESSION['carrinho'])) {
 
     $produtosMap = [];
     try {
-        $stmt = $conn->prepare("SELECT id, nome, categoria, preco, desconto, cashback, imagem FROM produtos WHERE id IN ($placeholders)");
+        $stmt = $conn->prepare("SELECT id_produto AS id, nome, categoria, preco, desconto, cashback_percentual AS cashback, imagem FROM produtos WHERE id_produto IN ($placeholders)");
         $stmt->bind_param($types, ...$ids);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -102,44 +237,23 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
-/* Exibe uma prévia completa do checkout enquanto não há produtos reais no carrinho. */
-if (empty($itens)) {
-    $carrinhoDemonstracao = true;
-    $itens = [
-        [
-            'id' => -101,
-            'nome' => 'Whey Protein Isolado 900g',
-            'categoria' => 'Suplementos',
-            'imagem' => '',
-            'quantidade' => 1,
-            'valorFinal' => 129.90,
-            'subtotal' => 129.90,
-            'cashbackItem' => 6.50,
-        ],
-        [
-            'id' => -102,
-            'nome' => 'Creatina Monohidratada 300g',
-            'categoria' => 'Performance',
-            'imagem' => '',
-            'quantidade' => 1,
-            'valorFinal' => 89.90,
-            'subtotal' => 89.90,
-            'cashbackItem' => 4.50,
-        ],
-        [
-            'id' => -103,
-            'nome' => 'Coqueteleira One Fit',
-            'categoria' => 'Acessórios',
-            'imagem' => '',
-            'quantidade' => 1,
-            'valorFinal' => 29.90,
-            'subtotal' => 29.90,
-            'cashbackItem' => 1.50,
-        ],
-    ];
-    $totalGeral = 249.70;
-    $cashbackTotal = 12.50;
+/* ===== Saldo real de cashback do usuário (créditos - débitos, exceto cancelados) ===== */
+$saldoCashback = 0.0;
+$stmtSaldoCashback = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
+$stmtSaldoCashback->bind_param('i', $idUsuarioLogado);
+$stmtSaldoCashback->execute();
+$saldoCashback = (float) ($stmtSaldoCashback->get_result()->fetch_assoc()['saldo'] ?? 0);
+$stmtSaldoCashback->close();
+$saldoCashback = max(0.0, $saldoCashback);
+$cashbackMaximoUsavel = round(min($saldoCashback, $totalGeral), 2);
+
+/* ===== Mensagens vindas do redirecionamento após finalizar a compra ===== */
+$pedidoConcluido = null;
+if (isset($_GET['sucesso']) && !empty($_SESSION['ultimo_pedido'])) {
+    $pedidoConcluido = $_SESSION['ultimo_pedido'];
+    unset($_SESSION['ultimo_pedido']);
 }
+$erroFinalizar = isset($_GET['erro']);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -152,8 +266,15 @@ if (empty($itens)) {
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">0
+    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/carrinho.css">
+    <style>
+        /* Os inputs de forma de pagamento agora são radios reais (funcionam sem JS);
+           o rótulo (label) continua com a aparência de aba já existente. */
+        .payment-radio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+        .payment-radio:checked + .payment-tab { background: #ffc400; color: #17130b; }
+        .payment-radio:focus-visible + .payment-tab { outline: 2px solid #ffc400; outline-offset: -2px; }
+    </style>
 </head>
 
 <body>
@@ -173,12 +294,21 @@ if (empty($itens)) {
 
         <div class="crt-page-title">
             <h1>Seu carrinho</h1>
-            <?php if ($carrinhoDemonstracao): ?>
-                <p class="crt-demo-note"><i class="bi bi-eye"></i> Prévia com produtos fictícios para visualização do checkout.</p>
-            <?php endif; ?>
         </div>
 
-        <?php if (empty($itens)): ?>
+        <?php if ($pedidoConcluido): ?>
+            <div class="crt-empty">
+                <i class="bi bi-check-circle"></i>
+                <p class="mb-0">Pedido #<?php echo (int) $pedidoConcluido['id']; ?> realizado com sucesso!</p>
+                <p class="mb-0">Total pago: <?php echo cart_money($pedidoConcluido['total']); ?><?php if ($pedidoConcluido['cashbackUsado'] > 0): ?> (<?php echo cart_money($pedidoConcluido['cashbackUsado']); ?> em cashback) <?php endif; ?></p>
+                <?php if ($pedidoConcluido['cashbackGanho'] > 0): ?>
+                    <p class="mb-0">Você ganhou <?php echo cart_money($pedidoConcluido['cashbackGanho']); ?> de cashback nesta compra.</p>
+                <?php endif; ?>
+                <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-outline">
+                    <i class="bi bi-shop"></i> Continuar comprando
+                </a>
+            </div>
+        <?php elseif (empty($itens)): ?>
             <div class="crt-empty">
                 <i class="bi bi-cart-x"></i>
                 <p class="mb-0">Seu carrinho está vazio.</p>
@@ -242,7 +372,6 @@ if (empty($itens)) {
                         <p>Abra cada etapa quando precisar: resumo, cashback ou pagamento.</p>
                     </div>
                     <div class="checkout-access-actions">
-                        <button type="button" class="checkout-access-button" data-open-checkout="checkout-resumo"><i class="bi bi-receipt"></i> Resumo da compra</button>
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-cashback"><i class="bi bi-coin"></i> Usar meu cashback</button>
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-pagamento"><i class="bi bi-credit-card"></i> Forma de pagamento</button>
                     </div>
@@ -251,6 +380,15 @@ if (empty($itens)) {
 
             <aside class="crt-checkout" id="checkout-panel" aria-hidden="true" aria-label="Checkout">
             <div class="checkout-panel-header"><strong>Checkout ONE FIT</strong><button class="checkout-close" type="button" aria-label="Fechar checkout"><i class="bi bi-x-lg"></i></button></div>
+
+            <?php if ($erroFinalizar): ?>
+                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não foi possível finalizar a compra (produto sem estoque ou indisponível). Revise o carrinho e tente novamente.</div>
+            <?php endif; ?>
+
+            <!-- Formulário real de checkout: processado 100% em PHP (ação "finalizar" no topo deste arquivo) -->
+            <form method="POST" action="carrinho.php" id="checkout-form">
+            <input type="hidden" name="acao" value="finalizar">
+
             <div class="crt-summary checkout-card checkout-step is-active" id="checkout-resumo">
                 <h2 class="checkout-title">Resumo da compra</h2>
                 <div class="crt-summary-row">
@@ -266,31 +404,43 @@ if (empty($itens)) {
                     <span id="total-final"><?php echo cart_money($totalGeral); ?></span>
                 </div>
 
-                <button type="button" class="btn-crt-gold">
-                    <i class="bi bi-wallet2"></i> Finalizar compra
+                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento">
+                    <i class="bi bi-credit-card"></i> Ir para pagamento
                 </button>
             </div>
 
             <div class="checkout-card checkout-step" id="checkout-cashback">
                 <h2 class="checkout-title">Usar meu cashback</h2>
-                <div class="cashback-disponivel"><span>Disponível</span><strong>R$ 200,00</strong></div>
-                <div class="cashback-disponivel"><span>Máximo permitido nesta compra: R$ 200,00</span></div>
-                <input id="cashback-range" class="cashback-range" type="range" min="0" max="200" value="0" step="1" aria-label="Cashback a utilizar">
-                <div class="cashback-actions"><button type="button" class="cashback-action" data-cashback="200">Usar máximo</button><button type="button" class="cashback-action" data-cashback="0">Não usar</button></div>
+                <div class="cashback-disponivel"><span>Disponível</span><strong><?php echo cart_money($saldoCashback); ?></strong></div>
+                <div class="cashback-disponivel"><span>Máximo permitido nesta compra: <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
+                <input id="cashback-range" class="cashback-range" type="range" name="cashback_usado"
+                    min="0" max="<?php echo $cashbackMaximoUsavel; ?>" value="0" step="0.01"
+                    aria-label="Cashback a utilizar">
+                <div class="cashback-actions">
+                    <button type="button" class="cashback-action" data-cashback="<?php echo $cashbackMaximoUsavel; ?>">Usar máximo</button>
+                    <button type="button" class="cashback-action" data-cashback="0">Não usar</button>
+                </div>
                 <div class="cashback-aplicado"><span>Aplicado</span><span id="cashback-aplicado">R$ 0,00</span></div>
                 <p class="cashback-remaining">Restante para pagamento: <strong id="cashback-restante"><?php echo cart_money($totalGeral); ?></strong></p>
                 <button type="button" class="cashback-continue" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
             </div>
             <div class="checkout-card checkout-step" id="checkout-pagamento">
-                <div class="payment-heading"><h2 class="checkout-title">Forma de pagamento</h2><small>SPLIT HABILITADO</small></div>
-                <div class="payment-tabs payment-tabs--three"><button class="payment-tab active" type="button" data-payment="pix"><i class="bi bi-qr-code"></i> PIX</button><button class="payment-tab" type="button" data-payment="card"><i class="bi bi-credit-card"></i> Crédito</button><button class="payment-tab" type="button" data-payment="debit"><i class="bi bi-credit-card-2-front"></i> Débito</button></div>
-                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalGeral); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div><div class="payment-features"><div class="payment-feature">⚡ PIX automático</div><div class="payment-feature">⚡ Crédito automático</div></div></div>
-                <div id="card-payment" class="card-payment"><label class="pix-label">Dados do cartão de crédito</label><input class="payment-input" type="text" placeholder="Número do cartão"><input class="payment-input" type="text" placeholder="Nome impresso no cartão"></div>
-                <div id="debit-payment" class="card-payment"><label class="pix-label">Dados do cartão de débito</label><input class="payment-input" type="text" placeholder="Número do cartão"><input class="payment-input" type="text" placeholder="Nome impresso no cartão"></div>
-                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalGeral); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalGeral); ?></strong></div><div><span>Total pago (cashback + pagamento)</span><strong id="payment-split"><?php echo cart_money($totalGeral); ?></strong></div></div>
-                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Pagamento pendente. Selecione uma forma de pagamento para finalizar.</div>
+                <div class="payment-heading"><h2 class="checkout-title">Forma de pagamento</h2></div>
+                <div class="payment-tabs">
+                    <input type="radio" class="payment-radio" name="forma_pagamento" id="payPix" value="pix" checked>
+                    <label class="payment-tab" for="payPix"><i class="bi bi-qr-code"></i> PIX</label>
+                    <input type="radio" class="payment-radio" name="forma_pagamento" id="payCartao" value="cartao">
+                    <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> Cartão</label>
+                </div>
+                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalGeral); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
+                <div id="card-payment" class="card-payment"><label class="pix-label">Dados do cartão (simulação)</label><input class="payment-input" type="text" placeholder="Número do cartão"><input class="payment-input" type="text" placeholder="Nome impresso no cartão"></div>
+                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalGeral); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalGeral); ?></strong></div></div>
+
+                <button type="submit" class="checkout-finish">Finalizar compra</button>
             </div>
-            <button type="button" class="checkout-finish">Finalizar compra</button>
+
+            </form>
+
             <form method="POST" action="carrinho.php"><input type="hidden" name="acao" value="limpar"><button type="submit" class="checkout-clear">Limpar carrinho</button></form>
             </aside>
             <div class="checkout-backdrop" data-close-checkout></div>
@@ -332,22 +482,27 @@ if (empty($itens)) {
                 document.getElementById('payment-total').textContent = money(total);
                 document.getElementById('payment-cashback').textContent = money(used);
                 document.getElementById('payment-remaining').textContent = money(due);
-                document.getElementById('payment-split').textContent = money(total);
             };
             range.addEventListener('input', update);
             document.querySelectorAll('[data-cashback]').forEach(button => button.addEventListener('click', () => { range.value = button.dataset.cashback; update(); }));
-            document.querySelectorAll('[data-payment]').forEach(button => button.addEventListener('click', () => {
-                document.querySelectorAll('[data-payment]').forEach(tab => tab.classList.toggle('active', tab === button));
-                const pix = button.dataset.payment === 'pix';
-                const credit = button.dataset.payment === 'card';
+
+            // Seleção de pagamento: os "botões" agora são <label for="..."> ligados a
+            // <input type="radio">, então já funcionam nativamente (sem JS). O trecho
+            // abaixo só atualiza o texto/painel de apoio quando o JS está disponível.
+            document.querySelectorAll('.payment-radio').forEach(radio => radio.addEventListener('change', () => {
+                const pix = radio.value === 'pix';
+                if (!radio.checked) return;
                 document.getElementById('pix-payment').style.display = pix ? 'block' : 'none';
-                document.getElementById('card-payment').classList.toggle('show', credit);
-                document.getElementById('debit-payment').classList.toggle('show', !pix && !credit);
-                document.getElementById('payment-method-name').textContent = pix ? 'PIX' : credit ? 'cartão de crédito' : 'cartão de débito';
+                document.getElementById('card-payment').classList.toggle('show', !pix);
+                document.getElementById('payment-method-name').textContent = pix ? 'PIX' : 'cartão';
             }));
-            document.getElementById('copy-pix').addEventListener('click', async () => {
-                try { await navigator.clipboard.writeText('onefit@pagamentos.com'); document.getElementById('copy-pix').textContent = 'Chave copiada!'; } catch (e) { document.getElementById('copy-pix').textContent = 'onefit@pagamentos.com'; }
-            });
+
+            const copyPixBtn = document.getElementById('copy-pix');
+            if (copyPixBtn) {
+                copyPixBtn.addEventListener('click', async () => {
+                    try { await navigator.clipboard.writeText('onefit@pagamentos.com'); copyPixBtn.textContent = 'Chave copiada!'; } catch (e) { copyPixBtn.textContent = 'onefit@pagamentos.com'; }
+                });
+            }
         })();
     </script>
 </body>

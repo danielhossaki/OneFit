@@ -28,22 +28,22 @@
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label">Usuários ativos</div>
-                <div class="bo-card-value">482</div>
-                <div class="bo-card-sub">+18 este mês</div>
+                <div class="bo-card-value"><?php echo $admDashboard['usuariosAtivos']; ?></div>
+                <div class="bo-card-sub">+<?php echo $admDashboard['usuariosNovosMes']; ?> este mês</div>
             </div>
         </div>
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label">Saldo operacional (mês)</div>
-                <div class="bo-card-value">R$ 38.240,00</div>
-                <div class="bo-card-sub">Ano R$ 412.900 · Semana R$ 8.960 · Dia R$ 1.940</div>
+                <div class="bo-card-value"><?php echo bo_money($admDashboard['saldoMes']); ?></div>
+                <div class="bo-card-sub">Ano <?php echo bo_money($admDashboard['saldoAno']); ?> · Semana <?php echo bo_money($admDashboard['saldoSemana']); ?> · Dia <?php echo bo_money($admDashboard['saldoDia']); ?></div>
             </div>
         </div>
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label">Cashback distribuído</div>
-                <div class="bo-card-value">R$ 6.512,90</div>
-                <div class="bo-card-sub">Ano R$ 22.140 · Semana R$ 1.480 · Dia R$ 210</div>
+                <div class="bo-card-value"><?php echo bo_money($admDashboard['cashbackMes']); ?></div>
+                <div class="bo-card-sub">Ano <?php echo bo_money($admDashboard['cashbackAno']); ?> · Semana <?php echo bo_money($admDashboard['cashbackSemana']); ?> · Dia <?php echo bo_money($admDashboard['cashbackDia']); ?></div>
             </div>
         </div>
     </div>
@@ -53,22 +53,22 @@
         <div class="col-12 col-md-3">
             <div class="bo-card">
                 <div class="bo-card-label">Acessos liberados</div>
-                <div class="bo-card-value">463</div>
-                <div class="bo-card-sub">96% da base</div>
+                <div class="bo-card-value"><?php echo $admDashboard['acessosLiberados']; ?></div>
+                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosLiberados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?>% da base</div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="bo-card">
                 <div class="bo-card-label">Acessos bloqueados</div>
-                <div class="bo-card-value">19</div>
-                <div class="bo-card-sub">4% da base</div>
+                <div class="bo-card-value"><?php echo $admDashboard['acessosBloqueados']; ?></div>
+                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosBloqueados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?>% da base</div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="bo-card">
                 <div class="bo-card-label">Profissionais ativos</div>
-                <div class="bo-card-value">27</div>
-                <div class="bo-card-sub">3 pendentes de contrato</div>
+                <div class="bo-card-value"><?php echo $admDashboard['profissionaisAtivos']; ?></div>
+                <div class="bo-card-sub"><?php echo $admDashboard['profissionaisPendentes']; ?> pendentes de contrato</div>
             </div>
         </div>
     </div>
@@ -259,9 +259,7 @@
         <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="pagamentos">
             <option value="">Todos os tipos</option>
             <option value="PIX">PIX</option>
-            <option value="Dinheiro">Dinheiro</option>
-            <option value="Crédito">Crédito</option>
-            <option value="Débito">Débito</option>
+            <option value="Cartão">Cartão</option>
         </select>
         <div class="bo-daterange">
             De <input type="date" class="form-control" data-bo-filter="date-from" data-bo-target="pagamentos">

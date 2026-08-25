@@ -25,11 +25,11 @@
                 <div class="row g-3 mb-3">
                     <div class="col-6">
                         <label class="form-label">Valor</label>
-                        <input type="text" class="form-control" value="R$ 129,90" readonly>
+                        <input type="text" class="form-control" value="<?php echo bo_money($alunoPerfil['valorContratado'] ?? 0); ?>" readonly>
                     </div>
                     <div class="col-6">
                         <label class="form-label">Tipo do plano</label>
-                        <input type="text" class="form-control" value="Mensal Fit" readonly>
+                        <input type="text" class="form-control" value="<?php echo htmlspecialchars($alunoPerfil['plano'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" readonly>
                     </div>
                 </div>
 
