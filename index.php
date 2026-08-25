@@ -306,7 +306,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
           <div class="who">
             <div class="avatar"></div>
             <div>
-              <div class="name">Mariana Alves</div>
+              <div class="name">Mariana Alvez</div>
               <div class="role">Aluna há 8 meses</div>
             </div>
           </div>
