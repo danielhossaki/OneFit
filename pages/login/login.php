@@ -117,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
         <source src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4" type="video/mp4">
-        Seu navegador não suporta vídeos.
+        Seu navegador não suporta vídeos
       </video>
       <div class="login-visual-overlay"></div>
 
