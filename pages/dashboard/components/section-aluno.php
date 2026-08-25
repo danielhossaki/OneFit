@@ -132,7 +132,7 @@
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label">Saldo de cashback</div>
-                <div class="bo-card-value">R$ 125,40</div>
+                <div class="bo-card-value"><?php echo bo_money($alunoCashbackSaldo); ?></div>
             </div>
         </div>
     </div>

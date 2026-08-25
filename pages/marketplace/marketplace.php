@@ -13,9 +13,9 @@ function mkt_money($v)
 
 /* ===== Produtos disponíveis (cadastrados no backoffice) ===== */
 $produtos = [];
-$sql = "SELECT id, nome, descricao, categoria, preco, desconto, cashback, imagem, estoque, status
+$sql = "SELECT id_produto AS id, nome, descricao, categoria, preco, desconto, cashback_percentual AS cashback, imagem, estoque, status
         FROM produtos
-        WHERE status = 'disponivel'
+        WHERE status = 'ativo'
         ORDER BY categoria, nome";
 try {
     $result = $conn->query($sql);

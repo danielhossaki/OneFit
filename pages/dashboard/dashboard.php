@@ -19,7 +19,6 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require __DIR__ . '/includes/helpers.php';
-require __DIR__ . '/includes/mock-data.php';
 
 // Sem sessão -> manda pro login. O acesso ao dashboard inteiro depende de
 // estar logado (id_usuario e tipo_usuario são gravados em processa_login.php).
@@ -43,7 +42,7 @@ if (empty($_SESSION['csrf_token'])) {
 // Carrega o perfil real do usuário autenticado para preencher a tela e o modal.
 $stmtUsuario = $conn->prepare(
     'SELECT nome, nacionalidade, data_nascimento, genero, cpf, endereco,
-            cidade_estado, email, celular, altura, peso, foto
+            cidade_estado, email, celular, altura, peso, foto, objetivo, data_cadastro
      FROM usuarios WHERE id_usuario = ? LIMIT 1'
 );
 $stmtUsuario->bind_param('i', $_SESSION['id_usuario']);
@@ -73,17 +72,33 @@ $usuarioDashboard = [
     'foto' => $usuarioBanco['foto'],
 ];
 
-// Até que exista a consulta real da equipe, a busca usa apenas os campos
-// públicos dos profissionais ativos que já fazem parte do mock do painel.
-$profissionaisPesquisa = array_values(array_map(
-    static fn(array $profissional): array => [
-        'id' => (int) $profissional['id'],
-        'nome' => $profissional['nome'],
-        'funcao' => $profissional['funcao'],
-        'especialidade' => $profissional['tituloCard'],
-    ],
-    array_filter($profissionaisAdm, static fn(array $profissional): bool => $profissional['status'] === 'ativo')
-));
+require __DIR__ . '/includes/db-data.php';
+
+// Busca de profissionais no header: usa a equipe cadastrada no banco
+// (populada em includes/db-data.php só para o perfil admin) ou consulta
+// direta para os demais perfis, restrita aos ativos.
+if ($perfilLogado === 'admin') {
+    $profissionaisPesquisa = array_values(array_map(
+        static fn(array $profissional): array => [
+            'id' => (int) $profissional['id'],
+            'nome' => $profissional['nome'],
+            'funcao' => $profissional['funcao'],
+            'especialidade' => $profissional['tituloCard'],
+        ],
+        array_filter($profissionaisAdm, static fn(array $profissional): bool => $profissional['status'] === 'ativo')
+    ));
+} else {
+    $profissionaisPesquisa = [];
+    $rBusca = $conn->query("SELECT id_profissional, nome, especialidade FROM cadastro_profissional WHERE status = 'ativo' ORDER BY nome");
+    while ($rowBusca = $rBusca->fetch_assoc()) {
+        $profissionaisPesquisa[] = [
+            'id' => (int) $rowBusca['id_profissional'],
+            'nome' => $rowBusca['nome'],
+            'funcao' => $rowBusca['especialidade'],
+            'especialidade' => $rowBusca['especialidade'],
+        ];
+    }
+}
 ?>
 
 
@@ -114,16 +129,24 @@ $profissionaisPesquisa = array_values(array_map(
         <?php
         // IMPORTANTE: isso não é só "esconder com CSS" — as seções de perfis
         // que o usuário não tem acesso nem chegam a ser enviadas no HTML.
-        // Hoje os components ainda usam dados mock (mesmo aluno pra todo
-        // mundo); quando ligar ao banco de verdade, cada section-*.php deve
-        // buscar os dados filtrando por $_SESSION['id_usuario'].
-        require __DIR__ . '/components/section-dashboard.php';
+        // Cada section-*.php busca os dados reais (includes/db-data.php)
+        // já filtrados por $_SESSION['id_usuario'] quando aplicável.
+        if ($perfilLogado === 'admin') {
+            require __DIR__ . '/components/section-admin.php';
+        } elseif ($perfilLogado === 'profissional') {
+            require __DIR__ . '/components/section-profissional.php';
+        } else {
+            require __DIR__ . '/components/section-aluno.php';
+        }
         require __DIR__ . '/components/section-configuracoes.php';
         require __DIR__ . '/components/section-stub.php';
         ?>
     </main>
 
     <?php require __DIR__ . '/components/modal-form.php'; ?>
+    <?php if ($perfilLogado === 'aluno'): ?>
+        <?php require __DIR__ . '/components/modal-pagar-plano.php'; ?>
+    <?php endif; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
