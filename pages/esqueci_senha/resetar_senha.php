@@ -6,263 +6,305 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
 
+$erro = '';
+
+$sucesso = '';
+
+$tokenValido = false;
+
+
 /*
 |--------------------------------------------------------------------------
-| TOKEN
+| PEGA TOKEN
 |--------------------------------------------------------------------------
 */
 
-$token = $_GET['token'] ?? $_POST['token'] ?? '';
+$token =
+    $_GET['token']
+    ??
+    ($_POST['token'] ?? '');
 
-$token = trim($token);
 
+/*
+|--------------------------------------------------------------------------
+| VERIFICA SE EXISTE TOKEN
+|--------------------------------------------------------------------------
+*/
 
 if (empty($token)) {
 
-  $_SESSION['esqueci_senha_msg'] =
-    'Link de recuperação inválido.';
+    header(
+        'Location: ' .
+        BASE_URL .
+        'pages/esqueci_senha/esqueci_senha.php'
+    );
 
-  $_SESSION['esqueci_senha_tipo'] =
-    'erro';
-
-  header(
-    'Location: ' .
-      BASE_URL .
-      'pages/esqueci_senha/esqueci_senha.php'
-  );
-
-  exit;
+    exit;
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| PROCURA TOKEN
+| VERIFICA O TOKEN
 |--------------------------------------------------------------------------
 */
 
 $sql = "
-    SELECT
-        id,
-        usuario_id,
-        expira_em,
-        usado
+    SELECT usuario_id, expira_em
     FROM recuperacao_senha
     WHERE token = ?
+    AND usado = 0
     LIMIT 1
 ";
 
 
 $stmt = $conn->prepare($sql);
 
+
 $stmt->bind_param(
-  's',
-  $token
+    's',
+    $token
 );
+
 
 $stmt->execute();
 
+
 $resultado = $stmt->get_result();
 
-$recuperacao = $resultado->fetch_assoc();
+
+$registro = $resultado->fetch_assoc();
+
 
 $stmt->close();
 
 
+
 /*
 |--------------------------------------------------------------------------
-| TOKEN NÃO EXISTE
+| TOKEN VÁLIDO
 |--------------------------------------------------------------------------
 */
 
-if (!$recuperacao) {
-
-  $erro =
-    'Este link de recuperação é inválido.';
-
-  $tokenValido = false;
-} else {
-
-  /*
-    |--------------------------------------------------------------------------
-    | VERIFICA SE JÁ FOI USADO
-    |--------------------------------------------------------------------------
-    */
-
-  if ((int)$recuperacao['usado'] === 1) {
-
-    $erro =
-      'Este link já foi utilizado.';
-
-    $tokenValido = false;
-  }
-
-  /*
-    |--------------------------------------------------------------------------
-    | VERIFICA EXPIRAÇÃO
-    |--------------------------------------------------------------------------
-    */ elseif (
-    strtotime($recuperacao['expira_em']) < time()
-  ) {
-
-    $erro =
-      'Este link de recuperação expirou.';
-
-    $tokenValido = false;
-  } else {
-
-    $erro = '';
+if (
+    $registro
+    &&
+    strtotime($registro['expira_em']) >= time()
+) {
 
     $tokenValido = true;
-  }
+
+    $usuario_id =
+        $registro['usuario_id'];
+
+} else {
+
+    $erro =
+        'Este link é inválido, expirou ou já foi utilizado.';
 }
 
 
 /*
 |--------------------------------------------------------------------------
-| PROCESSA NOVA SENHA
+| SALVAR NOVA SENHA
 |--------------------------------------------------------------------------
 */
 
 if (
-  $tokenValido &&
-  $_SERVER['REQUEST_METHOD'] === 'POST'
+    $tokenValido
+    &&
+    $_SERVER['REQUEST_METHOD'] === 'POST'
+    &&
+    isset($_POST['salvar_senha'])
 ) {
 
-  $novaSenha =
-    $_POST['nova_senha'] ?? '';
 
-  $confirmarSenha =
-    $_POST['confirmar_senha'] ?? '';
+    $novaSenha =
+        $_POST['nova_senha'] ?? '';
 
 
-  /*
+    $confirmarSenha =
+        $_POST['confirmar_senha'] ?? '';
+
+
+
+    /*
     |--------------------------------------------------------------------------
-    | TAMANHO
+    | VALIDA CAMPOS
     |--------------------------------------------------------------------------
     */
 
-  if (strlen($novaSenha) < 8) {
+    if (
+        empty($novaSenha)
+        ||
+        empty($confirmarSenha)
+    ) {
 
-    $erro =
-      'A senha precisa ter pelo menos 8 caracteres.';
-  }
+        $erro =
+            'Preencha todos os campos.';
 
-  /*
-    |--------------------------------------------------------------------------
-    | CONFIRMAÇÃO
-    |--------------------------------------------------------------------------
-    */ elseif ($novaSenha !== $confirmarSenha) {
+    }
 
-    $erro =
-      'As senhas não coincidem.';
-  } else {
 
     /*
+    |--------------------------------------------------------------------------
+    | VALIDA TAMANHO
+    |--------------------------------------------------------------------------
+    */
+
+    elseif (
+        strlen($novaSenha) < 8
+    ) {
+
+        $erro =
+            'A senha deve ter pelo menos 8 caracteres.';
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | CONFIRMA SENHAS
+    |--------------------------------------------------------------------------
+    */
+
+    elseif (
+        $novaSenha !== $confirmarSenha
+    ) {
+
+        $erro =
+            'As senhas não coincidem.';
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SALVA SENHA
+    |--------------------------------------------------------------------------
+    */
+
+    else {
+
+
+        /*
         |--------------------------------------------------------------------------
         | CRIA HASH
         |--------------------------------------------------------------------------
         */
 
-    $hash =
-      password_hash(
-        $novaSenha,
-        PASSWORD_DEFAULT
-      );
+        $hash =
+            password_hash(
+                $novaSenha,
+                PASSWORD_DEFAULT
+            );
 
 
-    /*
+        /*
         |--------------------------------------------------------------------------
-        | ATUALIZA USUÁRIO
+        | ATUALIZA SENHA DO USUÁRIO
         |--------------------------------------------------------------------------
-        |
-        | IMPORTANTE:
-        | Sua tabela usa id_usuario.
-        |
         */
 
-    $sqlUpdate = "
-    UPDATE usuarios
-    SET senha = ?
-    WHERE id_usuario = ?
-";
+        $sqlUpdate = "
+            UPDATE usuarios
+            SET senha = ?
+            WHERE id_usuario = ?
+        ";
 
 
-    $stmtUpdate =
-      $conn->prepare($sqlUpdate);
+        $stmtUpdate =
+            $conn->prepare($sqlUpdate);
 
 
-    $stmtUpdate->bind_param(
-      'si',
-      $hash,
-      $recuperacao['usuario_id']
-    );
+        $stmtUpdate->bind_param(
+            'si',
+            $hash,
+            $usuario_id
+        );
 
 
-    if ($stmtUpdate->execute()) {
+        $senhaAlterada =
+            $stmtUpdate->execute();
 
-      $stmtUpdate->close();
+
+        $stmtUpdate->close();
 
 
-      /*
+
+        /*
+        |--------------------------------------------------------------------------
+        | SE SENHA FOI ALTERADA
+        |--------------------------------------------------------------------------
+        */
+
+        if ($senhaAlterada) {
+
+
+            /*
             |--------------------------------------------------------------------------
             | MARCA TOKEN COMO USADO
             |--------------------------------------------------------------------------
             */
 
-      $sqlUsado = "
+            $sqlUsado = "
                 UPDATE recuperacao_senha
                 SET usado = 1
-                WHERE id = ?
+                WHERE token = ?
             ";
 
 
-      $stmtUsado =
-        $conn->prepare($sqlUsado);
+            $stmtUsado =
+                $conn->prepare($sqlUsado);
 
 
-      $stmtUsado->bind_param(
-        'i',
-        $recuperacao['id']
-      );
+            $stmtUsado->bind_param(
+                's',
+                $token
+            );
 
 
-      $stmtUsado->execute();
-
-      $stmtUsado->close();
+            $stmtUsado->execute();
 
 
-      /*
+            $stmtUsado->close();
+
+
+            /*
             |--------------------------------------------------------------------------
-            | SUCESSO
+            | REMOVE TOKEN DA SESSÃO
             |--------------------------------------------------------------------------
             */
 
-      $_SESSION['login_msg'] =
-        'Senha redefinida com sucesso! Faça login com sua nova senha.';
-
-      $_SESSION['login_tipo'] =
-        'sucesso';
+            unset(
+                $_SESSION['reset_token']
+            );
 
 
-      header(
-        'Location: ' .
-          BASE_URL .
-          'pages/login/login.php'
-      );
+            /*
+            |--------------------------------------------------------------------------
+            | MENSAGEM DE SUCESSO
+            |--------------------------------------------------------------------------
+            */
 
-      exit;
-    } else {
+            $sucesso =
+                'Senha salva com sucesso!';
 
-      $erro =
-        'Não foi possível atualizar sua senha.';
 
-      $stmtUpdate->close();
+            $tokenValido = false;
+
+
+        } else {
+
+
+            $erro =
+                'Não foi possível salvar a nova senha.';
+        }
     }
-  }
 }
 
 ?>
+
 
 <!DOCTYPE html>
 
@@ -270,41 +312,40 @@ if (
 
 <head>
 
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-  <title>
-    Redefinir senha · ONE FIT
-  </title>
-
-
-  <link
-    rel="preconnect"
-    href="https://fonts.googleapis.com">
+    <title>
+        Redefinir senha · ONE FIT
+    </title>
 
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
-    rel="stylesheet">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
 
 
-  <link
-    rel="stylesheet"
-    href="<?php echo BASE_URL; ?>assets/css/home.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
 
-  <link
-    rel="stylesheet"
-    href="<?php echo BASE_URL; ?>assets/css/login.css">
+    <link
+        rel="stylesheet"
+        href="<?php echo BASE_URL; ?>assets/css/home.css"
+    >
 
 
-  <link
-    rel="icon"
-    href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp"
-    type="image/webp">
+    <link
+        rel="stylesheet"
+        href="<?php echo BASE_URL; ?>assets/css/login.css"
+    >
 
 </head>
 
@@ -312,188 +353,240 @@ if (
 <body class="login-body">
 
 
-  <main class="login-page">
-
-
-    <section
-      class="login-visual">
-
-      <video
-        autoplay
-        muted
-        loop
-        playsinline>
-
-        <source
-          src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4"
-          type="video/mp4">
-
-        Seu navegador não suporta vídeos.
-
-      </video>
-
-
-      <div class="login-visual-overlay"></div>
-
-
-      <div class="login-visual-content">
-
-        <a
-          href="<?php echo BASE_URL; ?>index.php"
-          class="login-logo">
-          ONE<span>FIT</span>
-        </a>
-
-
-        <div class="login-visual-text">
-
-          <span class="eyebrow">
-            Treino de alta performance
-          </span>
-
-
-          <h2>
-            NÃO EXISTE<br>
-            SEGUNDO<br>
-            LUGAR
-          </h2>
-
-        </div>
-
-      </div>
-
-    </section>
+<main class="login-page">
 
 
     <section class="login-form-panel">
 
 
-      <div class="login-form-wrap">
+        <div class="login-form-wrap">
 
 
-        <a
-          href="<?php echo BASE_URL; ?>index.php"
-          class="login-logo login-logo-mobile">
-          ONE<span>FIT</span>
-        </a>
+            <span class="tag">
+                Recuperar acesso
+            </span>
 
 
-        <span class="tag">
-          Recuperar acesso
-        </span>
+            <h1>
+                Redefinir senha
+            </h1>
 
 
-        <h1>
-          Redefinir senha
-        </h1>
+
+            <?php if ($erro): ?>
+
+                <p class="form-msg form-msg-erro">
+
+                    <?php
+                    echo htmlspecialchars($erro);
+                    ?>
+
+                </p>
+
+            <?php endif; ?>
 
 
-        <?php if ($erro): ?>
 
-          <p class="form-msg form-msg-erro">
-            <?php echo htmlspecialchars($erro); ?>
-          </p>
-
-        <?php endif; ?>
+            <?php if ($sucesso): ?>
 
 
-        <?php if ($tokenValido): ?>
+                <p class="form-msg form-msg-sucesso">
+
+                    <?php
+                    echo htmlspecialchars($sucesso);
+                    ?>
+
+                </p>
 
 
-          <p class="login-subtitle">
-            Escolha uma nova senha para sua conta.
-          </p>
+                <p class="login-subtitle">
+
+                    Sua senha foi alterada com sucesso.
+
+                    Agora você já pode entrar na sua conta.
+
+                </p>
 
 
-          <form
-            class="login-form"
-            action="resetar_senha.php"
-            method="POST">
+                <a
+                    href="<?php echo BASE_URL; ?>pages/login/login.php"
+                    class="btn btn-gold btn-block"
+                >
+
+                    Ir para o login
+
+                </a>
 
 
-            <input
-              type="hidden"
-              name="token"
-              value="<?php echo htmlspecialchars($token); ?>">
+
+            <?php elseif ($tokenValido): ?>
 
 
-            <div class="field">
+                <p class="login-subtitle">
 
-              <label for="nova_senha">
-                Nova senha
-              </label>
+                    Clique abaixo para definir uma nova senha.
 
-
-              <input
-                type="password"
-                id="nova_senha"
-                name="nova_senha"
-                placeholder="Mínimo 8 caracteres"
-                minlength="8"
-                required>
-
-            </div>
+                </p>
 
 
-            <div class="field">
 
-              <label for="confirmar_senha">
-                Confirmar nova senha
-              </label>
+                <!--
+                ============================================================
+                BOTÃO DEFINIR NOVA SENHA
+                ============================================================
+                -->
 
+                <form
+                    method="POST"
+                    action="resetar_senha.php"
+                >
 
-              <input
-                type="password"
-                id="confirmar_senha"
-                name="confirmar_senha"
-                placeholder="Repita a nova senha"
-                minlength="8"
-                required>
-
-            </div>
-
-
-            <button
-              type="submit"
-              class="btn btn-gold btn-block">
-              Redefinir senha
-            </button>
+                    <input
+                        type="hidden"
+                        name="token"
+                        value="<?php echo htmlspecialchars($token); ?>"
+                    >
 
 
-          </form>
+                    <button
+                        type="submit"
+                        name="definir_senha"
+                        class="btn btn-gold btn-block"
+                    >
+
+                        Definir nova senha
+
+                    </button>
+
+                </form>
 
 
-        <?php else: ?>
+
+                <?php if (
+                    (
+                        $_SERVER['REQUEST_METHOD'] === 'POST'
+                        &&
+                        isset($_POST['definir_senha'])
+                    )
+                    ||
+                    (
+                        $_SERVER['REQUEST_METHOD'] === 'POST'
+                        &&
+                        isset($_POST['salvar_senha'])
+                    )
+                ): ?>
 
 
-          <p class="login-subtitle">
-
-            Solicite um novo link de recuperação
-            para continuar.
-
-          </p>
+                    <br>
 
 
-          <p class="login-footer-text">
-
-            <a
-              href="<?php echo BASE_URL; ?>pages/esqueci_senha/esqueci_senha.php">
-              Solicitar novo link
-            </a>
-
-          </p>
+                    <form
+                        class="login-form"
+                        method="POST"
+                        action="resetar_senha.php"
+                    >
 
 
-        <?php endif; ?>
+                        <input
+                            type="hidden"
+                            name="token"
+                            value="<?php echo htmlspecialchars($token); ?>"
+                        >
 
 
-      </div>
+
+                        <div class="field">
+
+                            <label for="nova_senha">
+
+                                Nova senha
+
+                            </label>
+
+
+                            <input
+                                type="password"
+                                id="nova_senha"
+                                name="nova_senha"
+                                placeholder="Digite sua nova senha"
+                                required
+                                minlength="8"
+                            >
+
+                        </div>
+
+
+
+                        <div class="field">
+
+                            <label for="confirmar_senha">
+
+                                Confirmar senha
+
+                            </label>
+
+
+                            <input
+                                type="password"
+                                id="confirmar_senha"
+                                name="confirmar_senha"
+                                placeholder="Confirme sua nova senha"
+                                required
+                                minlength="8"
+                            >
+
+                        </div>
+
+
+
+                        <button
+                            type="submit"
+                            name="salvar_senha"
+                            class="btn btn-gold btn-block"
+                        >
+
+                            Salvar nova senha
+
+                        </button>
+
+
+                    </form>
+
+
+                <?php endif; ?>
+
+
+
+            <?php else: ?>
+
+
+                <p class="login-subtitle">
+
+                    Solicite um novo link para redefinir sua senha.
+
+                </p>
+
+
+                <a
+                    href="<?php echo BASE_URL; ?>pages/esqueci_senha/esqueci_senha.php"
+                    class="btn btn-gold btn-block"
+                >
+
+                    Solicitar novo link
+
+                </a>
+
+
+            <?php endif; ?>
+
+
+        </div>
 
 
     </section>
 
 
-  </main>
+</main>
 
 
 </body>
