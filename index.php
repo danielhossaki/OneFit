@@ -338,7 +338,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
   </section>
 
   <section class="final-cta" id="contato" data-aos="fade-down">
-    <span class="eyebrow">Comece agora</span>
+    <span class="eyebrow">Comece agora!</span>
     <h2>Sua primeira<br>aula é <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, #fff8e1 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;">grátis</span></h2>
     <p>Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.</p>
     <a href="#" class="btn btn-gold">Agendar aula experimental</a>
