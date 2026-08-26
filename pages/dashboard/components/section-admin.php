@@ -81,10 +81,11 @@
             <h1>Usuários</h1>
             <p>Gerencie os usuários cadastrados na plataforma.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("usuarioEdit","Novo usuário", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalUsuarioNovo">
             <i class="bi bi-plus-lg"></i> Novo Usuário
         </button>
     </div>
+    <?php bo_modal_usuario(null, 'usuarios'); ?>
 
     <!-- Filtros: busca por texto + status (ligados à tabela pelo data-bo-target="usuarios") -->
     <div class="bo-filters">
@@ -125,18 +126,11 @@
                             <td><?php echo date('d/m/Y', strtotime($u['dataFinal'])); ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("usuarioEdit","Editar usuário", <?php echo bo_json($u); ?>)'>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar<?php echo $u['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn-bo-icon" title="<?php echo $u['status'] === 'ativo' ? 'Inativar' : 'Ativar'; ?>"
-                                        data-bo-action="toggle-status">
-                                        <i class="bi <?php echo $u['status'] === 'ativo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>"></i>
-                                    </button>
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="<?php echo htmlspecialchars($u['nome']); ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php bo_form_toggle('usuarios', $u['id'], 'usuarios', $u['status'] === 'ativo'); ?>
+                                    <?php echo bo_link_excluir('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -149,6 +143,9 @@
             </table>
         </div>
     </div>
+    <?php foreach ($usuarios as $u): ?>
+        <?php bo_modal_usuario($u, 'usuarios'); ?>
+    <?php endforeach; ?>
 </section>
 
 <!-- ===== ADMIN · Permissões (usuários com função administrativa) ===== -->
@@ -158,11 +155,11 @@
             <h1>Permissões</h1>
             <p>Controle os níveis de acesso concedidos aos usuários.</p>
         </div>
-        <!-- doubleConfirm: exige clicar 2x em "Salvar" (ação sensível) -->
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("permissaoNova","Cadastrar permissão", {}, {doubleConfirm: true})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPermissaoNova">
             <i class="bi bi-plus-lg"></i> Cadastrar Permissão
         </button>
     </div>
+    <?php bo_modal_permissao_nova('permissoes'); ?>
 
     <div class="bo-table-wrap">
         <div class="table-responsive">
@@ -182,17 +179,13 @@
                             <td>#<?php echo str_pad($p['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo $p['nome']; ?></td>
                             <td><?php echo $p['email']; ?></td>
-                            <td><?php echo $p['funcao']; ?></td>
+                            <td><?php echo $p['funcaoLabel']; ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("permissaoNova","Editar permissão", <?php echo bo_json($p); ?>, {doubleConfirm: true})'>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPermissaoEditar<?php echo $p['usuarioId']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="a permissão de <?php echo htmlspecialchars($p['nome']); ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php echo bo_link_excluir('permissoes', $p['usuarioId'], 'a permissão de ' . $p['nome'], 'permissoes'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -204,18 +197,18 @@
             </table>
         </div>
     </div>
+    <?php foreach ($permissoes as $p): ?>
+        <?php bo_modal_permissao_editar($p, 'permissoes'); ?>
+    <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Funções (cargos e o que cada um pode acessar) ===== -->
+<!-- ===== ADMIN · Funções (legenda fixa: são os tipos de acesso do banco, não uma tabela editável) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="funcoes">
     <div class="bo-page-title">
         <div>
             <h1>Funções</h1>
-            <p>Defina funções e as permissões de acesso associadas.</p>
+            <p>Referência dos níveis de acesso do sistema. Para elevar ou revogar o acesso de um usuário, use a tela "Permissões".</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("funcaoForm","Nova função", {})'>
-            <i class="bi bi-plus-lg"></i> Nova Função
-        </button>
     </div>
 
     <div class="bo-list">
@@ -224,16 +217,6 @@
                 <div>
                     <div class="bo-list-title"><?php echo $f['nome']; ?></div>
                     <div class="bo-list-sub"><?php echo $f['permissoes']; ?></div>
-                </div>
-                <div class="bo-table-actions">
-                    <button type="button" class="btn-bo-icon" title="Editar"
-                        onclick='boOpenForm("funcaoForm","Editar função", <?php echo bo_json($f); ?>)'>
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                        data-bo-action="delete" data-bo-name="a função <?php echo htmlspecialchars($f['nome']); ?>">
-                        <i class="bi bi-trash"></i>
-                    </button>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -247,10 +230,11 @@
             <h1>Pagamentos</h1>
             <p>Acompanhe e registre os pagamentos recebidos.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("pagamentoForm","Registrar pagamento", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPagamentoNovo">
             <i class="bi bi-plus-lg"></i> Registrar Pagamento
         </button>
     </div>
+    <?php bo_modal_pagamento(null, 'pagamentos'); ?>
 
     <!-- Filtros: busca por ID, tipo de pagamento e intervalo de datas -->
     <div class="bo-filters">
@@ -293,14 +277,10 @@
                             <td><?php echo $p['observacao']; ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("pagamentoForm","Editar pagamento", <?php echo bo_json($p); ?>)'>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPagamentoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="o pagamento #<?php echo $p['id']; ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php echo bo_link_excluir('pagamentos', $p['id'], 'o pagamento #' . $p['id'], 'pagamentos'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -312,6 +292,9 @@
             </table>
         </div>
     </div>
+    <?php foreach ($pagamentos as $p): ?>
+        <?php bo_modal_pagamento($p, 'pagamentos'); ?>
+    <?php endforeach; ?>
 </section>
 
 <!-- ===== ADMIN · Cashbacks (saldo geral + lançamentos manuais) ===== -->
@@ -322,14 +305,16 @@
             <p>Acompanhe saldo, distribuição e lançamentos de cashback.</p>
         </div>
         <div class="bo-actions">
-            <button type="button" class="btn-bo-outline" onclick='boOpenForm("cashbackMassa","Distribuição em massa", {})'>
+            <button type="button" class="btn-bo-outline" data-bs-toggle="modal" data-bs-target="#modalCashbackMassa">
                 <i class="bi bi-people"></i> Distribuição em Massa
             </button>
-            <button type="button" class="btn-bo-gold" onclick='boOpenForm("cashbackLancar","Lançar cashback", {})'>
+            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalCashbackLancar">
                 <i class="bi bi-plus-lg"></i> Lançar Cashback
             </button>
         </div>
     </div>
+    <?php bo_modal_cashback_massa('cashbacks'); ?>
+    <?php bo_modal_cashback_lancar('cashbacks'); ?>
 
     <!-- Cards de resumo: saldo total / distribuídos / debitado / creditado -->
     <div class="row g-3 mb-3">
@@ -394,10 +379,7 @@
                             <td><?php echo $c['motivo']; ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="a transação #<?php echo $c['id']; ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php echo bo_link_excluir('cashbacks', $c['id'], 'a transação #' . $c['id'], 'cashbacks'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -418,26 +400,24 @@
             <h1>Categorias</h1>
             <p>Organize as categorias de produtos da loja.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("categoriaForm","Nova categoria", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalCategoriaNova">
             <i class="bi bi-plus-lg"></i> Nova Categoria
         </button>
     </div>
+    <?php bo_modal_categoria(null, 'categorias'); ?>
 
     <div class="bo-list">
         <?php foreach ($categorias as $c): ?>
             <div class="bo-list-item">
                 <div class="bo-list-title"><?php echo $c['nome']; ?></div>
                 <div class="bo-table-actions">
-                    <button type="button" class="btn-bo-icon" title="Editar"
-                        onclick='boOpenForm("categoriaForm","Editar categoria", <?php echo bo_json($c); ?>)'>
+                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalCategoriaEditar<?php echo $c['id']; ?>">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                        data-bo-action="delete" data-bo-name="a categoria <?php echo htmlspecialchars($c['nome']); ?>">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <?php echo bo_link_excluir('categorias', $c['id'], 'a categoria ' . $c['nome'], 'categorias'); ?>
                 </div>
             </div>
+            <?php bo_modal_categoria($c, 'categorias'); ?>
         <?php endforeach; ?>
     </div>
 </section>
@@ -449,10 +429,11 @@
             <h1>Produtos</h1>
             <p>Gerencie o catálogo de produtos da loja.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("produtoForm","Cadastro de Produto", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalProdutoNovo">
             <i class="bi bi-plus-lg"></i> Cadastro de Produto
         </button>
     </div>
+    <?php bo_modal_produto(null, 'produtos', $categoriasAtivasOptions); ?>
 
     <!-- Cards de resumo do catálogo -->
     <div class="row g-3 mb-3">
@@ -526,18 +507,11 @@
                             <td><?php echo bo_badge($p['status'] === 'disponivel', 'Disponível', 'Indisponível'); ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Pausar/Ativar anúncio"
-                                        data-bo-action="toggle-status" data-on="Disponível" data-off="Indisponível">
-                                        <i class="bi <?php echo $p['status'] === 'disponivel' ? 'bi-pause-circle' : 'bi-play-circle'; ?>"></i>
-                                    </button>
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("produtoForm","Editar produto", <?php echo bo_json($p); ?>)'>
+                                    <?php bo_form_toggle('produtos', $p['id'], 'produtos', $p['status'] === 'disponivel', 'Disponível', 'Indisponível'); ?>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalProdutoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="<?php echo htmlspecialchars($p['nome']); ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php echo bo_link_excluir('produtos', $p['id'], $p['nome'], 'produtos'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -549,6 +523,9 @@
             </table>
         </div>
     </div>
+    <?php foreach ($produtos as $p): ?>
+        <?php bo_modal_produto($p, 'produtos', $categoriasAtivasOptions); ?>
+    <?php endforeach; ?>
 </section>
 
 <!-- ===== ADMIN · Cadastro de Planos (planos de assinatura oferecidos) ===== -->
@@ -558,10 +535,11 @@
             <h1>Cadastro de Planos</h1>
             <p>Configure os planos de assinatura disponíveis.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("planoForm","Novo Plano", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPlanoNovo">
             <i class="bi bi-plus-lg"></i> Novo Plano
         </button>
     </div>
+    <?php bo_modal_plano(null, 'planos'); ?>
 
     <div class="bo-filters">
         <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por plano ou ID"
@@ -599,12 +577,8 @@
                             <td><?php echo bo_badge($p['status'] === 'ativo'); ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Pausar/Ativar plano"
-                                        data-bo-action="toggle-status">
-                                        <i class="bi <?php echo $p['status'] === 'ativo' ? 'bi-pause-circle' : 'bi-play-circle'; ?>"></i>
-                                    </button>
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("planoForm","Editar plano", <?php echo bo_json($p); ?>)'>
+                                    <?php bo_form_toggle('planos', $p['id'], 'planos', $p['status'] === 'ativo'); ?>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPlanoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                 </div>
@@ -618,6 +592,9 @@
             </table>
         </div>
     </div>
+    <?php foreach ($planos as $p): ?>
+        <?php bo_modal_plano($p, 'planos'); ?>
+    <?php endforeach; ?>
 </section>
 
 <!-- ===== ADMIN · Profissionais (equipe cadastrada na plataforma) ===== -->
@@ -627,10 +604,11 @@
             <h1>Profissionais</h1>
             <p>Gerencie os profissionais cadastrados na plataforma.</p>
         </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("profissionalForm","Novo Profissional", {})'>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalProfissionalNovo">
             <i class="bi bi-plus-lg"></i> Novo Profissional
         </button>
     </div>
+    <?php bo_modal_profissional(null, 'profissionais'); ?>
 
     <div class="bo-filters">
         <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome, função ou documento"
@@ -676,14 +654,10 @@
                             <td><?php echo bo_badge($p['status'] === 'ativo'); ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Editar"
-                                        onclick='boOpenForm("profissionalForm","Editar profissional", <?php echo bo_json($p); ?>)'>
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalProfissionalEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn-bo-icon danger" title="Excluir"
-                                        data-bo-action="delete" data-bo-name="<?php echo htmlspecialchars($p['nome']); ?>">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                    <?php echo bo_link_excluir('profissionais', $p['id'], $p['nome'], 'profissionais'); ?>
                                 </div>
                             </td>
                         </tr>
@@ -695,4 +669,7 @@
             </table>
         </div>
     </div>
+    <?php foreach ($profissionaisAdm as $p): ?>
+        <?php bo_modal_profissional($p, 'profissionais'); ?>
+    <?php endforeach; ?>
 </section>

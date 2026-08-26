@@ -108,6 +108,7 @@ if ($perfilLogado === 'admin') {
     // Tela "Usuários"
     $usuarios = [];
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
+                   u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
                    m.id_matricula, m.data_inicio, m.data_fim
             FROM usuarios u
             LEFT JOIN matricula m ON m.id_matricula = (
@@ -118,6 +119,7 @@ if ($perfilLogado === 'admin') {
             ORDER BY u.nome";
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
+            $cidadeEstadoUsr = explode('/', $row['cidade_estado'] ?? '', 2);
             $usuarios[] = [
                 'id' => (int) $row['id_usuario'],
                 'nome' => $row['nome'],
@@ -129,6 +131,13 @@ if ($perfilLogado === 'admin') {
                 'dataFinal' => $row['data_fim'] ?: '',
                 'acesso' => $row['status'] === 'bloqueado' ? 'Bloqueado' : 'Liberado',
                 'observacao' => '',
+                'celular' => $row['celular'],
+                'genero' => $row['genero'],
+                'nascimento' => $row['data_nascimento'],
+                'nacionalidade' => $row['nacionalidade'],
+                'endereco' => $row['endereco'],
+                'cidade' => trim($cidadeEstadoUsr[0] ?? ''),
+                'estado' => trim($cidadeEstadoUsr[1] ?? ''),
             ];
         }
     }
@@ -145,7 +154,8 @@ if ($perfilLogado === 'admin') {
                 'usuarioId' => (int) $row['id_usuario'],
                 'nome' => $row['nome'],
                 'email' => $row['email'],
-                'funcao' => $funcaoLabel[$row['tipo_usuario']] ?? ucfirst($row['tipo_usuario']),
+                'funcao' => $row['tipo_usuario'],
+                'funcaoLabel' => $funcaoLabel[$row['tipo_usuario']] ?? ucfirst($row['tipo_usuario']),
             ];
         }
     }
@@ -204,14 +214,17 @@ if ($perfilLogado === 'admin') {
         }
     }
 
-    // Tela "Categorias" — derivadas dos produtos cadastrados
+    // Tela "Categorias"
     $categorias = [];
-    if ($r = $conn->query("SELECT DISTINCT categoria FROM produtos WHERE categoria IS NOT NULL AND categoria != '' ORDER BY categoria")) {
-        $i = 0;
+    if ($r = $conn->query('SELECT id_categoria, nome, status FROM categorias ORDER BY nome')) {
         while ($row = $r->fetch_assoc()) {
-            $categorias[] = ['id' => ++$i, 'nome' => $row['categoria']];
+            $categorias[] = ['id' => (int) $row['id_categoria'], 'nome' => $row['nome'], 'status' => $row['status']];
         }
     }
+    $categoriasAtivasOptions = array_values(array_map(
+        static fn(array $c): string => $c['nome'],
+        array_filter($categorias, static fn(array $c): bool => $c['status'] === 'ativo')
+    ));
 
     // Tela "Produtos"
     $produtosResumo = ['total' => 0, 'disponiveis' => 0, 'indisponiveis' => 0];
@@ -260,6 +273,10 @@ if ($perfilLogado === 'admin') {
             ];
         }
     }
+    $planosAtivosOptions = array_values(array_map(
+        static fn(array $p): string => $p['nome'],
+        array_filter($planos, static fn(array $p): bool => $p['status'] === 'ativo')
+    ));
 
     // Tela "Profissionais"
     $profissionaisAdm = [];
@@ -486,6 +503,17 @@ if ($perfilLogado === 'aluno') {
 
     // Tela "Minha agenda" — não há tabela de horários "disponíveis" distinta dos agendamentos
     $alunoAgendaDisponiveis = [];
+}
+
+// Nomes de planos ativos: usados no <select> do modal "Alterar plano" do
+// aluno. Para o admin, já foi calculado no bloco acima (evita repetir a query).
+if (!isset($planosAtivosOptions)) {
+    $planosAtivosOptions = [];
+    if ($r = $conn->query("SELECT nome FROM cadastro_planos WHERE status = 'ativo' ORDER BY nome")) {
+        while ($row = $r->fetch_assoc()) {
+            $planosAtivosOptions[] = $row['nome'];
+        }
+    }
 }
 
 /**

@@ -86,81 +86,6 @@ const BO_NATIONALITY_OPTIONS = BO_COUNTRY_CODES
    boBuildField() para montar o formulário dinamicamente dentro do modal
    #boFormModal, sem precisar de um modal HTML diferente para cada tela. */
 const BO_FORM_SCHEMAS = {
-    usuarioEdit: [
-        { key: 'nome', label: 'Nome completo', type: 'text', col: 12 },
-        { key: 'email', label: 'E-mail', type: 'email', col: 12 },
-        { key: 'cpf', label: 'CPF', type: 'text', col: 6 },
-        { key: 'status', label: 'Status', type: 'select', options: ['ativo', 'inativo'], optionLabels: ['Ativo', 'Inativo'], col: 6 },
-        { key: 'matricula', label: 'Nº da matrícula', type: 'text', col: 6 },
-        { key: 'dataInicial', label: 'Data inicial', type: 'date', col: 6 },
-        { key: 'dataFinal', label: 'Final de contrato', type: 'date', col: 6 },
-        { key: 'acesso', label: 'Acesso', type: 'select', options: ['Liberado', 'Bloqueado'], col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
-    ],
-    permissaoNova: [
-        { key: 'usuarioId', label: 'ID do usuário', type: 'text', col: 6 },
-        { key: 'nome', label: 'Nome', type: 'text', col: 6 },
-        { key: 'email', label: 'E-mail', type: 'email', col: 12 },
-        { key: 'funcao', label: 'Tipo de função', type: 'select', options: ['Administrador', 'Gerente', 'Instrutor', 'Recepção'], col: 12 },
-    ],
-    funcaoForm: [
-        { key: 'nome', label: 'Nome da função', type: 'text', col: 12 },
-        { key: 'permissoes', label: 'Permissões de acesso', type: 'checklist', options: ['Usuários', 'Pagamentos', 'Cashbacks', 'Produtos', 'Planos', 'Profissionais', 'Alunos', 'Agenda'], col: 12 },
-    ],
-    pagamentoForm: [
-        { key: 'data', label: 'Data', type: 'date', col: 6 },
-        { key: 'tipo', label: 'Tipo', type: 'select', options: ['PIX', 'Dinheiro', 'Crédito', 'Débito'], col: 6 },
-        { key: 'valor', label: 'Valor', type: 'number', col: 6 },
-        { key: 'usuarioId', label: 'ID do usuário', type: 'text', col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
-    ],
-    cashbackLancar: [
-        { key: 'data', label: 'Data', type: 'date', col: 6 },
-        { key: 'tipo', label: 'Tipo', type: 'select', options: ['credito', 'debito'], optionLabels: ['Crédito', 'Débito'], col: 6 },
-        { key: 'valor', label: 'Valor', type: 'number', col: 6 },
-        { key: 'usuarioId', label: 'ID do usuário', type: 'text', col: 6 },
-    ],
-    cashbackMassa: [
-        { key: 'data', label: 'Data', type: 'date', col: 6 },
-        { key: 'valor', label: 'Valor', type: 'number', col: 6 },
-        { key: 'alvo', label: 'Alvo', type: 'select', options: ['Todos', 'Ativos'], col: 12 },
-    ],
-    categoriaForm: [
-        { key: 'nome', label: 'Nome da categoria', type: 'text', col: 12 },
-    ],
-    produtoForm: [
-        { key: 'nome', label: 'Nome do produto', type: 'text', col: 12 },
-        { key: 'categoria', label: 'Categoria', type: 'select', options: BO_CATEGORIAS_OPTIONS, col: 6 },
-        { key: 'preco', label: 'Preço', type: 'number', col: 6 },
-        { key: 'desconto', label: 'Desconto (%)', type: 'number', col: 6 },
-        { key: 'cashback', label: 'Cashback (%)', type: 'number', col: 6 },
-        { key: 'estoque', label: 'Estoque', type: 'number', col: 6 },
-        { key: 'imagem', label: 'Imagem do produto (upload ou URL)', type: 'image', col: 12 },
-        { key: 'valorFinal', label: 'Valor final', type: 'text', col: 6, readonly: true },
-        { key: 'descricao', label: 'Descrição', type: 'textarea', col: 12 },
-    ],
-    planoForm: [
-        { key: 'nome', label: 'Nome do plano', type: 'text', col: 12 },
-        { key: 'valor', label: 'Valor do plano', type: 'number', col: 6 },
-        { key: 'ciclo', label: 'Ciclo', type: 'select', options: ['Mensal', 'Trimestral', 'Semestral', 'Anual'], col: 6 },
-        { key: 'status', label: 'Status', type: 'select', options: ['ativo', 'inativo'], optionLabels: ['Ativo', 'Inativo'], col: 6 },
-        { key: 'textoBotao', label: 'Texto do botão', type: 'text', col: 6 },
-        { key: 'descricao', label: 'Descrição', type: 'textarea', col: 12 },
-    ],
-    profissionalForm: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 6 },
-        { key: 'funcao', label: 'Função', type: 'text', col: 6 },
-        { key: 'tituloCard', label: 'Título do card', type: 'text', col: 6 },
-        { key: 'documento', label: 'Documento', type: 'text', col: 6 },
-        { key: 'status', label: 'Status', type: 'select', options: ['ativo', 'inativo'], optionLabels: ['Ativo', 'Inativo'], col: 6 },
-        { key: 'email', label: 'E-mail', type: 'email', col: 6 },
-        { key: 'telefone', label: 'Telefone', type: 'text', col: 6 },
-        { key: 'celular', label: 'Celular', type: 'text', col: 6 },
-        { key: 'descricao', label: 'Descrição', type: 'textarea', col: 12 },
-        { key: 'experiencia', label: 'Experiência', type: 'textarea', col: 12 },
-        { key: 'foto', label: 'Foto (upload ou URL)', type: 'image', col: 12 },
-        { key: 'observacaoInterna', label: 'Observação interna', type: 'textarea', col: 12 },
-    ],
     alunoDoProfissionalForm: [
         { key: 'nome', label: 'Nome', type: 'text', col: 12 },
         { key: 'contato', label: 'Contato', type: 'text', col: 6 },
@@ -822,13 +747,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Clique num item do dropdown de perfil (header) -> troca de perfil
-    document.getElementById('boPerfilMenu').addEventListener('click', (event) => {
-        const link = event.target.closest('a[data-perfil]');
-        if (!link) return;
-        event.preventDefault();
-        boTrocarPerfil(link.getAttribute('data-perfil'));
-    });
+    // Clique num item do dropdown de perfil (header) -> troca de perfil.
+    // #boPerfilMenu só existe quando o seletor de perfil está no header
+    // (hoje BO_IS_ADMIN é sempre false, então o elemento nem é renderizado).
+    const perfilMenuEl = document.getElementById('boPerfilMenu');
+    if (perfilMenuEl) {
+        perfilMenuEl.addEventListener('click', (event) => {
+            const link = event.target.closest('a[data-perfil]');
+            if (!link) return;
+            event.preventDefault();
+            boTrocarPerfil(link.getAttribute('data-perfil'));
+        });
+    }
 
     // Botão hambúrguer (mobile) abre/fecha a sidebar; clicar fora também fecha
     const sidebar = document.getElementById('boSidebar');
@@ -896,7 +826,9 @@ document.addEventListener('DOMContentLoaded', () => {
     /* ---- Ações de tabela (delegadas no <body> pois as linhas são dinâmicas) ---- */
     document.body.addEventListener('click', (event) => {
 
-        // Pausar/Ativar (alterna o badge de status de uma linha, sem reload)
+        // Pausar/Ativar — usado só pelas telas sem persistência real (ex:
+        // agenda do profissional). No admin isso agora é um <form> em PHP
+        // (ver includes/admin-forms.php), sem passar por aqui.
         const toggleBtn = event.target.closest('[data-bo-action="toggle-status"]');
         if (toggleBtn) {
             const row = toggleBtn.closest('tr');
@@ -913,7 +845,9 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleBtn.title = active ? 'Ativar' : 'Pausar/Inativar';
         }
 
-        // Excluir (pede confirmação e remove a linha da tabela)
+        // Excluir — usado só pelas telas sem persistência real (ex: ficha de
+        // treino do aluno). No admin isso agora é um link para uma página de
+        // confirmação em PHP (ver bo_link_excluir em includes/admin-forms.php).
         const deleteBtn = event.target.closest('[data-bo-action="delete"]');
         if (deleteBtn) {
             const label = deleteBtn.getAttribute('data-bo-name') || 'este registro';
