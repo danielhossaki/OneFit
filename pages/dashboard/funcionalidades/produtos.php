@@ -47,7 +47,8 @@ $preco = bo_num('preco');
 $desconto = bo_num('desconto');
 $cashback = bo_num('cashback');
 $estoque = (int) bo_num('estoque');
-$imagem = bo_str('imagem');
+$imagemUpload = bo_processar_upload_imagem('imagem_arquivo', 'produtos');
+$imagem = $imagemUpload ?? bo_str('imagem');
 $descricao = bo_str('descricao');
 
 if (!$nome || $preco <= 0) {
@@ -60,7 +61,7 @@ if ($acao === 'update') {
         bo_flash('error', 'Produto inválido.');
         bo_redirect($secao);
     }
-    $stmt = $conn->prepare('UPDATE produtos SET nome=?, categoria=?, preco=?, desconto=?, cashback_percentual=?, estoque=?, imagem=?, descricao=? WHERE id_produto=?');
+    $stmt = $conn->prepare('UPDATE produtos SET nome=?, categoria=?, preco=?, desconto=?, cashback_valor=?, estoque=?, imagem=?, descricao=? WHERE id_produto=?');
     $stmt->bind_param('ssdddissi', $nome, $categoria, $preco, $desconto, $cashback, $estoque, $imagem, $descricao, $id);
     $stmt->execute();
     $stmt->close();
@@ -68,7 +69,7 @@ if ($acao === 'update') {
     bo_redirect($secao);
 }
 
-$stmt = $conn->prepare('INSERT INTO produtos (nome, categoria, preco, desconto, cashback_percentual, estoque, imagem, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "ativo")');
+$stmt = $conn->prepare('INSERT INTO produtos (nome, categoria, preco, desconto, cashback_valor, estoque, imagem, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "ativo")');
 $stmt->bind_param('ssdddiss', $nome, $categoria, $preco, $desconto, $cashback, $estoque, $imagem, $descricao);
 $stmt->execute();
 $stmt->close();

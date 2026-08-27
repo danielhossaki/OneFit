@@ -16,19 +16,33 @@ if (!$usuarioId) {
 }
 
 if (!$usuarioId) {
-    bo_flash('error', 'Informe o ID de um usuário válido.');
-    bo_redirect($secao);
-}
-
-$check = $conn->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ?');
-$check->bind_param('i', $usuarioId);
-$check->execute();
-if (!$check->get_result()->fetch_assoc()) {
+    // Cadastro novo: identifica o usuário pelo e-mail informado, não por ID.
+    $email = bo_str('email');
+    if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        bo_flash('error', 'Informe um e-mail válido.');
+        bo_redirect($secao);
+    }
+    $check = $conn->prepare('SELECT id_usuario FROM usuarios WHERE email = ? LIMIT 1');
+    $check->bind_param('s', $email);
+    $check->execute();
+    $row = $check->get_result()->fetch_assoc();
     $check->close();
-    bo_flash('error', 'Usuário não encontrado.');
-    bo_redirect($secao);
+    if (!$row) {
+        bo_flash('error', 'Nenhum usuário encontrado com este e-mail.');
+        bo_redirect($secao);
+    }
+    $usuarioId = (int) $row['id_usuario'];
+} else {
+    $check = $conn->prepare('SELECT id_usuario FROM usuarios WHERE id_usuario = ?');
+    $check->bind_param('i', $usuarioId);
+    $check->execute();
+    if (!$check->get_result()->fetch_assoc()) {
+        $check->close();
+        bo_flash('error', 'Usuário não encontrado.');
+        bo_redirect($secao);
+    }
+    $check->close();
 }
-$check->close();
 
 if ($acao === 'delete') {
     $stmt = $conn->prepare("UPDATE usuarios SET tipo_usuario = 'aluno' WHERE id_usuario = ?");

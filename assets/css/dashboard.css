@@ -565,6 +565,17 @@ body {
     gap: 13px;
     margin-bottom: 18px;
     padding: 17px 19px;
+    /* Some sozinho após alguns segundos: sem isso a mensagem fica presa no
+       topo ao trocar de aba, já que o JS só alterna a section visível e
+       nunca remove este bloco (ele fica fora das <section data-section>). */
+    animation: bo-notice-fade 6s ease-in forwards;
+    overflow: hidden;
+}
+
+@keyframes bo-notice-fade {
+    0% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
+    80% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
+    100% { opacity: 0; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-width: 0; pointer-events: none; }
 }
 
 .bo-notice>i {

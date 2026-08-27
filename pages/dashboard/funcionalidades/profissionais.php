@@ -33,16 +33,22 @@ $funcao = bo_str('funcao');
 $documento = bo_str('documento');
 $status = bo_str('status') === 'inativo' ? 'inativo' : 'ativo';
 $email = bo_str('email');
-$celular = bo_str('celular') ?: bo_str('telefone');
+$celularDigitado = bo_str('celular') ?: bo_str('telefone');
+$celular = preg_replace('/\D/', '', $celularDigitado);
 $descricao = bo_str('descricao');
-$foto = bo_str('foto');
+$fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'profissionais');
+$foto = $fotoUpload ?? bo_str('foto');
 
-if (!$nome || !$email) {
-    bo_flash('error', 'Preencha nome e e-mail.');
+if (!$nome || !$email || !$celular) {
+    bo_flash('error', 'Preencha nome, e-mail e celular.');
     bo_redirect($secao);
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     bo_flash('error', 'Informe um e-mail válido.');
+    bo_redirect($secao);
+}
+if (!bo_valida_celular($celular)) {
+    bo_flash('error', 'Informe um celular/telefone válido, com DDD (10 ou 11 números).');
     bo_redirect($secao);
 }
 

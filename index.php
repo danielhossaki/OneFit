@@ -1,6 +1,20 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+
+/* Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
+ * na seção "#planos" logo abaixo. */
+$planosAtivos = [];
+if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_planos WHERE status = 'ativo' ORDER BY valor")) {
+    while ($row = $r->fetch_assoc()) {
+        $planosAtivos[] = [
+            'nome' => $row['nome'],
+            'valor' => (float) $row['valor'],
+            'descricao' => $row['descricao'],
+            'beneficios' => array_values(array_filter(array_map('trim', explode("\n", (string) $row['beneficios'])))),
+        ];
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -224,68 +238,22 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
       </div>
       <div class="plans">
 
-        <div class="plan" data-aos="fade-up" data-aos-delay="50">
-          <span class="plan-name">Desafiante</span>
-          <h3>Iniciante</h3>
-          <div class="price">R$99<span>/mês</span></div>
-          <div class="price-sub">Ideal para começar no seu ritmo</div>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Acesso à musculação</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>2 modalidades por semana</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Avaliação física inicial</li>
-          </ul>
-          <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-outline">Escolher plano</a>
-        </div>
-
-        <div class="plan featured" data-aos="fade-up" data-aos-delay="100">
-          <span class="plan-name">Campeão</span>
-          <h3>Completo</h3>
-          <div class="price">R$179<span>/mês</span></div>
-          <div class="price-sub">O mais escolhido pelos alunos</div>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Acesso ilimitado a todas as modalidades</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Treino personalizado mensal</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Avaliação física trimestral</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Acesso ao app de treino</li>
-          </ul>
-          <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold">Escolher plano</a>
-        </div>
-
-        <div class="plan" data-aos="fade-up" data-aos-delay="150">
-          <span class="plan-name">Lenda</span>
-          <h3>Elite</h3>
-          <div class="price">R$289<span>/mês</span></div>
-          <div class="price-sub">Para quem quer performance máxima</div>
-          <ul>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Tudo do plano Completo</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>2 personal training por semana</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Acompanhamento nutricional</li>
-            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M5 12l4 4 10-10" />
-              </svg>Armário fixo reservado</li>
-          </ul>
-          <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-outline">Escolher plano</a>
-        </div>
+        <?php foreach ($planosAtivos as $i => $p): ?>
+          <div class="plan<?php echo $i === 1 ? ' featured' : ''; ?>" data-aos="fade-up" data-aos-delay="<?php echo 50 + $i * 50; ?>">
+            <span class="plan-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
+            <h3><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></h3>
+            <div class="price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><span>/mês</span></div>
+            <div class="price-sub"><?php echo htmlspecialchars($p['descricao'], ENT_QUOTES, 'UTF-8'); ?></div>
+            <ul>
+              <?php foreach ($p['beneficios'] as $beneficio): ?>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12l4 4 10-10" />
+                  </svg><?php echo htmlspecialchars($beneficio, ENT_QUOTES, 'UTF-8'); ?></li>
+              <?php endforeach; ?>
+            </ul>
+            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn <?php echo $i === 1 ? 'btn-gold' : 'btn-outline'; ?>">Escolher plano</a>
+          </div>
+        <?php endforeach; ?>
 
       </div>
     </div>

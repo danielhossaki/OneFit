@@ -236,7 +236,7 @@ if ($perfilLogado === 'admin') {
     }
 
     $produtos = [];
-    $sql = "SELECT id_produto, nome, categoria, preco, desconto, cashback_percentual, estoque, status, imagem, descricao FROM produtos ORDER BY nome";
+    $sql = "SELECT id_produto, nome, categoria, preco, desconto, cashback_valor, estoque, status, imagem, descricao FROM produtos ORDER BY nome";
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
             $desconto = (float) $row['desconto'];
@@ -248,7 +248,7 @@ if ($perfilLogado === 'admin') {
                 'preco' => $preco,
                 'desconto' => $desconto,
                 'valorFinal' => round($preco - ($preco * $desconto / 100), 2),
-                'cashback' => (float) $row['cashback_percentual'],
+                'cashback' => (float) $row['cashback_valor'],
                 'estoque' => (int) $row['estoque'],
                 'status' => $row['status'] === 'ativo' ? 'disponivel' : 'indisponivel',
                 'imagem' => $row['imagem'],
@@ -259,7 +259,7 @@ if ($perfilLogado === 'admin') {
 
     // Tela "Cadastro de Planos"
     $planos = [];
-    $sql = "SELECT id_plano, nome, valor, duracao_dias, descricao, status FROM cadastro_planos ORDER BY valor";
+    $sql = "SELECT id_plano, nome, valor, duracao_dias, descricao, beneficios, status FROM cadastro_planos ORDER BY valor";
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
             $planos[] = [
@@ -268,6 +268,7 @@ if ($perfilLogado === 'admin') {
                 'valor' => (float) $row['valor'],
                 'ciclo' => bo_ciclo_por_duracao((int) $row['duracao_dias']),
                 'descricao' => $row['descricao'],
+                'beneficios' => $row['beneficios'],
                 'status' => $row['status'],
                 'textoBotao' => 'Assinar agora',
             ];
