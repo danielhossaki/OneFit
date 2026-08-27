@@ -948,6 +948,24 @@ html[data-theme="light"] .bo-modal .btn-close {
     filter: none;
 }
 
+/* Modal do perfil profissional: permanece escuro mesmo quando o painel usa
+   o tema claro. O :has() limita estas variáveis às páginas que realmente
+   carregaram section-profissional.php; outros perfis não são afetados. */
+body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal {
+    --surface: #1e1a15;
+    --surface-2: #241f18;
+    --border: rgba(243, 237, 226, 0.12);
+    --text: #f3ede2;
+    --text-muted: #b0a896;
+    --gold: #d4af37;
+    --gold-bright: #f4c430;
+    --gold-dim: #8a6b21;
+}
+
+body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.6);
+}
+
 /* Pré-visualização de imagem nos campos do tipo "image" (upload/URL) */
 .bo-modal img[data-bo-preview] {
     max-height: 140px;
@@ -1406,3 +1424,4 @@ html[data-theme="light"] .bo-modal .btn-close {
         padding: 8px 11px;
     }
 }
+
