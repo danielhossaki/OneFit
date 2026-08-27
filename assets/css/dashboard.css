@@ -1215,194 +1215,135 @@ html[data-theme="light"] .bo-modal .btn-close {
     font-size: 13px;
     margin: 0;
 }
+/* =========================================================
+   PERFIL - FOTO ESQUERDA / INFORMAÇÕES DIREITA
+   ========================================================= */
 
-.bo-theme-choices {
+.bo-profile-layout {
     display: grid;
-    gap: 12px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
 }
 
-.bo-theme-choice {
+.bo-profile-photo-area {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    gap: 14px;
+}
+
+.bo-profile-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 2px solid rgba(212, 175, 55, 0.35);
+    background: var(--surface-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bo-profile-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.bo-profile-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-size: 58px;
+}
+
+.bo-profile-photo-button {
+    width: 150px;
+    justify-content: center;
+}
+
+.bo-profile-details {
+    min-width: 0;
+}
+
+.bo-profile-details .bo-settings-heading {
+    margin-bottom: 16px;
+}
+
+.bo-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+/* Informações do perfil: gênero, altura, peso e IMC */
+.bo-profile-info {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.bo-profile-info-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 145px;
+    padding: 10px 14px;
+    border-radius: 12px;
     background: var(--surface-2);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    display: flex;
-    gap: 12px;
-    padding: 16px;
-    text-align: left;
-    transition: border-color .2s, background .2s;
 }
 
-.bo-theme-choice:hover,
-.bo-theme-choice.active {
-    background: rgba(212, 175, 55, .09);
-    border-color: var(--gold);
-}
-
-.bo-theme-choice>i:first-child {
+.bo-profile-info-item > i {
     color: var(--gold-bright);
     font-size: 20px;
 }
 
-.bo-theme-choice span {
-    flex: 1;
+.bo-profile-info-item > div {
+    display: flex;
+    flex-direction: column;
 }
 
-.bo-theme-choice strong,
-.bo-theme-choice small {
-    display: block;
-}
-
-.bo-theme-choice strong {
-    font-size: 14px;
-}
-
-.bo-theme-choice small {
+.bo-profile-info-item span {
     color: var(--text-muted);
     font-size: 12px;
+}
+
+.bo-profile-info-item strong {
+    color: var(--text);
+    font-size: 14px;
     margin-top: 2px;
 }
 
-.bo-theme-check {
-    color: var(--gold-bright);
-    display: none;
-    font-size: 18px;
-}
+/* Perfil responsivo */
+@media (max-width: 700px) {
 
-.bo-theme-choice.active .bo-theme-check {
-    display: block;
-}
-
-.bo-settings-logout {
-    align-items: center;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 16px;
-    justify-content: space-between;
-    margin-top: 23px;
-    padding-top: 20px;
-}
-
-.bo-settings-logout strong,
-.bo-settings-logout span {
-    display: block;
-}
-
-.bo-settings-logout strong {
-    color: var(--text);
-    font-size: 14px;
-}
-
-.bo-settings-logout span {
-    color: var(--text-muted);
-    font-size: 12px;
-    margin-top: 3px;
-}
-
-.bo-logout-button:hover {
-    border-color: var(--danger);
-    color: var(--danger);
-}
-
-/* =========================================================================
-   17. BACKDROP MOBILE + VISIBILIDADE DAS SEÇÕES
-   ========================================================================= */
-
-/* Camada escura atrás da sidebar quando aberta no mobile (fecha ao clicar fora) */
-.bo-sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1024;
-}
-
-/* Cada "página" do backoffice é uma <section data-perfil="..." data-section="...">
-   escondida por padrão; o JS mostra só a seção ativa trocando essa classe */
-.bo-content-section {
-    display: none;
-}
-
-.bo-content-section.active {
-    display: block;
-}
-
-/* =========================================================================
-   18. RESPONSIVO
-   ========================================================================= */
-@media (max-width: 1199px) {
-    .bo-metric-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-@media (max-width: 991px) {
-
-    /* Sidebar vira um painel deslizante (off-canvas) em telas menores */
-    .bo-sidebar {
-        transform: translateX(-100%);
-    }
-
-    .bo-sidebar.active {
-        transform: translateX(0);
-    }
-
-    .bo-sidebar-backdrop.active {
-        display: block;
-    }
-
-    .bo-header {
-        left: 0;
-        padding: 0 18px;
-    }
-
-    .bo-main {
-        margin-left: 0;
-        padding: 26px 18px 48px;
-    }
-}
-
-@media (max-width: 560px) {
-
-    /* Esconde o texto "One Fit · Backoffice" no header, mantém só a logo */
-    .bo-logo span {
-        display: none;
-    }
-
-    .bo-header-search {
-        width: min(260px, 50vw);
-    }
-
-    .bo-metric-grid,
-    .bo-theme-choices {
+    .bo-profile-layout {
         grid-template-columns: 1fr;
     }
 
-    .bo-metric-card {
-        min-height: 112px;
+    .bo-profile-photo-area {
+        align-items: center;
     }
 
-    .bo-header-settings {
-        display: none;
+    .bo-profile-info {
+        grid-template-columns: 1fr;
     }
 
-    .bo-user {
-        gap: 8px;
+    .bo-profile-actions {
+        justify-content: stretch;
     }
 
-    .bo-search-results {
-        left: min(-52px, -18vw);
-        width: min(340px, calc(100vw - 28px));
-    }
-
-    .bo-settings-logout {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .btn-bo-outline {
-        padding: 8px 11px;
+    .bo-profile-actions .btn-bo-gold {
+        width: 100%;
+        justify-content: center;
     }
 }

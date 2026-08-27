@@ -242,7 +242,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
           </ul>
           <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-outline">Escolher plano</a>
         </div>
-
+          
         <div class="plan featured" data-aos="fade-up" data-aos-delay="100">
           <span class="plan-name">Campeão</span>
           <h3>Completo</h3>

@@ -112,5 +112,7 @@ try {
 $_SESSION['nome'] = $nome;
 $_SESSION['email'] = $email;
 $_SESSION['genero'] = $genero;
+$_SESSION['altura'] = $altura;
+$_SESSION['peso'] = $peso;
 
 respond(200, true, 'Perfil atualizado com sucesso!');

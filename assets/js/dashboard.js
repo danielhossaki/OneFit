@@ -321,11 +321,100 @@ function boOpenForm(schemaKey, title, values, options) {
                 if (!response.ok || !result.success) throw new Error(result.message || 'Não foi possível atualizar o perfil.');
 
                 Object.assign(BO_CURRENT_USER, profileValues);
-                document.getElementById('boProfileName').textContent = profileValues.nome;
-                document.getElementById('boProfileEmail').textContent = profileValues.email;
+
+                /* NOME */
+                const profileName = document.getElementById('boProfileName');
+                if (profileName) {
+                    profileName.textContent = profileValues.nome || 'Usuário';
+                }
+
+                /* EMAIL */
+                const profileEmail = document.getElementById('boProfileEmail');
+                if (profileEmail) {
+                    profileEmail.textContent =
+                        profileValues.email || 'Dados da conta ONE FIT';
+                }
+
+                /* GÊNERO */
                 const gender = document.getElementById('boProfileGender');
-                if (gender) gender.textContent = `Gênero: ${profileValues.genero.charAt(0).toUpperCase()}${profileValues.genero.slice(1)}`;
-                document.getElementById('boAvatar').textContent = profileValues.nome.charAt(0).toUpperCase();
+                if (gender) {
+                    gender.textContent = profileValues.genero
+                        ? profileValues.genero.charAt(0).toUpperCase() +
+                        profileValues.genero.slice(1)
+                        : 'Não informado';
+                }
+
+                /* ALTURA */
+                const altura = parseFloat(
+                    String(profileValues.altura || '0').replace(',', '.')
+                );
+
+                const profileHeight = document.getElementById('boProfileHeight');
+
+                if (profileHeight) {
+                    profileHeight.textContent = altura > 0
+                        ? altura.toFixed(2).replace('.', ',') + ' m'
+                        : 'Não informada';
+                }
+
+                /* PESO */
+                const peso = parseFloat(
+                    String(profileValues.peso || '0').replace(',', '.')
+                );
+
+                const profileWeight = document.getElementById('boProfileWeight');
+
+                if (profileWeight) {
+                    profileWeight.textContent = peso > 0
+                        ? peso.toFixed(1).replace('.', ',') + ' kg'
+                        : 'Não informado';
+                }
+
+                /* IMC */
+                const profileImc = document.getElementById('boProfileImc');
+
+                if (profileImc) {
+
+                    if (altura > 0 && peso > 0) {
+
+                        const imc = peso / (altura * altura);
+
+                        let classificacao = '';
+
+                        if (imc < 18.5) {
+                            classificacao = 'Abaixo do peso';
+                        } else if (imc < 25) {
+                            classificacao = 'Peso adequado';
+                        } else if (imc < 30) {
+                            classificacao = 'Sobrepeso';
+                        } else if (imc < 35) {
+                            classificacao = 'Obesidade grau I';
+                        } else if (imc < 40) {
+                            classificacao = 'Obesidade grau II';
+                        } else {
+                            classificacao = 'Obesidade grau III';
+                        }
+
+                        profileImc.textContent =
+                            imc.toFixed(1).replace('.', ',') +
+                            ' · ' +
+                            classificacao;
+
+                    } else {
+
+                        profileImc.textContent = 'Não disponível';
+
+                    }
+                }
+
+                /* AVATAR */
+                const avatar = document.getElementById('boAvatar');
+
+                if (avatar && profileValues.nome) {
+                    avatar.textContent =
+                        profileValues.nome.charAt(0).toUpperCase();
+                }
+
 
                 boFormModalInstance.hide();
                 boToast(result.message);
@@ -886,7 +975,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-/* ---------- Cálculo de IMC (tela "Perfil" do aluno) ---------- */
 function boCalcularIMC() {
     const altura = parseFloat(document.getElementById('imcAltura').value);
     const peso = parseFloat(document.getElementById('imcPeso').value);
@@ -898,12 +986,27 @@ function boCalcularIMC() {
     }
 
     const imc = peso / (altura * altura);
-    let status = 'Normal';
-    if (imc < 18.5) status = 'Abaixo do peso';
-    else if (imc >= 25 && imc < 30) status = 'Sobrepeso';
-    else if (imc >= 30) status = 'Obesidade';
 
-    resultado.textContent = imc.toFixed(1) + ' · ' + status;
+    let classificacao = '';
+
+    if (imc < 18.5) {
+        classificacao = 'Abaixo do peso';
+    } else if (imc < 25) {
+        classificacao = 'Peso adequado';
+    } else if (imc < 30) {
+        classificacao = 'Sobrepeso';
+    } else if (imc < 35) {
+        classificacao = 'Obesidade grau I';
+    } else if (imc < 40) {
+        classificacao = 'Obesidade grau II';
+    } else {
+        classificacao = 'Obesidade grau III';
+    }
+
+    resultado.textContent =
+        imc.toFixed(1).replace('.', ',') +
+        ' · ' +
+        classificacao;
 }
 
 /* ---------- Modal "Pagar plano" (Pix simulado / cartão) ---------- */

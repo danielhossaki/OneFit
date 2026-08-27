@@ -1,9 +1,10 @@
+
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
 session_start();
-
+  
 $mensagensLogin = [
   '1' => ['tipo' => 'erro', 'texto' => 'E-mail ou senha incorretos. Confira os dados e tente novamente.'],
   '2' => ['tipo' => 'erro', 'texto' => 'Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT.'],
@@ -11,6 +12,7 @@ $mensagensLogin = [
   '4' => ['tipo' => 'sucesso', 'texto' => 'Cadastro realizado com sucesso! Agora você já pode entrar.'],
   '5' => ['tipo' => 'erro', 'texto' => 'Digite um endereço de e-mail válido.'],
 ];
+
 
 $mensagemLogin = $mensagensLogin[(string) ($_GET['msg'] ?? '')] ?? null;
 
@@ -20,6 +22,7 @@ if (!$mensagemLogin && !empty($_SESSION['login_msg'])) {
     'texto' => $_SESSION['login_msg'],
   ];
 }
+
 
 unset($_SESSION['login_msg'], $_SESSION['login_tipo']);
 
@@ -150,7 +153,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="email">E-mail</label>
             <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
           </div>
-
+          
           <div class="field">
             <label for="password">Senha</label>
             <div class="password-wrap">
