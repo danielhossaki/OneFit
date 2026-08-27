@@ -19,6 +19,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require __DIR__ . '/includes/helpers.php';
+require __DIR__ . '/includes/admin-forms.php';
 
 // Sem sessão -> manda pro login. O acesso ao dashboard inteiro depende de
 // estar logado (id_usuario e tipo_usuario são gravados em processa_login.php).
@@ -126,6 +127,13 @@ if ($perfilLogado === 'admin') {
     <?php require __DIR__ . '/components/sidebar.php'; ?>
 
     <main class="bo-main">
+        <?php if (!empty($_SESSION['bo_flash'])): ?>
+            <?php $boFlash = $_SESSION['bo_flash']; unset($_SESSION['bo_flash']); ?>
+            <div class="bo-notice" style="<?php echo $boFlash['type'] === 'error' ? 'border-color:#dc3545;' : ''; ?>">
+                <i class="bi <?php echo $boFlash['type'] === 'error' ? 'bi-exclamation-triangle' : 'bi-check-circle'; ?>"></i>
+                <div><span><?php echo htmlspecialchars($boFlash['text'], ENT_QUOTES, 'UTF-8'); ?></span></div>
+            </div>
+        <?php endif; ?>
         <?php
         // IMPORTANTE: isso não é só "esconder com CSS" — as seções de perfis
         // que o usuário não tem acesso nem chegam a ser enviadas no HTML.
@@ -151,12 +159,9 @@ if ($perfilLogado === 'admin') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Essas duas listas vêm do PHP (categorias e planos cadastrados) e
-        // precisam existir ANTES de dashboard.js carregar, porque os
-        // schemas de formulário (BO_FORM_SCHEMAS.produtoForm e .planoAlterar)
-        // usam elas direto ao montar os <select> de categoria/plano.
-        const BO_CATEGORIAS_OPTIONS = [];
-        const BO_PLANOS_OPTIONS = [];
+        // Planos ativos cadastrados, usados pelo BO_FORM_SCHEMAS.planoAlterar
+        // (tela "Alterar plano" do aluno) para montar o <select>.
+        const BO_PLANOS_OPTIONS = <?php echo json_encode($planosAtivosOptions ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 
         // Perfil real do usuário logado (vindo da sessão, não escolhido por ele).
         // dashboard.js usa isso pra: (1) abrir direto na seção certa,
