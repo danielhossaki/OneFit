@@ -192,7 +192,7 @@
 
 .form-msg-sucesso {
   color: #fff4cf;
-  background: linear-gradient(135deg, rgba(69, 57, 25, 0.96), rgba(31, 29, 22, 0.94));
+  background: linear-gradient(135deg, #214519f5, rgba(31, 29, 22, 0.94));
   border-color: rgba(214, 188, 117, 0.58);
 }
 
@@ -337,6 +337,15 @@
   font-size: 13px;
   color: var(--gold);
   transition: color 0.2s ease;
+}
+
+button.forgot-link {
+  align-self: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .forgot-link:hover {

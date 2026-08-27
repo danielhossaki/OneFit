@@ -1,0 +1,8 @@
+{
+  "name": "onefit/onefit",
+  "type": "project",
+  "license": "proprietary",
+  "require": {
+    "phpmailer/phpmailer": "^7.1"
+  }
+}

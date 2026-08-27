@@ -6,13 +6,16 @@ session_start();
 
 $mensagensLogin = [
   '1' => ['tipo' => 'erro', 'texto' => 'E-mail ou senha incorretos. Confira os dados e tente novamente.'],
-  '2' => ['tipo' => 'erro', 'texto' => 'Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT.'],
+  '2' => ['tipo' => 'erro', 'texto' => 'Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT caso deseja reativar sua conta.'],
   '3' => ['tipo' => 'erro', 'texto' => 'Preencha o e-mail e a senha para entrar.'],
   '4' => ['tipo' => 'sucesso', 'texto' => 'Cadastro realizado com sucesso! Agora você já pode entrar.'],
   '5' => ['tipo' => 'erro', 'texto' => 'Digite um endereço de e-mail válido.'],
 ];
 
 $mensagemLogin = $mensagensLogin[(string) ($_GET['msg'] ?? '')] ?? null;
+
+$emailPendenteVerificacao = $_SESSION['email_verificacao_pendente'] ?? '';
+unset($_SESSION['email_verificacao_pendente']);
 
 if (!$mensagemLogin && !empty($_SESSION['login_msg'])) {
   $mensagemLogin = [
@@ -37,7 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     $stmt = $conn->prepare(
-      "SELECT id_usuario, nome, senha, tipo_usuario, status, genero FROM usuarios WHERE email = ? LIMIT 1"
+      "SELECT id_usuario, nome, senha, tipo_usuario, status, genero, email_verificado FROM usuarios WHERE email = ? LIMIT 1"
     );
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -49,6 +52,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Usa uma mensagem única para não revelar se o e-mail está cadastrado.
     if (!$usuario || !password_verify($senha, $usuario['senha'])) {
       header("Location: login.php?msg=1");
+      exit;
+    }
+
+    if ((int) $usuario['email_verificado'] !== 1) {
+      $_SESSION['email_verificacao_pendente'] = $email;
+      $_SESSION['login_tipo'] = 'erro';
+      $_SESSION['login_msg'] = 'Você precisa confirmar seu e-mail antes de acessar sua conta.';
+      header("Location: login.php");
       exit;
     }
 
@@ -180,6 +191,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <button type="submit" class="btn btn-gold btn-block">Entrar</button>
 
         </form>
+
+        <?php if ($emailPendenteVerificacao): ?>
+          <form class="login-form" action="<?php echo BASE_URL; ?>pages/reenviar-verificacao.php" method="POST">
+            <input type="hidden" name="email" value="<?php echo htmlspecialchars($emailPendenteVerificacao, ENT_QUOTES, 'UTF-8'); ?>">
+            <button type="submit" class="forgot-link">Reenviar e-mail de confirmação</button>
+          </form>
+        <?php endif; ?>
 
         <p class="login-footer-text">Ainda não treina com a gente? <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php">Criar conta</a></p>
 
