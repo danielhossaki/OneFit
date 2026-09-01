@@ -1,6 +1,11 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/email-auth.php');
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+  session_start();
+}
 
 $mensagensMatricula = [
   '2' => 'Não foi possível concluir o cadastro. Confira os campos obrigatórios e tente novamente.',
@@ -12,6 +17,10 @@ $mensagensMatricula = [
   '8' => 'Digite um CPF válido com 11 números.',
   '9' => 'Não foi possível registrar o pagamento. Tente novamente.',
   '10' => 'Para se matricular na One Fit, é necessário ter ao menos 18 anos de idade ou 12 com autorização dos pais ou responsáveis.',
+  '11' => 'Digite uma data de nascimento válida, sem datas futuras.',
+  '12' => 'Digite um telefone válido com DDD.',
+  '13' => 'Selecione uma cidade válida para o estado informado.',
+  '14' => 'Não foi possível validar a cidade. Tente novamente.',
 ];
 
 $mensagemMatricula = $mensagensMatricula[(string) ($_GET['msg'] ?? '')] ?? null;
@@ -28,6 +37,97 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
       'beneficios' => array_values(array_filter(array_map('trim', explode("\n", (string) $row['beneficios'])))),
     ];
   }
+
+
+function cpfValidoMatricula(string $cpf): bool
+{
+  if (!preg_match('/^\d{11}$/', $cpf) || preg_match('/^(\d)\1{10}$/', $cpf)) {
+    return false;
+  }
+
+  for ($posicao = 9; $posicao < 11; $posicao++) {
+    $soma = 0;
+    for ($indice = 0; $indice < $posicao; $indice++) {
+      $soma += (int) $cpf[$indice] * (($posicao + 1) - $indice);
+    }
+
+    $digito = (($soma * 10) % 11) % 10;
+    if ((int) $cpf[$posicao] !== $digito) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function telefoneValidoMatricula(string $telefone): bool
+{
+  return (bool) preg_match('/^\d{10,11}$/', $telefone);
+}
+
+function estadoValidoMatricula(string $estado): bool
+{
+  $ufs = [
+    'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS',
+    'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC',
+    'SP', 'SE', 'TO',
+  ];
+
+  return in_array($estado, $ufs, true);
+}
+
+function cidadeValidaNoIbgeMatricula(string $estado, string $cidade): ?bool
+{
+  $url = 'https://servicodados.ibge.gov.br/api/v1/localidades/estados/'
+    . rawurlencode($estado)
+    . '/municipios?orderBy=nome';
+
+  $resposta = false;
+  $curl = function_exists('curl_init') ? curl_init($url) : false;
+
+  if ($curl !== false) {
+    curl_setopt_array($curl, [
+      CURLOPT_RETURNTRANSFER => true,
+      CURLOPT_CONNECTTIMEOUT => 3,
+      CURLOPT_TIMEOUT => 8,
+      CURLOPT_HTTPHEADER => ['Accept: application/json'],
+    ]);
+
+    $resposta = curl_exec($curl);
+    $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    curl_close($curl);
+
+    if ($resposta === false || $status !== 200) {
+      $resposta = false;
+    }
+  }
+
+  if ($resposta === false) {
+    $contexto = stream_context_create([
+      'http' => [
+        'timeout' => 8,
+        'header' => "Accept: application/json\r\n",
+      ],
+    ]);
+    $resposta = @file_get_contents($url, false, $contexto);
+  }
+
+  if ($resposta === false) {
+    return null;
+  }
+
+  $municipios = json_decode($resposta, true);
+  if (!is_array($municipios)) {
+    return null;
+  }
+
+  foreach ($municipios as $municipio) {
+    if (($municipio['nome'] ?? '') === $cidade) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // O servidor grava apenas os dados da cobrança. Número do cartão e CVV não
@@ -35,21 +135,21 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
-  $nome = $_POST['nome'] ?? null;
-  $cpf = isset($_POST['cpf']) ? preg_replace('/\D/', '', $_POST['cpf']) : null;
-  $nascimento = $_POST['nascimento'] ?? null;
+  $nome = trim((string) ($_POST['nome'] ?? ''));
+  $cpf = isset($_POST['cpf']) ? preg_replace('/\D/', '', (string) $_POST['cpf']) : '';
+  $nascimento = trim((string) ($_POST['nascimento'] ?? ''));
   $genero = strtolower(trim($_POST['genero'] ?? ''));
-  $telefone = isset($_POST['telefone']) ? preg_replace('/\D/', '', $_POST['telefone']) : null;
-  $email = $_POST['email'] ?? null;
-  $senha = $_POST['password'] ?? null;
-  $confirmar_senha = $_POST['confirmar_senha'] ?? null;
+  $telefone = isset($_POST['telefone']) ? preg_replace('/\D/', '', (string) $_POST['telefone']) : '';
+  $email = trim((string) ($_POST['email'] ?? ''));
+  $senha = (string) ($_POST['password'] ?? '');
+  $confirmar_senha = (string) ($_POST['confirmar_senha'] ?? '');
 
   $endereco = $_POST['endereco'] ?? null;
   $numero = $_POST['numero'] ?? null;
   $complemento = $_POST['complemento'] ?? '';
   $bairro = $_POST['bairro'] ?? null;
-  $cidade = $_POST['cidade'] ?? null;
-  $estado = $_POST['estado'] ?? null;
+  $cidade = trim((string) ($_POST['cidade'] ?? ''));
+  $estado = strtoupper(trim((string) ($_POST['estado'] ?? '')));
   $cep = isset($_POST['cep']) ? preg_replace('/\D/', '', $_POST['cep']) : '';
 
   $plano_nome = $_POST['plano'] ?? null; // Nome usado para localizar o plano ativo no banco.
@@ -75,15 +175,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       exit;
     }
 
-    if (strlen($cpf) !== 11) {
+    if (!cpfValidoMatricula($cpf)) {
       header("Location: matricula.php?msg=8");
       exit;
     }
 
+    if (!telefoneValidoMatricula($telefone)) {
+      header("Location: matricula.php?msg=12");
+      exit;
+    }
+
     $dataNascimento = DateTime::createFromFormat('!Y-m-d', $nascimento);
+    $errosDataNascimento = DateTime::getLastErrors();
+    $dataNascimentoInvalida = !$dataNascimento
+      || ($errosDataNascimento !== false
+        && ($errosDataNascimento['warning_count'] > 0 || $errosDataNascimento['error_count'] > 0))
+      || ($dataNascimento && $dataNascimento->format('Y-m-d') !== $nascimento);
+
+    if ($dataNascimentoInvalida || $dataNascimento > new DateTime('today')) {
+      header("Location: matricula.php?msg=11");
+      exit;
+    }
+
     $dataMinima = (new DateTime('today'))->modify('-12 years');
 
-    if (!$dataNascimento || $dataNascimento > $dataMinima) {
+    if ($dataNascimento > $dataMinima) {
       header("Location: matricula.php?msg=10");
       exit;
     }
@@ -96,8 +212,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Aceita somente valores de gênero disponíveis no formulário.
-    if (!in_array($genero, ['masculino', 'feminino'], true)) {
+    if (!in_array($genero, ['masculino', 'feminino', 'outro'], true)) {
       header("Location: matricula.php?msg=2");
+      exit;
+    }
+
+    if (!estadoValidoMatricula($estado)) {
+      header("Location: matricula.php?msg=13");
+      exit;
+    }
+
+    $cidadeValida = cidadeValidaNoIbgeMatricula($estado, $cidade);
+    if ($cidadeValida === null) {
+      header("Location: matricula.php?msg=14");
+      exit;
+    }
+
+    if (!$cidadeValida) {
+      header("Location: matricula.php?msg=13");
       exit;
     }
 
@@ -157,8 +289,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Cria a conta que será vinculada à matrícula.
     $stmt = $conn->prepare(
       "INSERT INTO usuarios
-                (nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, celular, senha, tipo_usuario, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'aluno', 'ativo')"
+                (nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, email_verificado, celular, senha, tipo_usuario, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'aluno', 'ativo')"
     );
     $stmt->bind_param(
       "sssssssss",
@@ -176,12 +308,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Reverte a transação se a conta não puder ser criada.
     if (!$stmt->execute()) {
+      $codigoErroBanco = (int) $stmt->errno;
+      $stmt->close();
       $conn->rollback();
-      header("Location: matricula.php?msg=2");
+      header("Location: matricula.php?msg=" . ($codigoErroBanco === 1062 ? 5 : 2));
       exit;
     }
     $id_usuario = $conn->insert_id;
     $stmt->close();
+
+    $tokenVerificacao = onefitCriarToken($conn, 'verificacao_email_tokens', $id_usuario, '+24 hours');
 
     // Cria a matrícula pendente com o valor atual do plano.
     $stmtMatricula = $conn->prepare(
@@ -226,11 +362,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmtPagamento->close();
 
     $conn->commit();
-    header("Location: " . BASE_URL . "pages/login/login.php?msg=4");
+    $emailEnviado = onefitEnviarVerificacaoEmail($email, $nome, $tokenVerificacao);
+    $_SESSION['login_tipo'] = $emailEnviado ? 'sucesso' : 'erro';
+    $_SESSION['login_msg'] = $emailEnviado
+      ? 'Cadastro realizado. Confirme seu e-mail para acessar sua conta.'
+      : 'Cadastro realizado, mas não foi possível enviar o e-mail de confirmação. Tente reenviar pela tela de login.';
+    header("Location: " . BASE_URL . "pages/login/login.php");
     exit;
     } catch (Throwable $erro) {
       $conn->rollback();
-      $codigoMensagem = $etapaPersistencia === 'pagamento' ? 9 : 2;
+      $codigoMensagem = (int) $erro->getCode() === 1062
+        ? 5
+        : ($etapaPersistencia === 'pagamento' ? 9 : 2);
       header("Location: matricula.php?msg=" . $codigoMensagem);
       exit;
     }
@@ -339,16 +482,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               </div>
               <div class="field">
                 <label for="nascimento">Data de nascimento</label>
-                <input type="date" id="nascimento" name="nascimento" required>
+                <input type="date" id="nascimento" name="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
               </div>
             </div>
 
             <div class="field">
               <label for="genero">Gênero</label>
               <select id="genero" name="genero" required>
-                <option value="">Selecione</option>
+                <option value="" selected disabled hidden>Selecione</option>
                 <option value="masculino">Masculino</option>
                 <option value="feminino">Feminino</option>
+                <option value="outro">Outro</option>
               </select>
             </div>
 
@@ -441,39 +585,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="field-row">
               <div class="field">
                 <label for="cidade">Cidade</label>
-                <input type="text" id="cidade" name="cidade" required>
+                <div class="city-combobox">
+                  <input type="text" id="cidade" name="cidade" placeholder="Selecione primeiro um estado"
+                    autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+                    aria-controls="cidade-sugestoes" data-city-selected="" disabled required>
+                  <div id="cidade-sugestoes" class="city-suggestions" role="listbox" hidden></div>
+                </div>
               </div>
               <div class="field">
                 <label for="estado">Estado</label>
-                <select id="estado" name="estado" required>
-                  <option value="">UF</option>
-                  <option>AC</option>
-                  <option>AL</option>
-                  <option>AP</option>
-                  <option>AM</option>
-                  <option>BA</option>
-                  <option>CE</option>
-                  <option>DF</option>
-                  <option>ES</option>
-                  <option>GO</option>
-                  <option>MA</option>
-                  <option>MT</option>
-                  <option>MS</option>
-                  <option>MG</option>
-                  <option>PA</option>
-                  <option>PB</option>
-                  <option>PR</option>
-                  <option>PE</option>
-                  <option>PI</option>
-                  <option>RJ</option>
-                  <option>RN</option>
-                  <option>RS</option>
-                  <option>RO</option>
-                  <option>RR</option>
-                  <option>SC</option>
-                  <option>SP</option>
-                  <option>SE</option>
-                  <option>TO</option>
+                <select id="estado" name="estado" disabled required>
+                  <option value="">Carregando estados...</option>
                 </select>
               </div>
             </div>
