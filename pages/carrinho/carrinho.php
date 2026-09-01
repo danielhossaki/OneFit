@@ -38,7 +38,7 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
     $ids = array_map('intval', array_keys($_SESSION['carrinho']));
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $types = str_repeat('i', count($ids));
-    $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_percentual, estoque, status FROM produtos WHERE id_produto IN ($placeholders)");
+    $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders)");
     $stmt->bind_param($types, ...$ids);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -65,15 +65,18 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
             : (float) $p['preco'];
         $subtotal = round($valorFinal * $quantidade, 2);
 
+        $cashbackUnitario = (float) $p['cashback_valor'];
+
         $itens[] = [
             'id' => $produtoId,
             'quantidade' => $quantidade,
             'precoUnitario' => $valorFinal,
             'subtotal' => $subtotal,
-            'cashbackPercentual' => (float) $p['cashback_percentual'],
+            'cashbackUnitario' => $cashbackUnitario,
         ];
         $totalCompra += $subtotal;
-        $cashbackGanho += round($subtotal * ((float) $p['cashback_percentual']) / 100, 2);
+        // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
+        $cashbackGanho += round($cashbackUnitario * $quantidade, 2);
     }
 
     if (empty($itens)) {
@@ -197,7 +200,7 @@ if (!empty($_SESSION['carrinho'])) {
 
     $produtosMap = [];
     try {
-        $stmt = $conn->prepare("SELECT id_produto AS id, nome, categoria, preco, desconto, cashback_percentual AS cashback, imagem FROM produtos WHERE id_produto IN ($placeholders)");
+        $stmt = $conn->prepare("SELECT id_produto AS id, nome, categoria, preco, desconto, cashback_valor AS cashback, imagem FROM produtos WHERE id_produto IN ($placeholders)");
         $stmt->bind_param($types, ...$ids);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -219,7 +222,8 @@ if (!empty($_SESSION['carrinho'])) {
         $cashback = (float) $p['cashback'];
         $valorFinal = $desconto > 0 ? round($preco * (1 - $desconto / 100), 2) : $preco;
         $subtotal = round($valorFinal * $quantidade, 2);
-        $cashbackItem = round($subtotal * ($cashback / 100), 2);
+        // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
+        $cashbackItem = round($cashback * $quantidade, 2);
 
         $totalGeral += $subtotal;
         $cashbackTotal += $cashbackItem;

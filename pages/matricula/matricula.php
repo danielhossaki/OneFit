@@ -25,6 +25,18 @@ $mensagensMatricula = [
 
 $mensagemMatricula = $mensagensMatricula[(string) ($_GET['msg'] ?? '')] ?? null;
 
+// Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
+// na Etapa 3 do formulário logo abaixo.
+$planosAtivos = [];
+if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_planos WHERE status = 'ativo' ORDER BY valor")) {
+  while ($row = $r->fetch_assoc()) {
+    $planosAtivos[] = [
+      'nome' => $row['nome'],
+      'valor' => (float) $row['valor'],
+      'descricao' => $row['descricao'],
+      'beneficios' => array_values(array_filter(array_map('trim', explode("\n", (string) $row['beneficios'])))),
+    ];
+  }
 
 
 function cpfValidoMatricula(string $cpf): bool
@@ -601,39 +613,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="plan-select">
 
-              <label class="plan-option">
-                <input type="radio" name="plano" value="iniciante" required>
-                <span class="plan-option-body">
-                  <span class="plan-option-head">
-                    <span class="plan-option-name">Iniciante</span>
-                    <span class="plan-option-price">R$99<i>/mês</i></span>
+              <?php foreach ($planosAtivos as $i => $p): ?>
+                <label class="plan-option<?php echo $i === 1 ? ' featured' : ''; ?>">
+                  <input type="radio" name="plano" value="<?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $i === 1 ? 'checked' : ''; ?> required>
+                  <?php if ($i === 1): ?><span class="badge">Mais escolhido</span><?php endif; ?>
+                  <span class="plan-option-body">
+                    <span class="plan-option-head">
+                      <span class="plan-option-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
+                      <span class="plan-option-price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><i>/mês</i></span>
+                    </span>
+                    <span class="plan-option-desc"><?php echo htmlspecialchars($p['beneficios'] ? implode(' · ', $p['beneficios']) : $p['descricao'], ENT_QUOTES, 'UTF-8'); ?></span>
                   </span>
-                  <span class="plan-option-desc">Acesso à musculação · 2 modalidades por semana</span>
-                </span>
-              </label>
-
-              <label class="plan-option featured">
-                <input type="radio" name="plano" value="completo" checked required>
-                <span class="badge">Mais escolhido</span>
-                <span class="plan-option-body">
-                  <span class="plan-option-head">
-                    <span class="plan-option-name">Completo</span>
-                    <span class="plan-option-price">R$179<i>/mês</i></span>
-                  </span>
-                  <span class="plan-option-desc">Todas as modalidades · treino personalizado · app de treino</span>
-                </span>
-              </label>
-
-              <label class="plan-option">
-                <input type="radio" name="plano" value="elite" required>
-                <span class="plan-option-body">
-                  <span class="plan-option-head">
-                    <span class="plan-option-name">Elite</span>
-                    <span class="plan-option-price">R$289<i>/mês</i></span>
-                  </span>
-                  <span class="plan-option-desc">Personal training · nutricionista · armário fixo</span>
-                </span>
-              </label>
+                </label>
+              <?php endforeach; ?>
 
             </div>
 
