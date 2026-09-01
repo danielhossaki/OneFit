@@ -185,7 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <input type="checkbox" name="remember">
               <span>Lembrar de mim</span>
             </label>
-            <a href="<?php echo BASE_URL; ?>pages/esqueci_senha/esqueci_senha.php" class="forgot-link">Esqueci minha senha</a>
+            <a href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php" class="forgot-link">Esqueci minha senha</a>
           </div>
 
           <button type="submit" class="btn btn-gold btn-block">Entrar</button>
@@ -193,7 +193,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </form>
 
         <?php if ($emailPendenteVerificacao): ?>
-          <form class="login-form" action="<?php echo BASE_URL; ?>pages/reenviar-verificacao.php" method="POST">
+          <form class="login-form" action="<?php echo BASE_URL; ?>pages/auth/email/reenviar-verificacao.php" method="POST">
             <input type="hidden" name="email" value="<?php echo htmlspecialchars($emailPendenteVerificacao, ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit" class="forgot-link">Reenviar e-mail de confirmação</button>
           </form>

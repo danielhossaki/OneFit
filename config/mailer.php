@@ -77,7 +77,7 @@ function onefitTemplateEmail(string $nome, string $texto, string $textoBotao, st
 
 function onefitEnviarVerificacaoEmail(string $email, string $nome, string $token): bool
 {
-    $link = onefitAppUrl() . '/verificar-email.php?token=' . rawurlencode($token);
+    $link = onefitAppUrl() . '/pages/auth/email/verificar-email.php?token=' . rawurlencode($token);
     $html = onefitTemplateEmail(
         $nome,
         'Seu cadastro na OneFit foi realizado. Para confirmar seu endereço de e-mail, clique no botão abaixo.',
@@ -91,7 +91,7 @@ function onefitEnviarVerificacaoEmail(string $email, string $nome, string $token
 
 function onefitEnviarRedefinicaoSenha(string $email, string $nome, string $token): bool
 {
-    $link = onefitAppUrl() . '/redefinir-senha.php?token=' . rawurlencode($token);
+    $link = onefitAppUrl() . '/pages/auth/senha/redefinir-senha.php?token=' . rawurlencode($token);
     $html = onefitTemplateEmail(
         $nome,
         'Recebemos uma solicitação para redefinir a senha da sua conta.',

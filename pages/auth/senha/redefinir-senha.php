@@ -97,31 +97,34 @@ if ($tokenValido && $_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
 </head>
-<body class="login-body">
-  <main class="login-page">
-    <section class="login-form-panel" style="grid-column: 1 / -1;">
+<body class="login-body"
+  <?php if ($erro || $sucesso): ?>
+    data-form-message="<?php echo htmlspecialchars($sucesso ?: $erro, ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message-type="<?php echo $sucesso ? 'sucesso' : 'erro'; ?>"
+  <?php endif; ?>>
+  <main class="login-page login-page-centered">
+    <section class="login-form-panel login-form-panel-centered">
       <div class="login-form-wrap">
         <span class="tag">Recuperar acesso</span>
         <h1>Redefinir senha</h1>
-        <?php if ($erro): ?><p class="form-msg form-msg-erro" style="position:static;transform:none;width:auto;"> <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
         <?php if ($sucesso): ?>
-          <p class="form-msg form-msg-sucesso" style="position:static;transform:none;width:auto;"> <?php echo htmlspecialchars($sucesso, ENT_QUOTES, 'UTF-8'); ?></p>
           <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/login/login.php">Entrar</a>
         <?php elseif ($tokenValido): ?>
           <p class="login-subtitle">Defina uma nova senha para sua conta.</p>
-          <form class="login-form" method="POST" action="<?php echo BASE_URL; ?>redefinir-senha.php">
+          <form class="login-form" method="POST" action="<?php echo BASE_URL; ?>pages/auth/senha/redefinir-senha.php">
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>">
             <div class="field"><label for="nova_senha">Nova senha</label><input type="password" id="nova_senha" name="nova_senha" minlength="8" required></div>
             <div class="field"><label for="confirmar_senha">Confirmar nova senha</label><input type="password" id="confirmar_senha" name="confirmar_senha" minlength="8" required></div>
             <button type="submit" class="btn btn-gold btn-block">Salvar nova senha</button>
           </form>
         <?php else: ?>
-          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/esqueci_senha/esqueci_senha.php">Solicitar novo link</a>
+          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php">Solicitar novo link</a>
         <?php endif; ?>
       </div>
     </section>
   </main>
+  <script src="<?php echo BASE_URL; ?>assets/js/login.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/login.js'); ?>"></script>
 </body>
 </html>

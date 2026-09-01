@@ -19,9 +19,13 @@ unset($_SESSION['esqueci_senha_msg'], $_SESSION['esqueci_senha_tipo']);
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
 </head>
-<body class="login-body">
+<body class="login-body"
+  <?php if ($mensagem): ?>
+    data-form-message="<?php echo htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message-type="<?php echo htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8'); ?>"
+  <?php endif; ?>>
   <main class="login-page">
     <section class="login-visual">
       <video autoplay muted loop playsinline>
@@ -39,8 +43,7 @@ unset($_SESSION['esqueci_senha_msg'], $_SESSION['esqueci_senha_tipo']);
         <span class="tag">Recuperar acesso</span>
         <h1>Esqueci minha senha</h1>
         <p class="login-subtitle">Digite seu e-mail para receber instruções de redefinição de senha.</p>
-        <?php if ($mensagem): ?><p class="form-msg form-msg-<?php echo htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8'); ?>" style="position:static;transform:none;width:auto;"> <?php echo htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
-        <form class="login-form" action="<?php echo BASE_URL; ?>pages/esqueci_senha/processa_esqueci_senha.php" method="POST">
+        <form class="login-form" action="<?php echo BASE_URL; ?>pages/auth/senha/processar-recuperacao.php" method="POST">
           <div class="field"><label for="email">E-mail</label><input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required></div>
           <button type="submit" class="btn btn-gold btn-block">Enviar instruções</button>
         </form>
@@ -48,5 +51,6 @@ unset($_SESSION['esqueci_senha_msg'], $_SESSION['esqueci_senha_tipo']);
       </div>
     </section>
   </main>
+  <script src="<?php echo BASE_URL; ?>assets/js/login.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/login.js'); ?>"></script>
 </body>
 </html>

@@ -3,6 +3,10 @@
 ALTER TABLE usuarios
   ADD COLUMN email_verificado TINYINT(1) NOT NULL DEFAULT 1 AFTER email;
 
+-- A partir daqui, novos usuários serão não verificados por padrão.
+ALTER TABLE usuarios
+  ALTER COLUMN email_verificado SET DEFAULT 0;
+
 CREATE TABLE verificacao_email_tokens (
   id INT NOT NULL AUTO_INCREMENT,
   usuario_id INT NOT NULL,

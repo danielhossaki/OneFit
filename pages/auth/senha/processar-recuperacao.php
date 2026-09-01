@@ -10,12 +10,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ' . BASE_URL . 'pages/esqueci_senha/esqueci_senha.php');
+    header('Location: ' . BASE_URL . 'pages/auth/senha/esqueci-senha.php');
     exit;
 }
 
 $email = trim((string) ($_POST['email'] ?? ''));
-$mensagem = 'Se existir uma conta associada a este e-mail, enviaremos as instruções para recuperá-la.';
+$mensagem = 'Solicitação recebida! Se o e-mail informado estiver cadastrado, você receberá as instruções para redefinir sua senha em alguns instantes. Confira também sua caixa de spam.';
 
 if (filter_var($email, FILTER_VALIDATE_EMAIL) && onefitPodeEnviarEmail('recuperacao-senha', $email)) {
     $stmt = $conn->prepare('SELECT id_usuario, nome, email FROM usuarios WHERE email = ? LIMIT 1');
@@ -39,5 +39,5 @@ if (filter_var($email, FILTER_VALIDATE_EMAIL) && onefitPodeEnviarEmail('recupera
 
 $_SESSION['esqueci_senha_tipo'] = 'sucesso';
 $_SESSION['esqueci_senha_msg'] = $mensagem;
-header('Location: ' . BASE_URL . 'pages/esqueci_senha/esqueci_senha.php');
+header('Location: ' . BASE_URL . 'pages/auth/senha/esqueci-senha.php');
 exit;
