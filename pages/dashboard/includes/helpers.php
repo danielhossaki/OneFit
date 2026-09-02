@@ -42,11 +42,23 @@ function bo_json($data)
 
 /**
  * Valida um celular/telefone brasileiro já sem máscara (só dígitos):
- * fixo tem 10 dígitos (DDD + 8), celular tem 11 (DDD + 9).
+ * fixo tem 10 dígitos (DDD + 8), celular tem 11 (DDD + 9, começando com 9).
+ * Também confere se o DDD informado é um código válido (11 a 99).
  */
 function bo_valida_celular(string $digitsOnly): bool
 {
-    return in_array(strlen($digitsOnly), [10, 11], true);
+    $tamanho = strlen($digitsOnly);
+    if (!in_array($tamanho, [10, 11], true)) {
+        return false;
+    }
+    $ddd = (int) substr($digitsOnly, 0, 2);
+    if ($ddd < 11 || $ddd > 99) {
+        return false;
+    }
+    if ($tamanho === 11 && $digitsOnly[2] !== '9') {
+        return false;
+    }
+    return true;
 }
 
 /**

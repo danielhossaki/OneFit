@@ -34,56 +34,6 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
         ? $post['forma_pagamento']
         : 'pix';
 
-    // Recarrega os produtos do carrinho direto do banco (preço/estoque/status atuais).
-    $ids = array_map('intval', array_keys($_SESSION['carrinho']));
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $types = str_repeat('i', count($ids));
-    $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders)");
-    $stmt->bind_param($types, ...$ids);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    $produtosBanco = [];
-    while ($row = $res->fetch_assoc()) {
-        $produtosBanco[(int) $row['id_produto']] = $row;
-    }
-    $stmt->close();
-
-    $itens = [];
-    $totalCompra = 0.0;
-    $cashbackGanho = 0.0;
-    foreach ($_SESSION['carrinho'] as $produtoId => $quantidade) {
-        if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
-            continue;
-        }
-        $p = $produtosBanco[$produtoId];
-        $quantidade = min((int) $quantidade, (int) $p['estoque']);
-        if ($quantidade <= 0) {
-            continue;
-        }
-        $valorFinal = $p['desconto'] > 0
-            ? round((float) $p['preco'] * (1 - (float) $p['desconto'] / 100), 2)
-            : (float) $p['preco'];
-        $subtotal = round($valorFinal * $quantidade, 2);
-
-        $cashbackUnitario = (float) $p['cashback_valor'];
-
-        $itens[] = [
-            'id' => $produtoId,
-            'quantidade' => $quantidade,
-            'precoUnitario' => $valorFinal,
-            'subtotal' => $subtotal,
-            'cashbackUnitario' => $cashbackUnitario,
-        ];
-        $totalCompra += $subtotal;
-        // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
-        $cashbackGanho += round($cashbackUnitario * $quantidade, 2);
-    }
-
-    if (empty($itens)) {
-        header('Location: carrinho.php?erro=1');
-        exit;
-    }
-
     // Saldo real de cashback do usuário (créditos - débitos, ignorando cancelados).
     $stmtSaldo = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
     $stmtSaldo->bind_param('i', $idUsuario);
@@ -91,10 +41,69 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
     $saldoAtual = (float) ($stmtSaldo->get_result()->fetch_assoc()['saldo'] ?? 0);
     $stmtSaldo->close();
 
-    $cashbackUsado = round(max(0, min((float) ($post['cashback_usado'] ?? 0), $saldoAtual, $totalCompra)), 2);
+    $ids = array_map('intval', array_keys($_SESSION['carrinho']));
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $types = str_repeat('i', count($ids));
 
     $conn->begin_transaction();
     try {
+        // SELECT ... FOR UPDATE dentro da transação: trava as linhas dos produtos
+        // do carrinho até o commit/rollback, evitando que duas finalizações
+        // concorrentes vendam mais unidades do que o estoque realmente permite.
+        $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders) FOR UPDATE");
+        $stmt->bind_param($types, ...$ids);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $produtosBanco = [];
+        while ($row = $res->fetch_assoc()) {
+            $produtosBanco[(int) $row['id_produto']] = $row;
+        }
+        $stmt->close();
+
+        $itens = [];
+        $totalCompra = 0.0;
+        $cashbackGanho = 0.0;
+        foreach ($_SESSION['carrinho'] as $produtoId => $quantidade) {
+            if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
+                continue;
+            }
+            $p = $produtosBanco[$produtoId];
+            $quantidade = (int) $quantidade;
+            // Estoque insuficiente: rejeita a compra inteira em vez de reduzir a
+            // quantidade em silêncio, para o cliente não pagar/receber menos do
+            // que via no carrinho nem finalizar um pedido maior que o estoque real.
+            if ($quantidade <= 0 || $quantidade > (int) $p['estoque']) {
+                $conn->rollback();
+                header('Location: carrinho.php?erro=1');
+                exit;
+            }
+            $valorFinal = $p['desconto'] > 0
+                ? round((float) $p['preco'] * (1 - (float) $p['desconto'] / 100), 2)
+                : (float) $p['preco'];
+            $subtotal = round($valorFinal * $quantidade, 2);
+
+            $cashbackUnitario = (float) $p['cashback_valor'];
+
+            $itens[] = [
+                'id' => $produtoId,
+                'quantidade' => $quantidade,
+                'precoUnitario' => $valorFinal,
+                'subtotal' => $subtotal,
+                'cashbackUnitario' => $cashbackUnitario,
+            ];
+            $totalCompra += $subtotal;
+            // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
+            $cashbackGanho += round($cashbackUnitario * $quantidade, 2);
+        }
+
+        if (empty($itens)) {
+            $conn->rollback();
+            header('Location: carrinho.php?erro=1');
+            exit;
+        }
+
+        $cashbackUsado = round(max(0, min((float) ($post['cashback_usado'] ?? 0), $saldoAtual, $totalCompra)), 2);
+
         $stmtPedido = $conn->prepare('INSERT INTO pedido (id_usuario, valor_total, forma_pagamento, status, data_pedido) VALUES (?, ?, ?, "aguardando", NOW())');
         $stmtPedido->bind_param('ids', $idUsuario, $totalCompra, $formaPagamento);
         $stmtPedido->execute();
@@ -165,7 +174,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
 
         case 'incrementar':
             if (isset($_SESSION['carrinho'][$produtoId])) {
-                $_SESSION['carrinho'][$produtoId]++;
+                $stmtEstoqueAtual = $conn->prepare('SELECT estoque FROM produtos WHERE id_produto = ? LIMIT 1');
+                $stmtEstoqueAtual->bind_param('i', $produtoId);
+                $stmtEstoqueAtual->execute();
+                $estoqueAtual = (int) ($stmtEstoqueAtual->get_result()->fetch_assoc()['estoque'] ?? 0);
+                $stmtEstoqueAtual->close();
+                if ($_SESSION['carrinho'][$produtoId] < $estoqueAtual) {
+                    $_SESSION['carrinho'][$produtoId]++;
+                } else {
+                    header('Location: carrinho.php?semestoque=1');
+                    exit;
+                }
             }
             break;
 
@@ -258,6 +277,7 @@ if (isset($_GET['sucesso']) && !empty($_SESSION['ultimo_pedido'])) {
     unset($_SESSION['ultimo_pedido']);
 }
 $erroFinalizar = isset($_GET['erro']);
+$erroSemEstoque = isset($_GET['semestoque']);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -299,6 +319,10 @@ $erroFinalizar = isset($_GET['erro']);
         <div class="crt-page-title">
             <h1>Seu carrinho</h1>
         </div>
+
+        <?php if ($erroSemEstoque): ?>
+            <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Sem estoque suficiente para adicionar mais unidades deste produto.</div>
+        <?php endif; ?>
 
         <?php if ($pedidoConcluido): ?>
             <div class="crt-empty">

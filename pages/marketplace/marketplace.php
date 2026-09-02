@@ -48,56 +48,73 @@ foreach ($produtos as $p) {
 if (!isset($_SESSION['carrinho']) || !is_array($_SESSION['carrinho'])) { $_SESSION['carrinho'] = []; }
 if (!isset($_SESSION['favoritos']) || !is_array($_SESSION['favoritos'])) { $_SESSION['favoritos'] = []; }
 
-/* ===== Endpoint AJAX (mesmo arquivo) — adicionar/remover do carrinho e favoritar ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
-    header('Content-Type: application/json; charset=utf-8');
-    $produtoId = (int) ($_POST['produto_id'] ?? 0);
-
-    switch ($_POST['acao']) {
-        case 'add_carrinho':
-            if (isset($produtos[$produtoId])) {
-                $_SESSION['carrinho'][$produtoId] = ($_SESSION['carrinho'][$produtoId] ?? 0) + 1;
-            }
-            break;
-
-        case 'favoritar':
-            if (isset($produtos[$produtoId])) {
-                if (!empty($_SESSION['favoritos'][$produtoId])) {
-                    unset($_SESSION['favoritos'][$produtoId]);
-                } else {
-                    $_SESSION['favoritos'][$produtoId] = true;
-                }
-            }
-            break;
-    }
-
-    $favoritosItens = [];
-    foreach (array_keys($_SESSION['favoritos']) as $pid) {
-        if (!isset($produtos[$pid])) {
-            continue;
+/* ===== Ação via formulário real (sem JS): adicionar ao carrinho a partir do
+   modal de detalhes de um favorito. Sempre recarrega a própria página
+   (padrão PRG, igual ao carrinho.php), mostrando um aviso quando o estoque
+   não permite adicionar mais unidades. ===== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'add_carrinho') {
+    $produtoIdForm = (int) ($_POST['produto_id'] ?? 0);
+    $categoriaVolta = (string) ($_POST['categoria'] ?? '');
+    $queryVolta = $categoriaVolta !== '' ? '&categoria=' . urlencode($categoriaVolta) : '';
+    if (isset($produtos[$produtoIdForm])) {
+        $qtdAtualForm = $_SESSION['carrinho'][$produtoIdForm] ?? 0;
+        if ($qtdAtualForm < (int) $produtos[$produtoIdForm]['estoque']) {
+            $_SESSION['carrinho'][$produtoIdForm] = $qtdAtualForm + 1;
+            header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php?adicionado=1' . $queryVolta);
+        } else {
+            header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php?semestoque=1' . $queryVolta);
         }
-        $p = $produtos[$pid];
-        $favoritosItens[] = [
-            'id' => $pid,
-            'nome' => $p['nome'],
-            'imagem' => $p['imagem'],
-            'valorFinal' => mkt_money($p['valorFinal']),
-        ];
+    } else {
+        header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php' . ($queryVolta !== '' ? '?' . ltrim($queryVolta, '&') : ''));
     }
+    exit;
+}
 
-    echo json_encode([
-        'ok' => true,
-        'favorito' => isset($_SESSION['favoritos'][$produtoId]),
-        'carrinhoCount' => array_sum($_SESSION['carrinho']),
-        'favoritosCount' => count($_SESSION['favoritos']),
-        'favoritosItens' => $favoritosItens,
-    ]);
+/* ===== Ação via formulário real (sem JS): favoritar/desfavoritar um produto
+   (usado tanto no botão de estrela do card quanto no botão de remover dentro
+   do offcanvas de favoritos). ===== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'toggle_favorito') {
+    $produtoIdForm = (int) ($_POST['produto_id'] ?? 0);
+    $categoriaVolta = (string) ($_POST['categoria'] ?? '');
+    if (isset($produtos[$produtoIdForm])) {
+        if (!empty($_SESSION['favoritos'][$produtoIdForm])) {
+            unset($_SESSION['favoritos'][$produtoIdForm]);
+        } else {
+            $_SESSION['favoritos'][$produtoIdForm] = true;
+        }
+    }
+    header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php' . ($categoriaVolta !== '' ? '?categoria=' . urlencode($categoriaVolta) : ''));
     exit;
 }
 
 $carrinhoCount = array_sum($_SESSION['carrinho']);
 $favoritosCount = count($_SESSION['favoritos']);
-$saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
+
+/* Saldo real de cashback do usuário logado (mesma conta usada no checkout do
+   carrinho: créditos - débitos, ignorando lançamentos cancelados). Antes este
+   valor vinha de uma sessão ('saldo_cashback') que nunca era preenchida em
+   nenhum outro lugar do sistema, então a tela principal sempre mostrava um
+   saldo desatualizado/zerado, diferente do saldo real exibido no checkout. */
+$saldoCashback = 0.0;
+if (isset($_SESSION['id_usuario'])) {
+    $stmtSaldoMkt = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
+    $stmtSaldoMkt->bind_param('i', $_SESSION['id_usuario']);
+    $stmtSaldoMkt->execute();
+    $saldoCashback = max(0.0, (float) ($stmtSaldoMkt->get_result()->fetch_assoc()['saldo'] ?? 0));
+    $stmtSaldoMkt->close();
+}
+
+$mktAvisoAdicionado = isset($_GET['adicionado']);
+$mktAvisoSemEstoque = isset($_GET['semestoque']);
+
+/* ===== Aba de categoria ativa (filtro por recarregamento de página, sem JS) ===== */
+$categoriaAtiva = (string) ($_GET['categoria'] ?? '');
+if (!in_array($categoriaAtiva, $categorias, true)) {
+    $categoriaAtiva = $categorias[0] ?? '';
+}
+
+/* URL de "Voltar": usa o referenciador quando disponível, senão a home. */
+$mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (BASE_URL . 'index.php');
 ?>
 
 
@@ -125,16 +142,16 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
         </div>
 
         <div class="mkt-header-actions">
-            <button type="button" class="mkt-icon-btn" id="mktBackBtn" aria-label="Voltar" title="Voltar">
+            <a class="mkt-icon-btn" href="<?php echo htmlspecialchars($mktVoltarUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="Voltar" title="Voltar">
                 <i class="bi bi-arrow-left"></i>
-            </button>
-            <button type="button" class="mkt-icon-btn" id="mktFavBtn" aria-label="Favoritos" title="Favoritos" data-bs-toggle="offcanvas" data-bs-target="#mktFavoritosOffcanvas">
+            </a>
+            <button type="button" class="mkt-icon-btn" aria-label="Favoritos" title="Favoritos" data-bs-toggle="offcanvas" data-bs-target="#mktFavoritosOffcanvas">
                 <i class="bi bi-star-fill"></i>
-                <span class="mkt-icon-badge" id="mktFavCount"><?php echo (int) $favoritosCount; ?></span>
+                <span class="mkt-icon-badge"><?php echo (int) $favoritosCount; ?></span>
             </button>
-            <a class="mkt-icon-btn" id="mktCartBtn" href="<?php echo BASE_URL; ?>pages/carrinho/carrinho.php" aria-label="Carrinho" title="Carrinho">
+            <a class="mkt-icon-btn" href="<?php echo BASE_URL; ?>pages/carrinho/carrinho.php" aria-label="Carrinho" title="Carrinho">
                 <i class="bi bi-cart3"></i>
-                <span class="mkt-icon-badge" id="mktCartCount"><?php echo (int) $carrinhoCount; ?></span>
+                <span class="mkt-icon-badge"><?php echo (int) $carrinhoCount; ?></span>
             </a>
         </div>
     </header>
@@ -146,6 +163,12 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
             <p class="mkt-cashback-saldo">Seu Cashback: <strong><?php echo mkt_money($saldoCashback); ?></strong></p>
         </div>
 
+        <?php if ($mktAvisoAdicionado): ?>
+            <div class="mkt-aviso"><i class="bi bi-check-circle"></i> Produto adicionado ao carrinho!</div>
+        <?php elseif ($mktAvisoSemEstoque): ?>
+            <div class="mkt-aviso mkt-aviso-erro"><i class="bi bi-exclamation-triangle"></i> Sem estoque suficiente para adicionar mais unidades deste produto.</div>
+        <?php endif; ?>
+
         <?php if (empty($categorias)): ?>
             <div class="mkt-empty">
                 <i class="bi bi-shop"></i>
@@ -153,20 +176,23 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
             </div>
         <?php else: ?>
 
-            <div class="mkt-tabs" id="mktTabs">
-                <?php foreach ($categorias as $i => $categoria): ?>
-                    <button type="button" class="mkt-tab<?php echo $i === 0 ? ' active' : ''; ?>" data-categoria="<?php echo htmlspecialchars($categoria); ?>">
+            <div class="mkt-tabs">
+                <?php foreach ($categorias as $categoria): ?>
+                    <a class="mkt-tab<?php echo $categoria === $categoriaAtiva ? ' active' : ''; ?>" href="?categoria=<?php echo urlencode($categoria); ?>">
                         <?php echo htmlspecialchars($categoria); ?>
-                    </button>
+                    </a>
                 <?php endforeach; ?>
             </div>
 
-            <div class="row g-3" id="mktGrid">
+            <div class="row g-3">
                 <?php foreach ($produtos as $produto): ?>
                     <?php
+                    if ($produto['categoria'] !== $categoriaAtiva) {
+                        continue;
+                    }
                     $isFavorito = !empty($_SESSION['favoritos'][$produto['id']]);
                     ?>
-                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3 mkt-card-col" data-categoria="<?php echo htmlspecialchars($produto['categoria']); ?>" style="<?php echo $categorias[0] === $produto['categoria'] ? '' : 'display:none;'; ?>">
+                    <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <div class="mkt-card">
                             <div class="mkt-card-media">
                                 <?php if (!empty($produto['imagem'])): ?>
@@ -179,9 +205,14 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
                                     <span class="mkt-badge-off"><?php echo (int) $produto['desconto']; ?>% OFF</span>
                                 <?php endif; ?>
 
-                                <button type="button" class="mkt-fav-btn<?php echo $isFavorito ? ' active' : ''; ?>" data-produto-id="<?php echo (int) $produto['id']; ?>" aria-label="Favoritar" title="Favoritar">
-                                    <i class="bi <?php echo $isFavorito ? 'bi-star-fill' : 'bi-star'; ?>"></i>
-                                </button>
+                                <form method="POST" action="marketplace.php" class="mkt-fav-form">
+                                    <input type="hidden" name="form_acao" value="toggle_favorito">
+                                    <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
+                                    <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
+                                    <button type="submit" class="mkt-fav-btn<?php echo $isFavorito ? ' active' : ''; ?>" aria-label="Favoritar" title="Favoritar">
+                                        <i class="bi <?php echo $isFavorito ? 'bi-star-fill' : 'bi-star'; ?>"></i>
+                                    </button>
+                                </form>
                             </div>
 
                             <div class="mkt-card-body">
@@ -204,9 +235,14 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
                                 <?php endif; ?>
 
                                 <div class="mkt-card-footer">
-                                    <button type="button" class="btn-mkt-gold mkt-add-cart-btn" data-produto-id="<?php echo (int) $produto['id']; ?>">
-                                        <i class="bi bi-cart-plus"></i> Adicionar
-                                    </button>
+                                    <form method="POST" action="marketplace.php">
+                                        <input type="hidden" name="form_acao" value="add_carrinho">
+                                        <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
+                                        <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <button type="submit" class="btn-mkt-gold">
+                                            <i class="bi bi-cart-plus"></i> Adicionar
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -218,137 +254,99 @@ $saldoCashback = (float) ($_SESSION['saldo_cashback'] ?? 0);
 
     </main>
 
-    <!-- Offcanvas: Favoritos -->
+    <!-- Offcanvas: Favoritos (renderizado 100% em PHP a partir da sessão) -->
     <div class="offcanvas offcanvas-end mkt-offcanvas" tabindex="-1" id="mktFavoritosOffcanvas">
         <div class="offcanvas-header">
             <h5 class="mb-0"><i class="bi bi-star-fill"></i> Seus favoritos</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fechar"></button>
         </div>
         <div class="offcanvas-body">
-            <div id="mktFavoritosLista"></div>
+            <?php
+            $favoritosProdutos = array_values(array_filter(
+                array_map(static fn($pid) => $produtos[$pid] ?? null, array_keys($_SESSION['favoritos'])),
+                static fn($p) => $p !== null
+            ));
+            ?>
+            <?php if (empty($favoritosProdutos)): ?>
+                <div class="mkt-off-empty">Você ainda não favoritou nenhum produto.</div>
+            <?php else: ?>
+                <?php foreach ($favoritosProdutos as $fp): ?>
+                    <div class="mkt-off-item">
+                        <a class="mkt-off-link" href="#mktDetalheModal<?php echo (int) $fp['id']; ?>" data-bs-toggle="modal" data-bs-target="#mktDetalheModal<?php echo (int) $fp['id']; ?>">
+                            <div class="mkt-off-thumb">
+                                <?php if (!empty($fp['imagem'])): ?>
+                                    <img src="<?php echo htmlspecialchars($fp['imagem']); ?>" alt="">
+                                <?php else: ?>
+                                    <i class="bi bi-image"></i>
+                                <?php endif; ?>
+                            </div>
+                            <div class="mkt-off-info">
+                                <div class="nome"><?php echo htmlspecialchars($fp['nome']); ?></div>
+                                <div class="sub"><?php echo mkt_money($fp['valorFinal']); ?></div>
+                            </div>
+                        </a>
+                        <form method="POST" action="marketplace.php">
+                            <input type="hidden" name="form_acao" value="toggle_favorito">
+                            <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
+                            <button type="submit" class="mkt-off-remove" title="Remover dos favoritos">
+                                <i class="bi bi-star-fill"></i>
+                            </button>
+                        </form>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 
-    <div class="mkt-toast" id="mktToast"></div>
+    <!-- Modais de detalhes: um por produto favoritado, aberto pelo item correspondente
+         no offcanvas (data-bs-toggle/data-bs-target do próprio Bootstrap, sem JS extra). -->
+    <?php foreach ($favoritosProdutos ?? [] as $fp): ?>
+        <div class="modal fade mkt-detalhe-modal" id="mktDetalheModal<?php echo (int) $fp['id']; ?>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Detalhes do produto</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mkt-detalhe-media">
+                            <?php if (!empty($fp['imagem'])): ?>
+                                <img src="<?php echo htmlspecialchars($fp['imagem']); ?>" alt="<?php echo htmlspecialchars($fp['nome']); ?>">
+                            <?php else: ?>
+                                <div class="mkt-no-image"><i class="bi bi-image"></i></div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="mkt-detalhe-categoria"><?php echo htmlspecialchars($fp['categoria']); ?></div>
+                        <h4 class="mkt-detalhe-nome"><?php echo htmlspecialchars($fp['nome']); ?></h4>
+                        <p class="mkt-detalhe-desc"><?php echo htmlspecialchars($fp['descricao']); ?></p>
+                        <div class="mkt-detalhe-preco">
+                            <?php if ($fp['desconto'] > 0): ?>
+                                <span class="mkt-preco-antigo"><?php echo mkt_money($fp['preco']); ?></span>
+                            <?php endif; ?>
+                            <span class="mkt-preco-final"><?php echo mkt_money($fp['valorFinal']); ?></span>
+                        </div>
+                        <?php if ($fp['cashback'] > 0): ?>
+                            <div class="mkt-cashback-linha">
+                                <i class="bi bi-coin"></i> Ganhe cashback: <?php echo mkt_money($fp['cashbackValor']); ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-footer">
+                        <form method="POST" action="marketplace.php">
+                            <input type="hidden" name="form_acao" value="add_carrinho">
+                            <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
+                            <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
+                            <button type="submit" class="btn-mkt-gold">
+                                <i class="bi bi-cart-plus"></i> Adicionar ao carrinho
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <?php endforeach; ?>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const MKT_URL = window.location.pathname;
-
-        /* ===== Abas de categoria ===== */
-        document.querySelectorAll('.mkt-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.mkt-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                const categoria = tab.dataset.categoria;
-                document.querySelectorAll('.mkt-card-col').forEach(col => {
-                    col.style.display = col.dataset.categoria === categoria ? '' : 'none';
-                });
-            });
-        });
-
-        /* ===== Toast ===== */
-        let mktToastTimer = null;
-        function mktShowToast(msg) {
-            const toast = document.getElementById('mktToast');
-            toast.textContent = msg;
-            toast.classList.add('show');
-            clearTimeout(mktToastTimer);
-            mktToastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
-        }
-
-        /* ===== Chamada AJAX ===== */
-        async function mktPost(acao, produtoId) {
-            const body = new URLSearchParams({ acao, produto_id: produtoId });
-            const resp = await fetch(MKT_URL, { method: 'POST', body });
-            return resp.json();
-        }
-
-        function mktUpdateBadges(data) {
-            document.getElementById('mktCartCount').textContent = data.carrinhoCount;
-            document.getElementById('mktFavCount').textContent = data.favoritosCount;
-        }
-
-        function mktRenderFavoritos(data) {
-            const lista = document.getElementById('mktFavoritosLista');
-
-            if (!data.favoritosItens.length) {
-                lista.innerHTML = '<div class="mkt-off-empty">Você ainda não favoritou nenhum produto.</div>';
-                return;
-            }
-
-            lista.innerHTML = data.favoritosItens.map(item => `
-                <div class="mkt-off-item">
-                    <div class="mkt-off-thumb">
-                        ${item.imagem ? `<img src="${item.imagem}" alt="">` : '<i class="bi bi-image"></i>'}
-                    </div>
-                    <div class="mkt-off-info">
-                        <div class="nome">${item.nome}</div>
-                        <div class="sub">${item.valorFinal}</div>
-                    </div>
-                    <button type="button" class="mkt-off-remove" data-produto-id="${item.id}" title="Remover dos favoritos">
-                        <i class="bi bi-star-fill"></i>
-                    </button>
-                </div>
-            `).join('');
-
-            lista.querySelectorAll('.mkt-off-remove').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const data = await mktPost('favoritar', btn.dataset.produtoId);
-                    mktSyncFavoritoButtons(data.favorito, btn.dataset.produtoId);
-                    mktUpdateBadges(data);
-                    mktRenderFavoritos(data);
-                });
-            });
-        }
-
-        function mktSyncFavoritoButtons(isFavorito, produtoId) {
-            const cardBtn = document.querySelector(`.mkt-fav-btn[data-produto-id="${produtoId}"]`);
-            if (cardBtn) {
-                cardBtn.classList.toggle('active', isFavorito);
-                const icon = cardBtn.querySelector('i');
-                icon.classList.toggle('bi-star', !isFavorito);
-                icon.classList.toggle('bi-star-fill', isFavorito);
-            }
-        }
-
-        /* ===== Adicionar ao carrinho ===== */
-        document.querySelectorAll('.mkt-add-cart-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                btn.disabled = true;
-                const data = await mktPost('add_carrinho', btn.dataset.produtoId);
-                mktUpdateBadges(data);
-                mktShowToast('Produto adicionado ao carrinho!');
-                btn.disabled = false;
-            });
-        });
-
-        /* ===== Favoritar ===== */
-        document.querySelectorAll('.mkt-fav-btn').forEach(btn => {
-            btn.addEventListener('click', async () => {
-                const data = await mktPost('favoritar', btn.dataset.produtoId);
-                mktSyncFavoritoButtons(data.favorito, btn.dataset.produtoId);
-                mktUpdateBadges(data);
-                mktRenderFavoritos(data);
-                mktShowToast(data.favorito ? 'Adicionado aos favoritos!' : 'Removido dos favoritos.');
-            });
-        });
-
-        /* ===== Voltar ===== */
-        document.getElementById('mktBackBtn').addEventListener('click', () => {
-            if (document.referrer) {
-                history.back();
-            } else {
-                window.location.href = '<?php echo BASE_URL; ?>index.php';
-            }
-        });
-
-        /* ===== Carrega lista de favoritos ao abrir o offcanvas ===== */
-        document.getElementById('mktFavoritosOffcanvas').addEventListener('show.bs.offcanvas', async () => {
-            const data = await mktPost('listar_favoritos', 0);
-            mktRenderFavoritos(data);
-        });
-    </script>
 
 </body>
 

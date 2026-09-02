@@ -629,6 +629,7 @@
                         <th>ID</th>
                         <th>Nome</th>
                         <th>Função</th>
+                        <th>Modalidades</th>
                         <th>Documento</th>
                         <th>Status</th>
                         <th>Ações</th>
@@ -650,6 +651,7 @@
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo $p['nome']; ?></td>
                             <td><?php echo $p['funcao']; ?></td>
+                            <td><?php echo $p['modalidades'] !== '' ? $p['modalidades'] : '—'; ?></td>
                             <td><?php echo $p['documento']; ?></td>
                             <td><?php echo bo_badge($p['status'] === 'ativo'); ?></td>
                             <td>
@@ -663,7 +665,7 @@
                         </tr>
                     <?php endforeach; ?>
                     <tr class="bo-empty-row" style="display:none">
-                        <td colspan="7">Nenhum profissional encontrado para os filtros selecionados.</td>
+                        <td colspan="8">Nenhum profissional encontrado para os filtros selecionados.</td>
                     </tr>
                 </tbody>
             </table>

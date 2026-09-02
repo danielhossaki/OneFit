@@ -39,6 +39,12 @@ $descricao = bo_str('descricao');
 $fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'profissionais');
 $foto = $fotoUpload ?? bo_str('foto');
 
+// Modalidades ministradas: só aceita valores da lista fixa (evita gravar
+// texto arbitrário vindo de fora do checklist do formulário).
+$modalidadesValidas = ['Musculação', 'CrossTraining', 'Funcional', 'Spinning', 'Boxe', 'Mobilidade & Yoga'];
+$modalidadesEnviadas = array_intersect((array) ($_POST['modalidades'] ?? []), $modalidadesValidas);
+$modalidades = implode(', ', $modalidadesEnviadas);
+
 if (!$nome || !$email || !$celular) {
     bo_flash('error', 'Preencha nome, e-mail e celular.');
     bo_redirect($secao);
@@ -67,10 +73,19 @@ if ($acao === 'update') {
     }
     $check->close();
 
-    $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, registro_profissional=?, status=?, email=?, celular=?, descricao=?, foto=? WHERE id_profissional=?');
-    $stmt->bind_param('ssssssssi', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto, $id);
-    $stmt->execute();
-    $stmt->close();
+    try {
+        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, modalidades=?, registro_profissional=?, status=?, email=?, celular=?, descricao=?, foto=? WHERE id_profissional=?');
+        $stmt->bind_param('sssssssssi', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $descricao, $foto, $id);
+        $stmt->execute();
+        $stmt->close();
+    } catch (\mysqli_sql_exception $e) {
+        // Coluna "modalidades" ainda não existe neste banco (migração
+        // modalidades-profissional-migration.sql pendente): grava sem ela.
+        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, registro_profissional=?, status=?, email=?, celular=?, descricao=?, foto=? WHERE id_profissional=?');
+        $stmt->bind_param('ssssssssi', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto, $id);
+        $stmt->execute();
+        $stmt->close();
+    }
     bo_flash('success', 'Profissional atualizado.');
     bo_redirect($secao);
 }
@@ -85,10 +100,19 @@ if ($check->get_result()->fetch_assoc()) {
 }
 $check->close();
 
-$stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, registro_profissional, status, email, celular, descricao, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-$stmt->bind_param('ssssssss', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto);
-$stmt->execute();
-$stmt->close();
+try {
+    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, modalidades, registro_profissional, status, email, celular, descricao, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('sssssssss', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $descricao, $foto);
+    $stmt->execute();
+    $stmt->close();
+} catch (\mysqli_sql_exception $e) {
+    // Coluna "modalidades" ainda não existe neste banco (migração
+    // modalidades-profissional-migration.sql pendente): grava sem ela.
+    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, registro_profissional, status, email, celular, descricao, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('ssssssss', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto);
+    $stmt->execute();
+    $stmt->close();
+}
 
 bo_flash('success', 'Profissional criado.');
 bo_redirect($secao);

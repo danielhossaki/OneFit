@@ -18,6 +18,16 @@
  * (não existe "preencher campo dinamicamente" sem JS).
  */
 
+/**
+ * Modalidades oferecidas pela academia (mesma lista exibida na landing page,
+ * seção #modalidades). Usada como checklist no cadastro/edição de
+ * profissional, para marcar quais modalidades cada um ministra.
+ */
+function bo_modalidades_disponiveis(): array
+{
+    return ['Musculação', 'CrossTraining', 'Funcional', 'Spinning', 'Boxe', 'Mobilidade & Yoga'];
+}
+
 function bo_form_action(string $arquivo): string
 {
     return BASE_URL . 'pages/dashboard/funcionalidades/' . $arquivo;
@@ -577,6 +587,20 @@ function bo_modal_profissional(?array $p, string $secao): void
                         <div class="col-6">
                             <label class="form-label">Função / especialidade</label>
                             <input type="text" class="form-control" name="funcao" value="<?php echo bo_val($p['funcao'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Modalidades ministradas</label>
+                            <?php
+                            $modalidadesSelecionadas = array_map('trim', explode(',', (string) ($p['modalidades'] ?? '')));
+                            ?>
+                            <div class="bo-checklist">
+                                <?php foreach (bo_modalidades_disponiveis() as $modalidadeOpt): ?>
+                                    <label class="bo-checklist-item">
+                                        <input type="checkbox" name="modalidades[]" value="<?php echo bo_val($modalidadeOpt); ?>" <?php echo in_array($modalidadeOpt, $modalidadesSelecionadas, true) ? 'checked' : ''; ?>>
+                                        <?php echo bo_val($modalidadeOpt); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Documento / registro</label>

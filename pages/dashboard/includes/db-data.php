@@ -281,15 +281,25 @@ if ($perfilLogado === 'admin') {
 
     // Tela "Profissionais"
     $profissionaisAdm = [];
-    $sql = "SELECT id_profissional, nome, especialidade, registro_profissional, status, email, celular, descricao, foto
-            FROM cadastro_profissional ORDER BY nome";
-    if ($r = $conn->query($sql)) {
+    try {
+        $sql = "SELECT id_profissional, nome, especialidade, modalidades, registro_profissional, status, email, celular, descricao, foto
+                FROM cadastro_profissional ORDER BY nome";
+        $r = $conn->query($sql);
+    } catch (\mysqli_sql_exception $e) {
+        // Coluna "modalidades" ainda não existe neste banco (migração
+        // modalidades-profissional-migration.sql pendente): consulta sem ela.
+        $sql = "SELECT id_profissional, nome, especialidade, registro_profissional, status, email, celular, descricao, foto
+                FROM cadastro_profissional ORDER BY nome";
+        $r = $conn->query($sql);
+    }
+    if ($r) {
         while ($row = $r->fetch_assoc()) {
             $profissionaisAdm[] = [
                 'id' => (int) $row['id_profissional'],
                 'nome' => $row['nome'],
                 'funcao' => $row['especialidade'],
                 'tituloCard' => $row['especialidade'],
+                'modalidades' => $row['modalidades'] ?? '',
                 'documento' => $row['registro_profissional'],
                 'status' => $row['status'],
                 'email' => $row['email'],

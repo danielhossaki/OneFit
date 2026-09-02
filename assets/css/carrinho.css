@@ -459,7 +459,7 @@ body {
     border-radius: 9px;
     margin-top: 8px;
     padding: 13px 12px;
-    background: linear-gradient(180deg, #ffd72b, #ffbc00);
+    background: #ffc400;
     color: #171208;
     font-size: 11px;
     font-weight: 800;
@@ -541,15 +541,13 @@ body {
     letter-spacing: 0.04em;
     border-radius: 8px;
     border: none;
-    background: linear-gradient(120deg, var(--bo-gold-dim), var(--bo-gold) 45%, var(--bo-gold-bright) 60%, var(--bo-gold) 75%, var(--bo-gold-dim));
-    background-size: 250% 100%;
+    background: var(--bo-gold);
     color: #14110e;
     cursor: pointer;
-    transition: background-position 0.3s ease, transform 0.2s ease;
+    transition: transform 0.2s ease;
 }
 
 .btn-crt-gold:hover:not(:disabled) {
-    background-position: 100% 0;
     transform: translateY(-1px);
 }
 
@@ -777,13 +775,7 @@ body {
 }
 
 .btn-crt-gold {
-    border: 1px solid #a98400;
     border-radius: 10px;
-    background: transparent;
-}
-
-.btn-crt-gold:hover:not(:disabled) {
-    background: var(--bo-gold);
 }
 
 /* Gatilhos no carrinho e drawer lateral do checkout. */

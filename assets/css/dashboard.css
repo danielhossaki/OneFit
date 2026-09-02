@@ -1436,3 +1436,29 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     }
 }
 
+/* Checklist de modalidades no cadastro de profissional */
+.bo-checklist {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface-2);
+}
+
+.bo-checklist-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.bo-checklist-item input {
+    accent-color: var(--gold);
+    cursor: pointer;
+}
+
