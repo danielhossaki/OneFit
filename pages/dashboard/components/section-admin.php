@@ -89,7 +89,7 @@
 
     <!-- Filtros: busca por texto + status (ligados à tabela pelo data-bo-target="usuarios") -->
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:320px" placeholder="Buscar por nome, email, CPF ou ID"
+        <input type="text" class="form-control" style="max-width:320px" placeholder="Buscar por ID, nome e email"
             data-bo-filter="search" data-bo-target="usuarios">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="usuarios">
             <option value="">Todos os status</option>
@@ -267,8 +267,8 @@
                 </thead>
                 <tbody>
                     <?php foreach ($pagamentos as $p): ?>
-                        <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo $p['data']; ?>"
-                            data-search="<?php echo strtolower($p['id']); ?>">
+                        <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo substr($p['data'], 0, 10); ?>"
+                            data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id']); ?>">
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($p['data'])); ?></td>
                             <td><?php echo $p['tipo']; ?></td>
@@ -502,7 +502,7 @@
                             <td><?php echo bo_money($p['preco']); ?></td>
                             <td><?php echo $p['desconto']; ?>%</td>
                             <td><?php echo bo_money($p['valorFinal']); ?></td>
-                            <td><?php echo $p['cashback']; ?>%</td>
+                            <td><?php echo bo_money($p['cashback']); ?></td>
                             <td><?php echo $p['estoque']; ?></td>
                             <td><?php echo bo_badge($p['status'] === 'disponivel', 'Disponível', 'Indisponível'); ?></td>
                             <td>
@@ -611,7 +611,7 @@
     <?php bo_modal_profissional(null, 'profissionais'); ?>
 
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome, função ou documento"
+        <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por ID, nome, função ou doc"
             data-bo-filter="search" data-bo-target="profissionais">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="profissionais">
             <option value="">Todos</option>

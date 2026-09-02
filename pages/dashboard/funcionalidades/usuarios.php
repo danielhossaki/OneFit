@@ -117,6 +117,10 @@ if (!$nascimento || !$genero || !$celular || !$nacionalidade || !$endereco || !$
     bo_flash('error', 'Preencha nascimento, gênero, celular, nacionalidade, endereço, cidade e estado.');
     bo_redirect($secao);
 }
+if (!bo_valida_celular($celular)) {
+    bo_flash('error', 'Informe um celular/telefone válido, com DDD (10 ou 11 números).');
+    bo_redirect($secao);
+}
 if (!in_array($genero, ['masculino', 'feminino', 'outro'], true)) {
     bo_flash('error', 'Selecione um gênero válido.');
     bo_redirect($secao);

@@ -13,7 +13,7 @@ function mkt_money($v)
 
 /* ===== Produtos disponíveis (cadastrados no backoffice) ===== */
 $produtos = [];
-$sql = "SELECT id_produto AS id, nome, descricao, categoria, preco, desconto, cashback_percentual AS cashback, imagem, estoque, status
+$sql = "SELECT id_produto AS id, nome, descricao, categoria, preco, desconto, cashback_valor AS cashback, imagem, estoque, status
         FROM produtos
         WHERE status = 'ativo'
         ORDER BY categoria, nome";
@@ -30,7 +30,8 @@ if ($result) {
         $row['valorFinal'] = $row['desconto'] > 0
             ? round($row['preco'] * (1 - $row['desconto'] / 100), 2)
             : $row['preco'];
-        $row['cashbackValor'] = round($row['valorFinal'] * ($row['cashback'] / 100), 2);
+        // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
+        $row['cashbackValor'] = $row['cashback'];
         $produtos[(int) $row['id']] = $row;
     }
 }

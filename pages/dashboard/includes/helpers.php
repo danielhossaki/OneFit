@@ -39,3 +39,54 @@ function bo_json($data)
 {
     return json_encode($data, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP);
 }
+
+/**
+ * Valida um celular/telefone brasileiro já sem máscara (só dígitos):
+ * fixo tem 10 dígitos (DDD + 8), celular tem 11 (DDD + 9).
+ */
+function bo_valida_celular(string $digitsOnly): bool
+{
+    return in_array(strlen($digitsOnly), [10, 11], true);
+}
+
+/**
+ * Processa (se houver) o upload de uma imagem enviada em $_FILES[$inputName]
+ * e move para assets/img/uploads/<subpasta>/, com nome único. Usado nos
+ * campos "Foto/Imagem" que aceitam upload de arquivo OU URL — o upload,
+ * quando presente, tem prioridade sobre a URL digitada.
+ *
+ * @return string|null URL pública do arquivo salvo, ou null se nenhum
+ *                      arquivo válido foi enviado neste campo.
+ */
+function bo_processar_upload_imagem(string $inputName, string $subpasta): ?string
+{
+    if (empty($_FILES[$inputName]) || $_FILES[$inputName]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+    $arquivo = $_FILES[$inputName];
+    if ($arquivo['error'] !== UPLOAD_ERR_OK) {
+        return null;
+    }
+    if ($arquivo['size'] > 3 * 1024 * 1024) {
+        return null;
+    }
+
+    $extensoesPermitidas = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+    $mime = mime_content_type($arquivo['tmp_name']);
+    $extensao = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
+    if (!isset($extensoesPermitidas[$extensao]) || $extensoesPermitidas[$extensao] !== $mime) {
+        return null;
+    }
+
+    $pastaFisica = $_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/img/uploads/' . $subpasta . '/';
+    if (!is_dir($pastaFisica)) {
+        mkdir($pastaFisica, 0755, true);
+    }
+
+    $nomeArquivo = bin2hex(random_bytes(16)) . '.' . $extensao;
+    if (!move_uploaded_file($arquivo['tmp_name'], $pastaFisica . $nomeArquivo)) {
+        return null;
+    }
+
+    return BASE_URL . 'assets/img/uploads/' . $subpasta . '/' . $nomeArquivo;
+}

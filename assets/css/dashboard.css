@@ -565,6 +565,17 @@ body {
     gap: 13px;
     margin-bottom: 18px;
     padding: 17px 19px;
+    /* Some sozinho após alguns segundos: sem isso a mensagem fica presa no
+       topo ao trocar de aba, já que o JS só alterna a section visível e
+       nunca remove este bloco (ele fica fora das <section data-section>). */
+    animation: bo-notice-fade 6s ease-in forwards;
+    overflow: hidden;
+}
+
+@keyframes bo-notice-fade {
+    0% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
+    80% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
+    100% { opacity: 0; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-width: 0; pointer-events: none; }
 }
 
 .bo-notice>i {
@@ -946,6 +957,24 @@ body {
    precisa do filtro de inverter cor (que foi pensado pro tema escuro) */
 html[data-theme="light"] .bo-modal .btn-close {
     filter: none;
+}
+
+/* Modal do perfil profissional: permanece escuro mesmo quando o painel usa
+   o tema claro. O :has() limita estas variáveis às páginas que realmente
+   carregaram section-profissional.php; outros perfis não são afetados. */
+body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal {
+    --surface: #1e1a15;
+    --surface-2: #241f18;
+    --border: rgba(243, 237, 226, 0.12);
+    --text: #f3ede2;
+    --text-muted: #b0a896;
+    --gold: #d4af37;
+    --gold-bright: #f4c430;
+    --gold-dim: #8a6b21;
+}
+
+body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.6);
 }
 
 /* Pré-visualização de imagem nos campos do tipo "image" (upload/URL) */
@@ -1346,4 +1375,13 @@ html[data-theme="light"] .bo-modal .btn-close {
         width: 100%;
         justify-content: center;
     }
+    .bo-settings-logout {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .btn-bo-outline {
+        padding: 8px 11px;
+    }
 }
+

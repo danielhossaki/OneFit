@@ -4,6 +4,70 @@
   const form = document.querySelector('.matricula-form');
   if (!form) return;
 
+  const onlyDigits = (value) => String(value).replace(/\D/g, '');
+
+  function isValidCpf(value) {
+    const cpf = onlyDigits(value);
+    if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false;
+
+    for (let position = 9; position < 11; position += 1) {
+      let sum = 0;
+      for (let index = 0; index < position; index += 1) {
+        sum += Number(cpf[index]) * ((position + 1) - index);
+      }
+      const digit = (sum * 10) % 11 % 10;
+      if (Number(cpf[position]) !== digit) return false;
+    }
+
+    return true;
+  }
+
+  function isValidBirthDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return date.getFullYear() === year
+      && date.getMonth() === month - 1
+      && date.getDate() === day
+      && date <= today;
+  }
+
+  function customMessageFor(input) {
+    if (!input.value.trim()) return '';
+
+    if (input.id === 'cpf' && !isValidCpf(input.value)) {
+      return 'Digite um CPF válido.';
+    }
+
+    if (input.id === 'telefone') {
+      const digits = onlyDigits(input.value);
+      if (digits.length < 10 || digits.length > 11) {
+        return 'Digite um telefone com DDD válido.';
+      }
+    }
+
+    if (input.id === 'nascimento' && !isValidBirthDate(input.value)) {
+      return 'Digite uma data de nascimento válida, sem datas futuras.';
+    }
+
+    if (input.id === 'cidade' && input.dataset.citySelected !== input.value) {
+      return 'Selecione uma cidade válida da lista.';
+    }
+
+    if (input.id === 'confirmar-senha') {
+      const senha = document.getElementById('password');
+      if (senha?.value && input.value !== senha.value) {
+        return 'As senhas não coincidem.';
+      }
+    }
+
+    return '';
+  }
+
   const steps = Array.from(form.querySelectorAll('.form-step'));
   const progressFill = document.getElementById('progress-fill');
   const progressSteps = Array.from(document.querySelectorAll('.progress-step'));
@@ -83,8 +147,10 @@
     const panel = input.closest('.payment-panel');
     if (panel && !panel.classList.contains('active')) return true;
 
+    const customMessage = customMessageFor(input);
+    input.setCustomValidity(customMessage);
     const valid = input.checkValidity();
-    setFieldState(input, valid);
+    setFieldState(input, valid, customMessage);
     return valid;
   }
 
@@ -94,7 +160,13 @@
     input.addEventListener('input', () => {
       const field = input.closest('.field');
       if (field?.classList.contains('invalid')) validateField(input);
+
+      if (input.id === 'password') {
+        const confirmar = document.getElementById('confirmar-senha');
+        if (confirmar?.value) validateField(confirmar);
+      }
     });
+    input.addEventListener('change', () => validateField(input));
   });
 
   function validateStep(n) {
@@ -118,6 +190,15 @@
     }
 
     // Aplica feedback visual ao grupo de planos quando nenhum está selecionado.
+    if (n === 2) {
+      const cidade = document.getElementById('cidade');
+      const estado = document.getElementById('estado');
+      if (estado?.value && cidade?.disabled) {
+        setFieldState(cidade, false, cidade.dataset.cityError || 'Aguarde o carregamento das cidades.');
+        valid = false;
+      }
+    }
+
     if (n === 3) {
       const planWrap = step.querySelector('.plan-select');
       const checked = step.querySelector('input[name="plano"]:checked');
@@ -167,6 +248,7 @@
   form.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     if (e.target.tagName === 'TEXTAREA') return;
+    if (e.target.id === 'cidade') return;
 
     if (current < total) {
       e.preventDefault();
@@ -219,14 +301,13 @@
   });
 
   // Formata campos numéricos sem alterar os valores tratados pelo PHP.
-  const onlyDigits = (v) => v.replace(/\D/g, '');
-
   function mask(id, formatter, maxDigits) {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', () => {
       const digits = onlyDigits(el.value).slice(0, maxDigits);
       el.value = formatter(digits);
+      if (el.closest('.field')?.classList.contains('invalid')) validateField(el);
     });
   }
 
@@ -254,6 +335,203 @@
 
   mask('cartao-cvv', (d) => d, 4);
 
+  const ibgeApi = 'https://servicodados.ibge.gov.br/api/v1/localidades';
+  const estadoInput = document.getElementById('estado');
+  const cidadeInput = document.getElementById('cidade');
+  const cidadeSugestoes = document.getElementById('cidade-sugestoes');
+  let cidades = [];
+  let buscaCidadesController;
+  let estadoPendenteDoCep = '';
+  let cidadePendenteDoCep = '';
+
+  const normalizarBusca = (value) => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('pt-BR')
+    .trim();
+
+  function fecharSugestoesCidade() {
+    if (!cidadeSugestoes || !cidadeInput) return;
+    cidadeSugestoes.hidden = true;
+    cidadeSugestoes.replaceChildren();
+    cidadeInput.setAttribute('aria-expanded', 'false');
+  }
+
+  function limparCidade(placeholder, { disabled = true, error = '' } = {}) {
+    if (!cidadeInput) return;
+    cidades = [];
+    cidadeInput.value = '';
+    cidadeInput.dataset.citySelected = '';
+    cidadeInput.dataset.cityError = error;
+    cidadeInput.placeholder = placeholder;
+    cidadeInput.disabled = disabled;
+    fecharSugestoesCidade();
+    setFieldState(cidadeInput, true);
+  }
+
+  function selecionarCidade(nome) {
+    if (!cidadeInput) return;
+    cidadeInput.value = nome;
+    cidadeInput.dataset.citySelected = nome;
+    cidadeInput.dataset.cityError = '';
+    fecharSugestoesCidade();
+    validateField(cidadeInput);
+  }
+
+  function mostrarSugestoesCidade(termo = '') {
+    if (!cidadeInput || !cidadeSugestoes || cidadeInput.disabled) return;
+
+    const busca = normalizarBusca(termo);
+    const resultados = cidades
+      .filter((nome) => normalizarBusca(nome).includes(busca))
+      .slice(0, 30);
+
+    cidadeSugestoes.replaceChildren();
+    if (!resultados.length) {
+      const vazio = document.createElement('div');
+      vazio.className = 'city-suggestion-empty';
+      vazio.textContent = 'Nenhuma cidade encontrada.';
+      cidadeSugestoes.appendChild(vazio);
+    } else {
+      resultados.forEach((nome) => {
+        const opcao = document.createElement('button');
+        opcao.type = 'button';
+        opcao.className = 'city-suggestion';
+        opcao.setAttribute('role', 'option');
+        opcao.textContent = nome;
+        opcao.addEventListener('click', () => selecionarCidade(nome));
+        cidadeSugestoes.appendChild(opcao);
+      });
+    }
+
+    cidadeSugestoes.hidden = false;
+    cidadeInput.setAttribute('aria-expanded', 'true');
+  }
+
+  async function carregarCidades(uf) {
+    if (!cidadeInput) return;
+    buscaCidadesController?.abort();
+    buscaCidadesController = new AbortController();
+    limparCidade('Carregando cidades...', { disabled: true });
+
+    try {
+      const resposta = await fetch(
+        `${ibgeApi}/estados/${encodeURIComponent(uf)}/municipios?orderBy=nome`,
+        { signal: buscaCidadesController.signal }
+      );
+      if (!resposta.ok) throw new Error('Falha ao carregar municípios.');
+
+      const municipios = await resposta.json();
+      cidades = municipios
+        .map((municipio) => municipio.nome)
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      cidadeInput.disabled = false;
+      cidadeInput.placeholder = 'Digite ou selecione a cidade';
+      cidadeInput.dataset.cityError = '';
+
+      if (cidadePendenteDoCep && cidades.includes(cidadePendenteDoCep)) {
+        selecionarCidade(cidadePendenteDoCep);
+      }
+      cidadePendenteDoCep = '';
+    } catch (erro) {
+      if (erro.name === 'AbortError') return;
+      limparCidade('Não foi possível carregar as cidades', {
+        disabled: true,
+        error: 'Não foi possível carregar as cidades.',
+      });
+      setFieldState(cidadeInput, false, cidadeInput.dataset.cityError);
+    }
+  }
+
+  function preencherEstados(estados) {
+    if (!estadoInput) return;
+    estadoInput.replaceChildren();
+
+    const inicial = document.createElement('option');
+    inicial.value = '';
+    inicial.textContent = 'Selecione o estado';
+    estadoInput.appendChild(inicial);
+
+    estados.forEach((estado) => {
+      const opcao = document.createElement('option');
+      opcao.value = estado.sigla;
+      opcao.textContent = `${estado.nome} (${estado.sigla})`;
+      estadoInput.appendChild(opcao);
+    });
+
+    estadoInput.disabled = false;
+  }
+
+  async function carregarEstados() {
+    if (!estadoInput) return;
+
+    try {
+      const resposta = await fetch(`${ibgeApi}/estados?orderBy=nome`);
+      if (!resposta.ok) throw new Error('Falha ao carregar estados.');
+
+      const estados = await resposta.json();
+      preencherEstados(estados);
+
+      if (estadoPendenteDoCep) {
+        estadoInput.value = estadoPendenteDoCep;
+        estadoPendenteDoCep = '';
+        estadoInput.dispatchEvent(new CustomEvent('change', { detail: { fromCep: true } }));
+      }
+    } catch (erro) {
+      estadoInput.replaceChildren();
+      const falha = document.createElement('option');
+      falha.value = '';
+      falha.textContent = 'Não foi possível carregar estados';
+      estadoInput.appendChild(falha);
+      estadoInput.disabled = true;
+      setFieldState(estadoInput, false, 'Não foi possível carregar os estados.');
+    }
+  }
+
+  function selecionarLocalidadeDoCep(uf, cidade) {
+    if (!estadoInput || !uf) return;
+
+    cidadePendenteDoCep = cidade || '';
+    if (estadoInput.disabled) {
+      estadoPendenteDoCep = uf;
+      return;
+    }
+
+    estadoInput.value = uf;
+    estadoInput.dispatchEvent(new CustomEvent('change', { detail: { fromCep: true } }));
+  }
+
+  if (estadoInput && cidadeInput) {
+    estadoInput.addEventListener('change', (event) => {
+      const uf = estadoInput.value;
+      if (!event.detail?.fromCep) cidadePendenteDoCep = '';
+      if (!uf) {
+        buscaCidadesController?.abort();
+        limparCidade('Selecione primeiro um estado');
+        return;
+      }
+      carregarCidades(uf);
+    });
+
+    cidadeInput.addEventListener('focus', () => mostrarSugestoesCidade(cidadeInput.value));
+    cidadeInput.addEventListener('input', () => {
+      cidadeInput.dataset.citySelected = '';
+      if (cidadeInput.closest('.field')?.classList.contains('invalid')) validateField(cidadeInput);
+      mostrarSugestoesCidade(cidadeInput.value);
+    });
+    cidadeInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') fecharSugestoesCidade();
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.city-combobox')) fecharSugestoesCidade();
+    });
+
+    carregarEstados();
+  }
+
   // Consulta o ViaCEP e preenche os campos de endereço disponíveis.
   const buscarCepBtn = document.getElementById('buscar-cep');
   if (buscarCepBtn) {
@@ -280,8 +558,7 @@
           setFieldState(cepInput, true);
           document.getElementById('endereco').value = data.logradouro || '';
           document.getElementById('bairro').value = data.bairro || '';
-          document.getElementById('cidade').value = data.localidade || '';
-          document.getElementById('estado').value = data.uf || '';
+          selecionarLocalidadeDoCep(data.uf || '', data.localidade || '');
           document.getElementById('numero').focus();
         }
       } catch (err) {

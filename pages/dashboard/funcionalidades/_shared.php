@@ -11,6 +11,7 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+require __DIR__ . '/../includes/helpers.php';
 
 if (($_SESSION['tipo_usuario'] ?? '') !== 'admin') {
     header('Location: ' . BASE_URL . 'pages/dashboard/dashboard.php');

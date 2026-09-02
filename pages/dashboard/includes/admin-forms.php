@@ -23,6 +23,11 @@ function bo_form_action(string $arquivo): string
     return BASE_URL . 'pages/dashboard/funcionalidades/' . $arquivo;
 }
 
+function bo_action_url(string $arquivo): string
+{
+    return BASE_URL . 'pages/dashboard/actions/' . $arquivo;
+}
+
 function bo_csrf_field(): string
 {
     return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">';
@@ -166,8 +171,8 @@ function bo_modal_permissao_nova(string $secao): void
                         <?php echo bo_hidden('secao', $secao); ?>
                         <?php echo bo_hidden('acao', 'create'); ?>
                         <div class="col-12">
-                            <label class="form-label">ID do usuário</label>
-                            <input type="text" class="form-control" name="usuarioId" required>
+                            <label class="form-label">E-mail do usuário</label>
+                            <input type="email" class="form-control" name="email" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Tipo de função</label>
@@ -422,7 +427,7 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                     <h5 class="modal-title"><?php echo $isEdit ? 'Editar produto' : 'Cadastro de Produto'; ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <form method="POST" action="<?php echo bo_form_action('produtos.php'); ?>">
+                <form method="POST" action="<?php echo bo_form_action('produtos.php'); ?>" enctype="multipart/form-data">
                     <div class="modal-body row g-3">
                         <?php echo bo_csrf_field(); ?>
                         <?php echo bo_hidden('secao', $secao); ?>
@@ -449,8 +454,8 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                             <input type="number" step="0.01" min="0" max="100" class="form-control" name="desconto" value="<?php echo bo_val($p['desconto'] ?? '0'); ?>">
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Cashback (%)</label>
-                            <input type="number" step="0.01" min="0" max="100" class="form-control" name="cashback" value="<?php echo bo_val($p['cashback'] ?? '0'); ?>">
+                            <label class="form-label">Cashback (R$)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="cashback" value="<?php echo bo_val($p['cashback'] ?? '0'); ?>">
                         </div>
                         <div class="col-6">
                             <label class="form-label">Estoque</label>
@@ -459,6 +464,10 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                         <div class="col-6">
                             <label class="form-label">Imagem (URL)</label>
                             <input type="text" class="form-control" name="imagem" value="<?php echo bo_val($p['imagem'] ?? ''); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">ou enviar arquivo</label>
+                            <input type="file" class="form-control" name="imagem_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Descrição</label>
@@ -524,6 +533,10 @@ function bo_modal_plano(?array $p, string $secao): void
                             <label class="form-label">Descrição</label>
                             <textarea class="form-control" name="descricao" rows="3"><?php echo bo_val($p['descricao'] ?? ''); ?></textarea>
                         </div>
+                        <div class="col-12">
+                            <label class="form-label">Benefícios (um por linha, exibidos no card do site)</label>
+                            <textarea class="form-control" name="beneficios" rows="4" placeholder="Acesso à musculação&#10;2 modalidades por semana&#10;Avaliação física inicial"><?php echo bo_val($p['beneficios'] ?? ''); ?></textarea>
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
@@ -551,7 +564,7 @@ function bo_modal_profissional(?array $p, string $secao): void
                     <h5 class="modal-title"><?php echo $isEdit ? 'Editar profissional' : 'Novo Profissional'; ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
                 </div>
-                <form method="POST" action="<?php echo bo_form_action('profissionais.php'); ?>">
+                <form method="POST" action="<?php echo bo_form_action('profissionais.php'); ?>" enctype="multipart/form-data">
                     <div class="modal-body row g-3">
                         <?php echo bo_csrf_field(); ?>
                         <?php echo bo_hidden('secao', $secao); ?>
@@ -582,15 +595,148 @@ function bo_modal_profissional(?array $p, string $secao): void
                         </div>
                         <div class="col-6">
                             <label class="form-label">Celular</label>
-                            <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>">
+                            <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>" placeholder="DDD + número" required>
                         </div>
-                        <div class="col-12">
+                        <div class="col-6">
                             <label class="form-label">Foto (URL)</label>
                             <input type="text" class="form-control" name="foto" value="<?php echo bo_val($p['foto'] ?? ''); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">ou enviar arquivo</label>
+                            <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Descrição</label>
                             <textarea class="form-control" name="descricao" rows="3"><?php echo bo_val($p['descricao'] ?? ''); ?></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/* =======================================================================
+ * MEU PERFIL (qualquer perfil logado — não é exclusivo do admin)
+ * ===================================================================== */
+function bo_modal_perfil_editar(array $u, int $idUsuario): void
+{
+    ?>
+    <div class="modal fade bo-modal" id="modalPerfilEditar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Editar perfil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_action_url('update-profile.php'); ?>" enctype="multipart/form-data">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <div class="col-6">
+                            <label class="form-label">ID do usuário</label>
+                            <input type="text" class="form-control" value="#<?php echo str_pad((string) $idUsuario, 4, '0', STR_PAD_LEFT); ?>" disabled>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Documento (CPF)</label>
+                            <input type="text" class="form-control" name="documento" value="<?php echo bo_val($u['documento'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($u['nome'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control" name="email" value="<?php echo bo_val($u['email'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Telefone/Celular</label>
+                            <input type="text" class="form-control" name="telefone" value="<?php echo bo_val($u['telefone'] ?? ''); ?>" placeholder="DDD + número" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Nacionalidade</label>
+                            <input type="text" class="form-control" name="nacionalidade" value="<?php echo bo_val($u['nacionalidade'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Data de nascimento</label>
+                            <input type="date" class="form-control" name="nascimento" value="<?php echo bo_val($u['nascimento'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Gênero</label>
+                            <select class="form-select" name="genero" required>
+                                <option value="masculino" <?php echo ($u['genero'] ?? '') === 'masculino' ? 'selected' : ''; ?>>Masculino</option>
+                                <option value="feminino" <?php echo ($u['genero'] ?? '') === 'feminino' ? 'selected' : ''; ?>>Feminino</option>
+                                <option value="outro" <?php echo ($u['genero'] ?? '') === 'outro' ? 'selected' : ''; ?>>Outro</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Estado (UF)</label>
+                            <input type="text" class="form-control" name="estado" maxlength="2" value="<?php echo bo_val($u['estado'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Endereço</label>
+                            <input type="text" class="form-control" name="endereco" value="<?php echo bo_val($u['endereco'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Cidade</label>
+                            <input type="text" class="form-control" name="cidade" value="<?php echo bo_val($u['cidade'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Altura (m)</label>
+                            <input type="number" step="0.01" min="0.5" max="3" class="form-control" name="altura" value="<?php echo bo_val($u['altura'] ?? ''); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Peso (kg)</label>
+                            <input type="number" step="0.1" min="1" max="500" class="form-control" name="peso" value="<?php echo bo_val($u['peso'] ?? ''); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Foto (URL)</label>
+                            <input type="text" class="form-control" name="foto" value="<?php echo bo_val($u['foto'] ?? ''); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">ou enviar arquivo</label>
+                            <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+function bo_modal_senha_alterar(): void
+{
+    ?>
+    <div class="modal fade bo-modal" id="modalSenhaAlterar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Alterar senha</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_action_url('senha.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <div class="col-12">
+                            <label class="form-label">Senha atual</label>
+                            <input type="password" class="form-control" name="senha_atual" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Nova senha</label>
+                            <input type="password" class="form-control" name="senha_nova" minlength="6" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Confirmar nova senha</label>
+                            <input type="password" class="form-control" name="senha_confirma" minlength="6" required>
                         </div>
                     </div>
                     <div class="modal-footer">
