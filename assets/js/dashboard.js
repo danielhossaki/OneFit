@@ -31,6 +31,7 @@ const BO_PERFIS = {
             { key: 'produtos', label: 'Produtos', icon: 'bi-box-seam' },
             { key: 'planos', label: 'Cadastro de Planos', icon: 'bi-clipboard-check' },
             { key: 'profissionais', label: 'Profissionais', icon: 'bi-person-badge' },
+            { key: 'modalidades', label: 'Modalidades', icon: 'bi-activity' },
             { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
@@ -846,8 +847,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Excluir — usado só pelas telas sem persistência real (ex: ficha de
-        // treino do aluno). No admin isso agora é um link para uma página de
-        // confirmação em PHP (ver bo_link_excluir em includes/admin-forms.php).
+        // treino do aluno). No admin isso agora é um modal Bootstrap centralizado
+        // (ver bo_botao_excluir/bo_modal_confirmar_exclusao em includes/admin-forms.php).
         const deleteBtn = event.target.closest('[data-bo-action="delete"]');
         if (deleteBtn) {
             const label = deleteBtn.getAttribute('data-bo-name') || 'este registro';

@@ -22,7 +22,7 @@ $cidade = bo_str('cidade');
 $estado = strtoupper(bo_str('estado'));
 $alturaStr = bo_str('altura');
 $pesoStr = bo_str('peso');
-$fotoUrl = bo_str('foto');
+$fotoAtual = bo_str('foto_atual');
 
 $altura = $alturaStr === '' ? null : filter_var($alturaStr, FILTER_VALIDATE_FLOAT);
 $peso = $pesoStr === '' ? null : filter_var($pesoStr, FILTER_VALIDATE_FLOAT);
@@ -63,13 +63,8 @@ if (($altura !== null && ($altura === false || $altura <= 0 || $altura > 3)) ||
     bo_flash('error', 'Confira os valores de altura e peso.');
     bo_redirect_perfil();
 }
-if ($fotoUrl && (!filter_var($fotoUrl, FILTER_VALIDATE_URL) || strlen($fotoUrl) > 255)) {
-    bo_flash('error', 'Informe uma URL válida para a foto.');
-    bo_redirect_perfil();
-}
-
 $fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'perfil');
-$foto = $fotoUpload ?? $fotoUrl;
+$foto = $fotoUpload ?? $fotoAtual;
 
 $cidadeEstado = $cidade . '/' . $estado;
 $idUsuario = (int) $_SESSION['id_usuario'];

@@ -130,7 +130,7 @@
                                         <i class="bi bi-pencil"></i>
                                     </button>
                                     <?php bo_form_toggle('usuarios', $u['id'], 'usuarios', $u['status'] === 'ativo'); ?>
-                                    <?php echo bo_link_excluir('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
+                                    <?php echo bo_botao_excluir('usuarios', $u['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -145,6 +145,7 @@
     </div>
     <?php foreach ($usuarios as $u): ?>
         <?php bo_modal_usuario($u, 'usuarios'); ?>
+        <?php bo_modal_confirmar_exclusao('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
     <?php endforeach; ?>
 </section>
 
@@ -159,14 +160,14 @@
             <i class="bi bi-plus-lg"></i> Cadastrar Permissão
         </button>
     </div>
-    <?php bo_modal_permissao_nova('permissoes'); ?>
+    <?php bo_modal_permissao_nova('permissoes', $funcoes); ?>
 
     <div class="bo-table-wrap">
         <div class="table-responsive">
             <table class="bo-table" data-bo-table="permissoes">
                 <thead>
                     <tr>
-                        <th>ID usuário</th>
+                        <th>ID</th>
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Tipo de função</th>
@@ -175,17 +176,17 @@
                 </thead>
                 <tbody>
                     <?php foreach ($permissoes as $p): ?>
-                        <tr data-search="<?php echo strtolower($p['usuarioId'] . ' ' . $p['nome'] . ' ' . $p['email']); ?>">
-                            <td>#<?php echo str_pad($p['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
+                        <tr data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome'] . ' ' . $p['email']); ?>">
+                            <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo $p['nome']; ?></td>
                             <td><?php echo $p['email']; ?></td>
                             <td><?php echo $p['funcaoLabel']; ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPermissaoEditar<?php echo $p['usuarioId']; ?>">
+                                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPermissaoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <?php echo bo_link_excluir('permissoes', $p['usuarioId'], 'a permissão de ' . $p['nome'], 'permissoes'); ?>
+                                    <?php echo bo_botao_excluir('permissoes', $p['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -198,27 +199,37 @@
         </div>
     </div>
     <?php foreach ($permissoes as $p): ?>
-        <?php bo_modal_permissao_editar($p, 'permissoes'); ?>
+        <?php bo_modal_permissao_editar($p, 'permissoes', $funcoes); ?>
+        <?php bo_modal_confirmar_exclusao('permissoes', $p['id'], 'a permissão de ' . $p['nome'], 'permissoes'); ?>
     <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Funções (legenda fixa: são os tipos de acesso do banco, não uma tabela editável) ===== -->
+<!-- ===== ADMIN · Funções (tabela `funcao`, usada pela tela "Permissões") ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="funcoes">
     <div class="bo-page-title">
         <div>
             <h1>Funções</h1>
-            <p>Referência dos níveis de acesso do sistema. Para elevar ou revogar o acesso de um usuário, use a tela "Permissões".</p>
+            <p>Gerencie as funções disponíveis para conceder permissões aos usuários.</p>
         </div>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalFuncaoNova">
+            <i class="bi bi-plus-lg"></i> Nova Função
+        </button>
     </div>
+    <?php bo_modal_funcao(null, 'funcoes'); ?>
 
     <div class="bo-list">
         <?php foreach ($funcoes as $f): ?>
             <div class="bo-list-item">
-                <div>
-                    <div class="bo-list-title"><?php echo $f['nome']; ?></div>
-                    <div class="bo-list-sub"><?php echo $f['permissoes']; ?></div>
+                <div class="bo-list-title"><?php echo $f['nome']; ?></div>
+                <div class="bo-table-actions">
+                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalFuncaoEditar<?php echo $f['id']; ?>">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <?php echo bo_botao_excluir('funcoes', $f['id']); ?>
                 </div>
             </div>
+            <?php bo_modal_funcao($f, 'funcoes'); ?>
+            <?php bo_modal_confirmar_exclusao('funcoes', $f['id'], 'a função ' . $f['nome'], 'funcoes'); ?>
         <?php endforeach; ?>
     </div>
 </section>
@@ -280,7 +291,7 @@
                                     <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalPagamentoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <?php echo bo_link_excluir('pagamentos', $p['id'], 'o pagamento #' . $p['id'], 'pagamentos'); ?>
+                                    <?php echo bo_botao_excluir('pagamentos', $p['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -294,6 +305,7 @@
     </div>
     <?php foreach ($pagamentos as $p): ?>
         <?php bo_modal_pagamento($p, 'pagamentos'); ?>
+        <?php bo_modal_confirmar_exclusao('pagamentos', $p['id'], 'o pagamento #' . $p['id'], 'pagamentos'); ?>
     <?php endforeach; ?>
 </section>
 
@@ -370,7 +382,7 @@
                 </thead>
                 <tbody>
                     <?php foreach ($cashbackTransacoes as $c): ?>
-                        <tr data-type="<?php echo $c['tipo']; ?>" data-search="<?php echo strtolower($c['id']); ?>">
+                        <tr data-type="<?php echo $c['tipo']; ?>" data-search="<?php echo strtolower('#' . str_pad($c['id'], 4, '0', STR_PAD_LEFT) . ' ' . $c['id']); ?>">
                             <td>#<?php echo str_pad($c['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($c['data'])); ?></td>
                             <td><?php echo $c['tipo'] === 'credito' ? 'Crédito' : 'Débito'; ?></td>
@@ -379,7 +391,7 @@
                             <td><?php echo $c['motivo']; ?></td>
                             <td>
                                 <div class="bo-table-actions">
-                                    <?php echo bo_link_excluir('cashbacks', $c['id'], 'a transação #' . $c['id'], 'cashbacks'); ?>
+                                    <?php echo bo_botao_excluir('cashbacks', $c['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -391,6 +403,9 @@
             </table>
         </div>
     </div>
+    <?php foreach ($cashbackTransacoes as $c): ?>
+        <?php bo_modal_confirmar_exclusao('cashbacks', $c['id'], 'a transação #' . $c['id'], 'cashbacks'); ?>
+    <?php endforeach; ?>
 </section>
 
 <!-- ===== ADMIN · Categorias (organização dos produtos da loja) ===== -->
@@ -414,10 +429,11 @@
                     <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalCategoriaEditar<?php echo $c['id']; ?>">
                         <i class="bi bi-pencil"></i>
                     </button>
-                    <?php echo bo_link_excluir('categorias', $c['id'], 'a categoria ' . $c['nome'], 'categorias'); ?>
+                    <?php echo bo_botao_excluir('categorias', $c['id']); ?>
                 </div>
             </div>
             <?php bo_modal_categoria($c, 'categorias'); ?>
+            <?php bo_modal_confirmar_exclusao('categorias', $c['id'], 'a categoria ' . $c['nome'], 'categorias'); ?>
         <?php endforeach; ?>
     </div>
 </section>
@@ -487,7 +503,7 @@
                 <tbody>
                     <?php foreach ($produtos as $p): ?>
                         <tr data-status="<?php echo $p['status']; ?>"
-                            data-search="<?php echo strtolower($p['id'] . ' ' . $p['nome']); ?>">
+                            data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome']); ?>">
                             <td>
                                 <div class="bo-thumb">
                                     <?php if ($p['imagem']): ?>
@@ -511,7 +527,7 @@
                                     <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalProdutoEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <?php echo bo_link_excluir('produtos', $p['id'], $p['nome'], 'produtos'); ?>
+                                    <?php echo bo_botao_excluir('produtos', $p['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -525,6 +541,7 @@
     </div>
     <?php foreach ($produtos as $p): ?>
         <?php bo_modal_produto($p, 'produtos', $categoriasAtivasOptions); ?>
+        <?php bo_modal_confirmar_exclusao('produtos', $p['id'], $p['nome'], 'produtos'); ?>
     <?php endforeach; ?>
 </section>
 
@@ -568,7 +585,7 @@
                 <tbody>
                     <?php foreach ($planos as $p): ?>
                         <tr data-status="<?php echo $p['status']; ?>"
-                            data-search="<?php echo strtolower($p['id'] . ' ' . $p['nome']); ?>">
+                            data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome']); ?>">
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo $p['nome']; ?></td>
                             <td><?php echo bo_money($p['valor']); ?></td>
@@ -608,7 +625,7 @@
             <i class="bi bi-plus-lg"></i> Novo Profissional
         </button>
     </div>
-    <?php bo_modal_profissional(null, 'profissionais'); ?>
+    <?php bo_modal_profissional(null, 'profissionais', $modalidadesOptions); ?>
 
     <div class="bo-filters">
         <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por ID, nome, função ou doc"
@@ -659,7 +676,7 @@
                                     <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalProfissionalEditar<?php echo $p['id']; ?>">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <?php echo bo_link_excluir('profissionais', $p['id'], $p['nome'], 'profissionais'); ?>
+                                    <?php echo bo_botao_excluir('profissionais', $p['id']); ?>
                                 </div>
                             </td>
                         </tr>
@@ -672,6 +689,37 @@
         </div>
     </div>
     <?php foreach ($profissionaisAdm as $p): ?>
-        <?php bo_modal_profissional($p, 'profissionais'); ?>
+        <?php bo_modal_profissional($p, 'profissionais', $modalidadesOptions); ?>
+        <?php bo_modal_confirmar_exclusao('profissionais', $p['id'], $p['nome'], 'profissionais'); ?>
     <?php endforeach; ?>
+</section>
+
+<!-- ===== ADMIN · Modalidades (tabela `modalidades`, usada no cadastro de profissionais) ===== -->
+<section class="bo-content-section" data-perfil="admin" data-section="modalidades">
+    <div class="bo-page-title">
+        <div>
+            <h1>Modalidades</h1>
+            <p>Gerencie as modalidades oferecidas pela academia.</p>
+        </div>
+        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalModalidadeNova">
+            <i class="bi bi-plus-lg"></i> Nova Modalidade
+        </button>
+    </div>
+    <?php bo_modal_modalidade(null, 'modalidades'); ?>
+
+    <div class="bo-list">
+        <?php foreach ($modalidadesAdm as $m): ?>
+            <div class="bo-list-item">
+                <div class="bo-list-title"><?php echo $m['nome']; ?></div>
+                <div class="bo-table-actions">
+                    <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalModalidadeEditar<?php echo $m['id']; ?>">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <?php echo bo_botao_excluir('modalidades', $m['id']); ?>
+                </div>
+            </div>
+            <?php bo_modal_modalidade($m, 'modalidades'); ?>
+            <?php bo_modal_confirmar_exclusao('modalidades', $m['id'], 'a modalidade ' . $m['nome'], 'modalidades'); ?>
+        <?php endforeach; ?>
+    </div>
 </section>

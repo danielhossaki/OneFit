@@ -142,30 +142,31 @@ if ($perfilLogado === 'admin') {
         }
     }
 
-    // Tela "Permissões" — usuários com função administrativa/profissional
-    $permissoes = [];
-    $sql = "SELECT id_usuario, nome, email, tipo_usuario FROM usuarios WHERE tipo_usuario IN ('admin','profissional') ORDER BY nome";
-    if ($r = $conn->query($sql)) {
-        $i = 0;
-        $funcaoLabel = ['admin' => 'Administrador', 'profissional' => 'Profissional'];
+    // Tela "Funções" — tabela `funcao`
+    $funcoes = [];
+    if ($r = $conn->query('SELECT id_funcao, nome FROM funcao ORDER BY nome')) {
         while ($row = $r->fetch_assoc()) {
-            $permissoes[] = [
-                'id' => ++$i,
-                'usuarioId' => (int) $row['id_usuario'],
-                'nome' => $row['nome'],
-                'email' => $row['email'],
-                'funcao' => $row['tipo_usuario'],
-                'funcaoLabel' => $funcaoLabel[$row['tipo_usuario']] ?? ucfirst($row['tipo_usuario']),
-            ];
+            $funcoes[] = ['id' => (int) $row['id_funcao'], 'nome' => $row['nome']];
         }
     }
 
-    // Tela "Funções" — legenda fixa de acesso por tipo de usuário (não há tabela própria de funções no banco)
-    $funcoes = [
-        ['id' => 1, 'nome' => 'Administrador', 'permissoes' => 'Acesso completo: usuários, pagamentos, cashbacks, produtos, planos e profissionais.'],
-        ['id' => 2, 'nome' => 'Profissional', 'permissoes' => 'Alunos vinculados, agenda e cashback próprio.'],
-        ['id' => 3, 'nome' => 'Aluno', 'permissoes' => 'Perfil, histórico, cashback, compras, treino e agenda próprios.'],
-    ];
+    // Tela "Permissões" — tabela `permissoes` (email + função concedida)
+    $permissoes = [];
+    $sql = "SELECT pe.id_permissao, pe.nome, pe.email, pe.funcao AS id_funcao, f.nome AS funcaoLabel
+            FROM permissoes pe
+            LEFT JOIN funcao f ON f.id_funcao = pe.funcao
+            ORDER BY pe.nome";
+    if ($r = $conn->query($sql)) {
+        while ($row = $r->fetch_assoc()) {
+            $permissoes[] = [
+                'id' => (int) $row['id_permissao'],
+                'nome' => $row['nome'],
+                'email' => $row['email'],
+                'id_funcao' => (int) $row['id_funcao'],
+                'funcaoLabel' => $row['funcaoLabel'] ?? '—',
+            ];
+        }
+    }
 
     // Tela "Pagamentos"
     $pagamentos = [];
@@ -278,6 +279,15 @@ if ($perfilLogado === 'admin') {
         static fn(array $p): string => $p['nome'],
         array_filter($planos, static fn(array $p): bool => $p['status'] === 'ativo')
     ));
+
+    // Tela "Modalidades"
+    $modalidadesAdm = [];
+    if ($r = $conn->query('SELECT id_modalidade, nome FROM modalidades ORDER BY nome')) {
+        while ($row = $r->fetch_assoc()) {
+            $modalidadesAdm[] = ['id' => (int) $row['id_modalidade'], 'nome' => $row['nome']];
+        }
+    }
+    $modalidadesOptions = array_map(static fn(array $m): string => $m['nome'], $modalidadesAdm);
 
     // Tela "Profissionais"
     $profissionaisAdm = [];
