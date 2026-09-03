@@ -73,6 +73,41 @@ $usuarioDashboard = [
     'foto' => $usuarioBanco['foto'],
 ];
 
+$preferenciasDashboard = [
+    'tema' => 'dark',
+    'lembretes_treino' => true,
+    'avisos_agendamentos' => true,
+    'atualizacoes_compras' => true,
+    'ofertas_novidades' => false,
+    'notificacoes_email' => true,
+];
+$preferenciasDisponiveis = false;
+$preferenciasPersistidas = false;
+try {
+    $stmtPreferencias = $conn->prepare(
+        'SELECT tema, lembretes_treino, avisos_agendamentos, atualizacoes_compras,
+                ofertas_novidades, notificacoes_email
+         FROM preferencias_usuario WHERE id_usuario = ? LIMIT 1'
+    );
+    $stmtPreferencias->bind_param('i', $_SESSION['id_usuario']);
+    $stmtPreferencias->execute();
+    $preferenciasBanco = $stmtPreferencias->get_result()->fetch_assoc();
+    $stmtPreferencias->close();
+    $preferenciasDisponiveis = true;
+    if ($preferenciasBanco) {
+        $preferenciasPersistidas = true;
+        $preferenciasDashboard['tema'] = in_array($preferenciasBanco['tema'], ['light', 'dark', 'system'], true)
+            ? $preferenciasBanco['tema'] : 'dark';
+        foreach (array_keys($preferenciasDashboard) as $chavePreferencia) {
+            if ($chavePreferencia !== 'tema' && array_key_exists($chavePreferencia, $preferenciasBanco)) {
+                $preferenciasDashboard[$chavePreferencia] = (bool) $preferenciasBanco[$chavePreferencia];
+            }
+        }
+    }
+} catch (Throwable $erroPreferencias) {
+    // A tela continua funcional via localStorage enquanto a migração não for aplicada.
+}
+
 require __DIR__ . '/includes/db-data.php';
 
 // Busca de profissionais no header: usa a equipe cadastrada no banco
@@ -116,7 +151,17 @@ if ($perfilLogado === 'admin') {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/dashboard.css">
     <script>
-        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('onefit-theme') || 'dark'); } catch (e) {}
+        (() => {
+            const banco = <?php echo json_encode($preferenciasPersistidas ? $preferenciasDashboard['tema'] : null); ?>;
+            let escolha = banco;
+            try { escolha = localStorage.getItem('onefit-theme') || escolha; } catch (e) {}
+            escolha = ['light', 'dark', 'system'].includes(escolha) ? escolha : 'dark';
+            const tema = escolha === 'system'
+                ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+                : escolha;
+            document.documentElement.setAttribute('data-theme', tema);
+            document.documentElement.setAttribute('data-theme-preference', escolha);
+        })();
     </script>
     <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
 </head>
@@ -156,6 +201,8 @@ if ($perfilLogado === 'admin') {
         <?php require __DIR__ . '/components/modal-pagar-plano.php'; ?>
     <?php endif; ?>
 
+    <div class="bo-toast" id="boToast" role="status" aria-live="polite"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
@@ -174,6 +221,10 @@ if ($perfilLogado === 'admin') {
         const BO_CURRENT_USER = <?php echo json_encode($usuarioDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token']); ?>;
         const BO_PROFILE_UPDATE_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/update-profile.php'); ?>;
+        const BO_PREFERENCES_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/preferencias.php'); ?>;
+        const BO_USER_PREFERENCES = <?php echo json_encode($preferenciasDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        const BO_PREFERENCES_AVAILABLE = <?php echo $preferenciasDisponiveis ? 'true' : 'false'; ?>;
+        const BO_PREFERENCES_PERSISTED = <?php echo $preferenciasPersistidas ? 'true' : 'false'; ?>;
         const BO_PROFISSIONAIS_SEARCH = <?php echo json_encode($profissionaisPesquisa, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>
 

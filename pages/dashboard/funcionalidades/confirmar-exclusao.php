@@ -55,9 +55,9 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/dashboard.css">
     <script>
-        try { document.documentElement.setAttribute('data-theme', localStorage.getItem('onefit-theme') || 'dark'); } catch (e) {}
+        (() => { let p = 'dark'; try { p = localStorage.getItem('onefit-theme') || p; } catch (e) {} const t = p === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); })();
     </script>
-    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/webp">
 </head>
 
 <body>

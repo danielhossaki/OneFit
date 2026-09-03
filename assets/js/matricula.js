@@ -29,11 +29,17 @@
     const date = new Date(year, month - 1, day);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    const minimumDate = new Date(
+      today.getFullYear() - 120,
+      today.getMonth(),
+      today.getDate()
+    );
 
     return date.getFullYear() === year
       && date.getMonth() === month - 1
       && date.getDate() === day
-      && date <= today;
+      && date <= today
+      && date >= minimumDate;
   }
 
   function customMessageFor(input) {
@@ -51,7 +57,7 @@
     }
 
     if (input.id === 'nascimento' && !isValidBirthDate(input.value)) {
-      return 'Digite uma data de nascimento válida, sem datas futuras.';
+      return 'Informe uma data de nascimento válida.';
     }
 
     if (input.id === 'cidade' && input.dataset.citySelected !== input.value) {

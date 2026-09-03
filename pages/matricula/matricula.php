@@ -7,6 +7,9 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }
 
+$hojeMatricula = new DateTimeImmutable('today');
+$dataNascimentoMinima = $hojeMatricula->modify('-120 years');
+
 $mensagensMatricula = [
   '2' => 'Não foi possível concluir o cadastro. Confira os campos obrigatórios e tente novamente.',
   '3' => 'As senhas não coincidem. Digite a mesma senha nos dois campos.',
@@ -17,7 +20,7 @@ $mensagensMatricula = [
   '8' => 'Digite um CPF válido com 11 números.',
   '9' => 'Não foi possível registrar o pagamento. Tente novamente.',
   '10' => 'Para se matricular na One Fit, é necessário ter ao menos 18 anos de idade ou 12 com autorização dos pais ou responsáveis.',
-  '11' => 'Digite uma data de nascimento válida, sem datas futuras.',
+  '11' => 'Informe uma data de nascimento válida.',
   '12' => 'Digite um telefone válido com DDD.',
   '13' => 'Selecione uma cidade válida para o estado informado.',
   '14' => 'Não foi possível validar a cidade. Tente novamente.',
@@ -37,6 +40,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
       'beneficios' => array_values(array_filter(array_map('trim', explode("\n", (string) $row['beneficios'])))),
     ];
   }
+}
 
 
 function cpfValidoMatricula(string $cpf): bool
@@ -192,12 +196,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         && ($errosDataNascimento['warning_count'] > 0 || $errosDataNascimento['error_count'] > 0))
       || ($dataNascimento && $dataNascimento->format('Y-m-d') !== $nascimento);
 
-    if ($dataNascimentoInvalida || $dataNascimento > new DateTime('today')) {
+    if ($dataNascimentoInvalida || $dataNascimento > $hojeMatricula) {
       header("Location: matricula.php?msg=11");
       exit;
     }
 
-    $dataMinima = (new DateTime('today'))->modify('-12 years');
+    // DateTime::diff considera ano, mês e dia ao calcular a idade completa.
+    $idade = $dataNascimento->diff($hojeMatricula)->y;
+    if ($idade > 120 || $dataNascimento < $dataNascimentoMinima) {
+      header("Location: matricula.php?msg=11");
+      exit;
+    }
+
+    $dataMinima = $hojeMatricula->modify('-12 years');
 
     if ($dataNascimento > $dataMinima) {
       header("Location: matricula.php?msg=10");
@@ -482,7 +493,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               </div>
               <div class="field">
                 <label for="nascimento">Data de nascimento</label>
-                <input type="date" id="nascimento" name="nascimento" max="<?php echo date('Y-m-d'); ?>" required>
+                <input type="date" id="nascimento" name="nascimento"
+                  min="<?php echo $dataNascimentoMinima->format('Y-m-d'); ?>"
+                  max="<?php echo $hojeMatricula->format('Y-m-d'); ?>" required>
               </div>
             </div>
 

@@ -658,20 +658,94 @@ document.addEventListener('DOMContentLoaded', () => {
         boGoToSection(initialSection, false);
     }
 
-    const applyTheme = (theme) => {
-        document.documentElement.setAttribute('data-theme', theme);
-        try { localStorage.setItem('onefit-theme', theme); } catch (e) { /* armazenamento indisponível */ }
+    const systemTheme = window.matchMedia('(prefers-color-scheme: light)');
+    const resolvedTheme = (preference) => preference === 'system'
+        ? (systemTheme.matches ? 'light' : 'dark')
+        : preference;
+    const applyTheme = (preference, persistLocal = true) => {
+        const validPreference = ['light', 'dark', 'system'].includes(preference) ? preference : 'dark';
+        document.documentElement.setAttribute('data-theme', resolvedTheme(validPreference));
+        document.documentElement.setAttribute('data-theme-preference', validPreference);
+        if (persistLocal) {
+            try { localStorage.setItem('onefit-theme', validPreference); } catch (e) { /* armazenamento indisponível */ }
+        }
         document.querySelectorAll('[data-bo-theme]').forEach((button) => {
-            button.classList.toggle('active', button.getAttribute('data-bo-theme') === theme);
+            const active = button.getAttribute('data-bo-theme') === validPreference;
+            button.classList.toggle('active', active);
+            button.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
     };
 
     let savedTheme = 'dark';
     try { savedTheme = localStorage.getItem('onefit-theme') || 'dark'; } catch (e) { /* usa o padrão escuro */ }
-    applyTheme(savedTheme === 'light' ? 'light' : 'dark');
-    document.querySelectorAll('[data-bo-theme]').forEach((button) => {
-        button.addEventListener('click', () => applyTheme(button.getAttribute('data-bo-theme')));
+    if (BO_PREFERENCES_PERSISTED) savedTheme = BO_USER_PREFERENCES.tema;
+    applyTheme(savedTheme);
+    systemTheme.addEventListener('change', () => {
+        if (document.documentElement.getAttribute('data-theme-preference') === 'system') applyTheme('system', false);
     });
+
+    const savePreference = async (key, value) => {
+        const body = new URLSearchParams({ csrf_token: BO_CSRF_TOKEN, key, value: String(value) });
+        const response = await fetch(BO_PREFERENCES_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+            body,
+        });
+        const result = await response.json().catch(() => ({ ok: false, message: 'Resposta inválida do servidor.' }));
+        if (!response.ok || !result.ok) throw new Error(result.message || 'Não foi possível salvar.');
+        return result;
+    };
+
+    document.querySelectorAll('[data-bo-theme]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const previous = document.documentElement.getAttribute('data-theme-preference') || 'dark';
+            const next = button.getAttribute('data-bo-theme');
+            applyTheme(next);
+            button.disabled = true;
+            try {
+                await savePreference('tema', next);
+                boToast('Tema salvo.');
+            } catch (error) {
+                if (BO_PREFERENCES_AVAILABLE) applyTheme(previous);
+                boToast(BO_PREFERENCES_AVAILABLE ? error.message : 'Tema salvo neste dispositivo.');
+            } finally {
+                button.disabled = false;
+            }
+        });
+    });
+
+    document.querySelectorAll('[data-bo-preference]').forEach((toggle) => {
+        toggle.addEventListener('change', async () => {
+            const previous = !toggle.checked;
+            toggle.disabled = true;
+            toggle.closest('.bo-preference-row')?.classList.add('is-loading');
+            try {
+                await savePreference(toggle.dataset.boPreference, toggle.checked ? 1 : 0);
+                boToast('Preferência salva.');
+            } catch (error) {
+                toggle.checked = previous;
+                boToast(error.message);
+            } finally {
+                toggle.disabled = false;
+                toggle.closest('.bo-preference-row')?.classList.remove('is-loading');
+            }
+        });
+    });
+
+    const passwordForm = document.getElementById('boSenhaNova')?.form;
+    const newPassword = document.getElementById('boSenhaNova');
+    const confirmPassword = document.getElementById('boSenhaConfirma');
+    const validatePasswordConfirmation = () => {
+        if (!confirmPassword) return;
+        confirmPassword.setCustomValidity(
+            confirmPassword.value && newPassword.value !== confirmPassword.value
+                ? 'A confirmação não corresponde à nova senha.'
+                : ''
+        );
+    };
+    newPassword?.addEventListener('input', validatePasswordConfirmation);
+    confirmPassword?.addEventListener('input', validatePasswordConfirmation);
+    passwordForm?.addEventListener('submit', validatePasswordConfirmation);
 
     document.addEventListener('keydown', (event) => {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {

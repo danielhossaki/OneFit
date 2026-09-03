@@ -751,16 +751,16 @@ function bo_modal_senha_alterar(): void
                     <div class="modal-body row g-3">
                         <?php echo bo_csrf_field(); ?>
                         <div class="col-12">
-                            <label class="form-label">Senha atual</label>
-                            <input type="password" class="form-control" name="senha_atual" required>
+                            <label class="form-label" for="boSenhaAtual">Senha atual</label>
+                            <input type="password" class="form-control" id="boSenhaAtual" name="senha_atual" autocomplete="current-password" required>
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Nova senha</label>
-                            <input type="password" class="form-control" name="senha_nova" minlength="6" required>
+                            <label class="form-label" for="boSenhaNova">Nova senha</label>
+                            <input type="password" class="form-control" id="boSenhaNova" name="senha_nova" autocomplete="new-password" minlength="8" required>
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Confirmar nova senha</label>
-                            <input type="password" class="form-control" name="senha_confirma" minlength="6" required>
+                            <label class="form-label" for="boSenhaConfirma">Confirmar nova senha</label>
+                            <input type="password" class="form-control" id="boSenhaConfirma" name="senha_confirma" autocomplete="new-password" minlength="8" required>
                         </div>
                     </div>
                     <div class="modal-footer">
