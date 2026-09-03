@@ -18,16 +18,6 @@
  * (não existe "preencher campo dinamicamente" sem JS).
  */
 
-/**
- * Modalidades oferecidas pela academia (mesma lista exibida na landing page,
- * seção #modalidades). Usada como checklist no cadastro/edição de
- * profissional, para marcar quais modalidades cada um ministra.
- */
-function bo_modalidades_disponiveis(): array
-{
-    return ['Musculação', 'CrossTraining', 'Funcional', 'Spinning', 'Boxe', 'Mobilidade & Yoga'];
-}
-
 function bo_form_action(string $arquivo): string
 {
     return BASE_URL . 'pages/dashboard/funcionalidades/' . $arquivo;
@@ -165,7 +155,7 @@ function bo_modal_usuario(?array $u, string $secao): void
 /* =======================================================================
  * PERMISSÕES
  * ===================================================================== */
-function bo_modal_permissao_nova(string $secao): void
+function bo_modal_permissao_nova(string $secao, array $funcoes): void
 {
     ?>
     <div class="modal fade bo-modal" id="modalPermissaoNova" tabindex="-1" aria-hidden="true">
@@ -186,9 +176,10 @@ function bo_modal_permissao_nova(string $secao): void
                         </div>
                         <div class="col-12">
                             <label class="form-label">Tipo de função</label>
-                            <select class="form-select" name="funcao">
-                                <option value="admin">Administrador</option>
-                                <option value="profissional">Profissional</option>
+                            <select class="form-select" name="funcao" required>
+                                <?php foreach ($funcoes as $f): ?>
+                                    <option value="<?php echo (int) $f['id']; ?>"><?php echo bo_val($f['nome']); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -203,9 +194,9 @@ function bo_modal_permissao_nova(string $secao): void
     <?php
 }
 
-function bo_modal_permissao_editar(array $p, string $secao): void
+function bo_modal_permissao_editar(array $p, string $secao, array $funcoes): void
 {
-    $modalId = 'modalPermissaoEditar' . $p['usuarioId'];
+    $modalId = 'modalPermissaoEditar' . $p['id'];
     ?>
     <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -219,15 +210,16 @@ function bo_modal_permissao_editar(array $p, string $secao): void
                         <?php echo bo_csrf_field(); ?>
                         <?php echo bo_hidden('secao', $secao); ?>
                         <?php echo bo_hidden('acao', 'update'); ?>
-                        <?php echo bo_hidden('usuarioId', $p['usuarioId']); ?>
+                        <?php echo bo_hidden('id', $p['id']); ?>
                         <div class="col-12">
-                            <p class="mb-0"><strong><?php echo bo_val($p['nome']); ?></strong> · <?php echo bo_val($p['email']); ?> (ID #<?php echo (int) $p['usuarioId']; ?>)</p>
+                            <p class="mb-0"><strong><?php echo bo_val($p['nome']); ?></strong> · <?php echo bo_val($p['email']); ?></p>
                         </div>
                         <div class="col-12">
                             <label class="form-label">Tipo de função</label>
-                            <select class="form-select" name="funcao">
-                                <option value="admin" <?php echo $p['funcao'] === 'admin' ? 'selected' : ''; ?>>Administrador</option>
-                                <option value="profissional" <?php echo $p['funcao'] === 'profissional' ? 'selected' : ''; ?>>Profissional</option>
+                            <select class="form-select" name="funcao" required>
+                                <?php foreach ($funcoes as $f): ?>
+                                    <option value="<?php echo (int) $f['id']; ?>" <?php echo (int) $p['id_funcao'] === (int) $f['id'] ? 'selected' : ''; ?>><?php echo bo_val($f['nome']); ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
                     </div>
@@ -265,7 +257,7 @@ function bo_modal_pagamento(?array $p, string $secao): void
                         <?php if ($isEdit): ?><?php echo bo_hidden('id', $p['id']); ?><?php endif; ?>
                         <div class="col-6">
                             <label class="form-label">Data</label>
-                            <input type="date" class="form-control" name="data" value="<?php echo bo_val(isset($p['data']) ? date('Y-m-d', strtotime($p['data'])) : ''); ?>" required>
+                            <input type="date" class="form-control" name="data" max="<?php echo date('Y-m-d'); ?>" value="<?php echo bo_val(isset($p['data']) ? date('Y-m-d', strtotime($p['data'])) : ''); ?>" required>
                         </div>
                         <div class="col-6">
                             <label class="form-label">Tipo</label>
@@ -423,6 +415,80 @@ function bo_modal_categoria(?array $c, string $secao): void
 }
 
 /* =======================================================================
+ * FUNÇÕES
+ * ===================================================================== */
+function bo_modal_funcao(?array $f, string $secao): void
+{
+    $isEdit = $f !== null;
+    $modalId = $isEdit ? 'modalFuncaoEditar' . $f['id'] : 'modalFuncaoNova';
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar função' : 'Nova função'; ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('funcoes.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
+                        <?php if ($isEdit): ?><?php echo bo_hidden('id', $f['id']); ?><?php endif; ?>
+                        <div class="col-12">
+                            <label class="form-label">Nome da função</label>
+                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($f['nome'] ?? ''); ?>" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/* =======================================================================
+ * MODALIDADES
+ * ===================================================================== */
+function bo_modal_modalidade(?array $m, string $secao): void
+{
+    $isEdit = $m !== null;
+    $modalId = $isEdit ? 'modalModalidadeEditar' . $m['id'] : 'modalModalidadeNova';
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar modalidade' : 'Nova modalidade'; ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('modalidades.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
+                        <?php if ($isEdit): ?><?php echo bo_hidden('id', $m['id']); ?><?php endif; ?>
+                        <div class="col-12">
+                            <label class="form-label">Nome da modalidade</label>
+                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($m['nome'] ?? ''); ?>" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/* =======================================================================
  * PRODUTOS
  * ===================================================================== */
 function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): void
@@ -443,6 +509,7 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                         <?php echo bo_hidden('secao', $secao); ?>
                         <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
                         <?php if ($isEdit): ?><?php echo bo_hidden('id', $p['id']); ?><?php endif; ?>
+                        <?php echo bo_hidden('imagem_atual', $p['imagem'] ?? ''); ?>
                         <div class="col-12">
                             <label class="form-label">Nome do produto</label>
                             <input type="text" class="form-control" name="nome" value="<?php echo bo_val($p['nome'] ?? ''); ?>" required>
@@ -472,11 +539,7 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                             <input type="number" step="1" min="0" class="form-control" name="estoque" value="<?php echo bo_val($p['estoque'] ?? '0'); ?>">
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Imagem (URL)</label>
-                            <input type="text" class="form-control" name="imagem" value="<?php echo bo_val($p['imagem'] ?? ''); ?>">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">ou enviar arquivo</label>
+                            <label class="form-label">Imagem do produto</label>
                             <input type="file" class="form-control" name="imagem_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                         <div class="col-12">
@@ -562,7 +625,7 @@ function bo_modal_plano(?array $p, string $secao): void
 /* =======================================================================
  * PROFISSIONAIS
  * ===================================================================== */
-function bo_modal_profissional(?array $p, string $secao): void
+function bo_modal_profissional(?array $p, string $secao, array $modalidadesOptions): void
 {
     $isEdit = $p !== null;
     $modalId = $isEdit ? 'modalProfissionalEditar' . $p['id'] : 'modalProfissionalNovo';
@@ -580,6 +643,7 @@ function bo_modal_profissional(?array $p, string $secao): void
                         <?php echo bo_hidden('secao', $secao); ?>
                         <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
                         <?php if ($isEdit): ?><?php echo bo_hidden('id', $p['id']); ?><?php endif; ?>
+                        <?php echo bo_hidden('foto_atual', $p['foto'] ?? ''); ?>
                         <div class="col-6">
                             <label class="form-label">Nome</label>
                             <input type="text" class="form-control" name="nome" value="<?php echo bo_val($p['nome'] ?? ''); ?>" required>
@@ -594,7 +658,7 @@ function bo_modal_profissional(?array $p, string $secao): void
                             $modalidadesSelecionadas = array_map('trim', explode(',', (string) ($p['modalidades'] ?? '')));
                             ?>
                             <div class="bo-checklist">
-                                <?php foreach (bo_modalidades_disponiveis() as $modalidadeOpt): ?>
+                                <?php foreach ($modalidadesOptions as $modalidadeOpt): ?>
                                     <label class="bo-checklist-item">
                                         <input type="checkbox" name="modalidades[]" value="<?php echo bo_val($modalidadeOpt); ?>" <?php echo in_array($modalidadeOpt, $modalidadesSelecionadas, true) ? 'checked' : ''; ?>>
                                         <?php echo bo_val($modalidadeOpt); ?>
@@ -621,17 +685,9 @@ function bo_modal_profissional(?array $p, string $secao): void
                             <label class="form-label">Celular</label>
                             <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>" placeholder="DDD + número" required>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label">Foto (URL)</label>
-                            <input type="text" class="form-control" name="foto" value="<?php echo bo_val($p['foto'] ?? ''); ?>">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">ou enviar arquivo</label>
-                            <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
-                        </div>
                         <div class="col-12">
-                            <label class="form-label">Descrição</label>
-                            <textarea class="form-control" name="descricao" rows="3"><?php echo bo_val($p['descricao'] ?? ''); ?></textarea>
+                            <label class="form-label">Foto</label>
+                            <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -661,6 +717,7 @@ function bo_modal_perfil_editar(array $u, int $idUsuario): void
                 <form method="POST" action="<?php echo bo_action_url('update-profile.php'); ?>" enctype="multipart/form-data">
                     <div class="modal-body row g-3">
                         <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('foto_atual', $u['foto'] ?? ''); ?>
                         <div class="col-6">
                             <label class="form-label">ID do usuário</label>
                             <input type="text" class="form-control" value="#<?php echo str_pad((string) $idUsuario, 4, '0', STR_PAD_LEFT); ?>" disabled>
@@ -717,12 +774,8 @@ function bo_modal_perfil_editar(array $u, int $idUsuario): void
                             <label class="form-label">Peso (kg)</label>
                             <input type="number" step="0.1" min="1" max="500" class="form-control" name="peso" value="<?php echo bo_val($u['peso'] ?? ''); ?>">
                         </div>
-                        <div class="col-6">
-                            <label class="form-label">Foto (URL)</label>
-                            <input type="text" class="form-control" name="foto" value="<?php echo bo_val($u['foto'] ?? ''); ?>">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">ou enviar arquivo</label>
+                        <div class="col-12">
+                            <label class="form-label">Foto</label>
                             <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                     </div>
@@ -775,17 +828,52 @@ function bo_modal_senha_alterar(): void
 }
 
 /**
- * Link "Excluir" sem JS: leva para a página de confirmação, que só então
- * mostra um <form method="POST"> real apontando pro handler do recurso.
+ * Botão "Excluir" sem JS customizado: abre um modal Bootstrap centralizado
+ * (modal-dialog-centered) com um <form method="POST"> real apontando pro
+ * handler do recurso. Usar sempre em conjunto com bo_modal_confirmar_exclusao()
+ * para o mesmo $recurso/$id.
  */
-function bo_link_excluir(string $recurso, $id, string $nome, string $secao): string
+function bo_botao_excluir(string $recurso, $id): string
 {
-    $url = BASE_URL . 'pages/dashboard/funcionalidades/confirmar-exclusao.php'
-        . '?recurso=' . urlencode($recurso)
-        . '&id=' . urlencode((string) $id)
-        . '&nome=' . urlencode($nome)
-        . '&secao=' . urlencode($secao);
-    return '<a class="btn-bo-icon danger" title="Excluir" href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"><i class="bi bi-trash"></i></a>';
+    $modalId = 'modalExcluir' . $recurso . $id;
+    return '<button type="button" class="btn-bo-icon danger" title="Excluir" data-bs-toggle="modal" data-bs-target="#' . $modalId . '"><i class="bi bi-trash"></i></button>';
+}
+
+/**
+ * Modal de confirmação de exclusão, centralizado na tela. O <form> envia
+ * acao=delete direto pro handler do recurso (ex: produtos.php) — quem
+ * efetivamente apaga é sempre o handler, nunca este modal.
+ */
+function bo_modal_confirmar_exclusao(string $recurso, $id, string $nome, string $secao): void
+{
+    $modalId = 'modalExcluir' . $recurso . $id;
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Excluir <?php echo bo_val($nome); ?>?</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action($recurso . '.php'); ?>">
+                    <div class="modal-body">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', 'delete'); ?>
+                        <?php echo bo_hidden('id', $id); ?>
+                        <p class="mb-0">Essa exclusão remove o registro definitivamente do banco de dados e não pode ser desfeita.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold" style="background:#dc3545;border-color:#dc3545;color:#fff;">
+                            <i class="bi bi-trash"></i> Sim, excluir
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
 }
 
 /**

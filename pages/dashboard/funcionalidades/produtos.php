@@ -48,7 +48,7 @@ $desconto = bo_num('desconto');
 $cashback = bo_num('cashback');
 $estoque = (int) bo_num('estoque');
 $imagemUpload = bo_processar_upload_imagem('imagem_arquivo', 'produtos');
-$imagem = $imagemUpload ?? bo_str('imagem');
+$imagem = $imagemUpload ?? bo_str('imagem_atual');
 $descricao = bo_str('descricao');
 
 if (!$nome || $preco <= 0) {

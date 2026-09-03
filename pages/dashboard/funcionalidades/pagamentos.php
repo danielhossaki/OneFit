@@ -36,6 +36,11 @@ if (!$dataPagamento || $valor <= 0 || !$usuarioId) {
     bo_redirect($secao);
 }
 
+if ($dataPagamento > date('Y-m-d')) {
+    bo_flash('error', 'A data do pagamento não pode ser posterior a hoje.');
+    bo_redirect($secao);
+}
+
 $stmtM = $conn->prepare('SELECT id_matricula FROM matricula WHERE id_usuario = ? ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1');
 $stmtM->bind_param('i', $usuarioId);
 $stmtM->execute();

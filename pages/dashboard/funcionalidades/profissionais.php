@@ -35,13 +35,17 @@ $status = bo_str('status') === 'inativo' ? 'inativo' : 'ativo';
 $email = bo_str('email');
 $celularDigitado = bo_str('celular') ?: bo_str('telefone');
 $celular = preg_replace('/\D/', '', $celularDigitado);
-$descricao = bo_str('descricao');
 $fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'profissionais');
-$foto = $fotoUpload ?? bo_str('foto');
+$foto = $fotoUpload ?? bo_str('foto_atual');
 
-// Modalidades ministradas: só aceita valores da lista fixa (evita gravar
-// texto arbitrário vindo de fora do checklist do formulário).
-$modalidadesValidas = ['Musculação', 'CrossTraining', 'Funcional', 'Spinning', 'Boxe', 'Mobilidade & Yoga'];
+// Modalidades ministradas: só aceita valores cadastrados na tabela
+// `modalidades` (evita gravar texto arbitrário vindo de fora do checklist).
+$modalidadesValidas = [];
+if ($resMod = $conn->query('SELECT nome FROM modalidades')) {
+    while ($rowMod = $resMod->fetch_assoc()) {
+        $modalidadesValidas[] = $rowMod['nome'];
+    }
+}
 $modalidadesEnviadas = array_intersect((array) ($_POST['modalidades'] ?? []), $modalidadesValidas);
 $modalidades = implode(', ', $modalidadesEnviadas);
 
@@ -74,15 +78,15 @@ if ($acao === 'update') {
     $check->close();
 
     try {
-        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, modalidades=?, registro_profissional=?, status=?, email=?, celular=?, descricao=?, foto=? WHERE id_profissional=?');
-        $stmt->bind_param('sssssssssi', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $descricao, $foto, $id);
+        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, modalidades=?, registro_profissional=?, status=?, email=?, celular=?, foto=? WHERE id_profissional=?');
+        $stmt->bind_param('ssssssssi', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $foto, $id);
         $stmt->execute();
         $stmt->close();
     } catch (\mysqli_sql_exception $e) {
         // Coluna "modalidades" ainda não existe neste banco (migração
         // modalidades-profissional-migration.sql pendente): grava sem ela.
-        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, registro_profissional=?, status=?, email=?, celular=?, descricao=?, foto=? WHERE id_profissional=?');
-        $stmt->bind_param('ssssssssi', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto, $id);
+        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, registro_profissional=?, status=?, email=?, celular=?, foto=? WHERE id_profissional=?');
+        $stmt->bind_param('sssssssi', $nome, $funcao, $documento, $status, $email, $celular, $foto, $id);
         $stmt->execute();
         $stmt->close();
     }
@@ -101,15 +105,15 @@ if ($check->get_result()->fetch_assoc()) {
 $check->close();
 
 try {
-    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, modalidades, registro_profissional, status, email, celular, descricao, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    $stmt->bind_param('sssssssss', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $descricao, $foto);
+    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, modalidades, registro_profissional, status, email, celular, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('ssssssss', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $foto);
     $stmt->execute();
     $stmt->close();
 } catch (\mysqli_sql_exception $e) {
     // Coluna "modalidades" ainda não existe neste banco (migração
     // modalidades-profissional-migration.sql pendente): grava sem ela.
-    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, registro_profissional, status, email, celular, descricao, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-    $stmt->bind_param('ssssssss', $nome, $funcao, $documento, $status, $email, $celular, $descricao, $foto);
+    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, registro_profissional, status, email, celular, foto) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    $stmt->bind_param('sssssss', $nome, $funcao, $documento, $status, $email, $celular, $foto);
     $stmt->execute();
     $stmt->close();
 }
