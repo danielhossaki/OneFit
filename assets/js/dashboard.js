@@ -955,13 +955,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // "Pagar" apenas fecha o modal e mostra o toast (pagamento simulado)
+    const money = (value) => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' })[char]);
+
     const btnPagar = document.getElementById('btnPagar');
     if (btnPagar) {
-        btnPagar.addEventListener('click', () => {
-            const modalEl = document.getElementById('modalPagarPlano');
-            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-            boToast('Pagamento simulado com sucesso!');
+        btnPagar.addEventListener('click', async () => {
+            if (btnPagar.disabled) return;
+            const forma = document.getElementById('metodoCredito').checked ? 'credito' : (document.getElementById('metodoDebito').checked ? 'debito' : 'pix');
+            const payload = {
+                csrf_token: BO_CSRF_TOKEN,
+                payment_token: BO_PAYMENT_TOKEN,
+                forma_pagamento: forma,
+                numero_cartao: document.getElementById('numeroCartao').value,
+                validade: document.getElementById('validadeCartao').value,
+                cvv: document.getElementById('cvvCartao').value,
+            };
+
+            btnPagar.disabled = true;
+            btnPagar.querySelector('.bo-pay-label').innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Processando...';
+            try {
+                const response = await fetch(BO_PAYMENT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
+                });
+                const result = await response.json();
+                if (!response.ok || !result.ok) throw new Error(result.message || 'Não foi possível processar o pagamento. Tente novamente.');
+
+                const payment = result.payment;
+                const tbody = document.querySelector('#alunoHistoricoTable tbody');
+                tbody.querySelector('.bo-empty-row')?.setAttribute('style', 'display:none');
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${escapeHtml(payment.data)}</td><td>${escapeHtml(payment.descricao)}</td><td title="Forma: ${escapeHtml(payment.forma_pagamento)}">${escapeHtml(payment.tipo)}</td><td><span class="bo-status-badge bo-status-aprovado">${escapeHtml(payment.status)}</span></td><td>${money(payment.valor)}</td><td>${money(payment.cashback)}</td>`;
+                tbody.prepend(row);
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPagarPlano')).hide();
+                boToast(result.message);
+            } catch (error) {
+                console.error('Erro ao processar pagamento:', error);
+                boToast(error.message || 'Não foi possível processar o pagamento. Tente novamente.');
+                btnPagar.disabled = false;
+                btnPagar.querySelector('.bo-pay-label').textContent = 'Pagar';
+            }
         });
     }
 });

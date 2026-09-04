@@ -1614,3 +1614,18 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     cursor: pointer;
 }
 
+.bo-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border: 1px solid rgba(212, 175, 55, .45);
+    border-radius: 999px;
+    color: #d4af37;
+    background: rgba(212, 175, 55, .1);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.bo-status-pendente { color: #f0ad4e; border-color: rgba(240,173,78,.45); background: rgba(240,173,78,.1); }
+.bo-status-cancelado,
+.bo-status-recusado { color: #dc6b75; border-color: rgba(220,107,117,.45); background: rgba(220,107,117,.1); }
