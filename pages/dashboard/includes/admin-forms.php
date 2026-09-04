@@ -895,3 +895,97 @@ function bo_form_toggle(string $recurso, $id, string $secao, bool $ativo, string
     </form>
     <?php
 }
+
+/* =======================================================================
+ * TRANSPORTADORAS (tela "Vendas Marketplace" > aba Transportadoras, admin)
+ * ===================================================================== */
+function bo_modal_transportadora(?array $t, string $secao): void
+{
+    $isEdit = $t !== null;
+    $modalId = $isEdit ? 'modalTransportadoraEditar' . $t['id'] : 'modalTransportadoraNova';
+    $tipos = ['transportadora' => 'Transportadora', 'correios' => 'Correios', 'sedex' => 'Sedex', 'motoboy' => 'Motoboy', 'outros' => 'Outros'];
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar transportadora' : 'Novo transportador'; ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('transportadoras.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
+                        <?php if ($isEdit): ?><?php echo bo_hidden('id', $t['id']); ?><?php endif; ?>
+                        <div class="col-12">
+                            <label class="form-label">Nome</label>
+                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($t['nome'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Tipo de envio</label>
+                            <select class="form-select" name="tipo">
+                                <?php foreach ($tipos as $valor => $label): ?>
+                                    <option value="<?php echo $valor; ?>" <?php echo ($t['tipo'] ?? '') === $valor ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/**
+ * Faixa de CEP/frete de uma transportadora específica.
+ */
+function bo_modal_faixa_cep(int $idTransportadora, string $secao): void
+{
+    $modalId = 'modalFaixaCep' . $idTransportadora;
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova faixa de CEP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('transportadoras.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', 'create-faixa'); ?>
+                        <?php echo bo_hidden('id_transportadora', $idTransportadora); ?>
+                        <div class="col-6">
+                            <label class="form-label">CEP inicial</label>
+                            <input type="text" class="form-control" name="cep_inicial" placeholder="01000-000" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">CEP final</label>
+                            <input type="text" class="form-control" name="cep_final" placeholder="05999-999" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Valor do frete (R$)</label>
+                            <input type="number" step="0.01" min="0" class="form-control" name="valor_frete" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Prazo (dias)</label>
+                            <input type="number" step="1" min="0" class="form-control" name="prazo_dias" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-bo-gold">Adicionar faixa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}

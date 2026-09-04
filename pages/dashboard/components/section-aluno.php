@@ -209,8 +209,12 @@
                     <?php foreach ($alunoPedidos as $ped): ?>
                         <tr>
                             <td><?php echo $ped['transacao']; ?></td>
-                            <td><?php echo $ped['produto']; ?></td>
-                            <td><?php echo $ped['quantidade']; ?></td>
+                            <td>
+                                <?php foreach ($ped['itens'] as $it): ?>
+                                    <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?> — <small>Vendido por: <?php echo htmlspecialchars($it['vendedor']); ?> · <?php echo htmlspecialchars($it['statusLogistica']); ?></small></div>
+                                <?php endforeach; ?>
+                            </td>
+                            <td><?php echo array_sum(array_column($ped['itens'], 'quantidade')); ?></td>
                             <td><?php echo bo_money($ped['valor']); ?></td>
                             <td><?php echo $ped['status']; ?></td>
                         </tr>
@@ -237,7 +241,11 @@
                         <tr>
                             <td><?php echo $ped['transacao']; ?></td>
                             <td><?php echo $ped['data']; ?></td>
-                            <td><?php echo $ped['produto']; ?></td>
+                            <td>
+                                <?php foreach ($ped['itens'] as $it): ?>
+                                    <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?> — <small>Vendido por: <?php echo htmlspecialchars($it['vendedor']); ?></small></div>
+                                <?php endforeach; ?>
+                            </td>
                             <td><?php echo $ped['status']; ?></td>
                         </tr>
                     <?php endforeach; ?>

@@ -258,6 +258,11 @@ if ($perfilLogado === 'admin') {
         }
     }
 
+    // Tela "Vendas Marketplace" (visão agregada de todos os vendedores)
+    $admVendasProdutos = bo_carregar_produtos_vendedor($conn, null);
+    $admVendas = bo_carregar_vendas_vendedor($conn, null);
+    $transportadoras = bo_carregar_transportadoras($conn);
+
     // Tela "Cadastro de Planos"
     $planos = [];
     $sql = "SELECT id_plano, nome, valor, duracao_dias, descricao, beneficios, status FROM cadastro_planos ORDER BY valor";
@@ -526,6 +531,34 @@ if ($perfilLogado === 'aluno') {
     $alunoAgendaDisponiveis = [];
 }
 
+/* =======================================================================
+ * PERFIL: VENDEDOR
+ * ===================================================================== */
+if ($perfilLogado === 'vendedor') {
+    $idUsuarioLogado = (int) $_SESSION['id_usuario'];
+
+    $categoriasAtivasOptions = [];
+    if ($r = $conn->query("SELECT nome FROM categorias WHERE status = 'ativo' ORDER BY nome")) {
+        while ($row = $r->fetch_assoc()) {
+            $categoriasAtivasOptions[] = $row['nome'];
+        }
+    }
+
+    $vendedorProdutos = bo_carregar_produtos_vendedor($conn, $idUsuarioLogado);
+    $vendedorProdutosResumo = [
+        'total' => count($vendedorProdutos),
+        'disponiveis' => count(array_filter($vendedorProdutos, static fn(array $p): bool => $p['status'] === 'disponivel')),
+        'indisponiveis' => count(array_filter($vendedorProdutos, static fn(array $p): bool => $p['status'] === 'indisponivel')),
+    ];
+    $vendedorVendas = bo_carregar_vendas_vendedor($conn, $idUsuarioLogado);
+    // Só para exibir o nome da transportadora escolhida em cada venda — o
+    // cadastro de transportadoras em si é exclusivo do admin (globais).
+    $transportadorasAtivas = array_values(array_filter(
+        bo_carregar_transportadoras($conn),
+        static fn(array $t): bool => $t['status'] === 'ativo'
+    ));
+}
+
 // Nomes de planos ativos: usados no <select> do modal "Alterar plano" do
 // aluno. Para o admin, já foi calculado no bloco acima (evita repetir a query).
 if (!isset($planosAtivosOptions)) {
@@ -540,48 +573,194 @@ if (!isset($planosAtivosOptions)) {
 /**
  * Carrega os pedidos (marketplace) de um usuário, já separados em
  * "em andamento" e "histórico" — usado pelas telas "Minhas compras"
- * do profissional e do aluno.
+ * do profissional e do aluno. Cada pedido traz sua lista de itens
+ * ('itens'), com o nome do vendedor de cada um ("ONE FIT" para produtos
+ * legados sem vendedor, id_vendedor NULL) e o status de logística.
  *
  * @return array{0: array, 1: array}
  */
 function bo_carregar_pedidos(mysqli $conn, int $idUsuario): array
 {
-    $emAndamento = [];
-    $historico = [];
-
-    $stmt = $conn->prepare("SELECT pe.id_pedido, pe.status, pe.data_pedido,
-            GROUP_CONCAT(pr.nome SEPARATOR ', ') AS produtos,
-            SUM(pi.quantidade) AS quantidade,
-            SUM(pi.subtotal) AS valor
+    $stmt = $conn->prepare("SELECT pe.id_pedido, pe.status, pe.data_pedido, pe.valor_total,
+            pi.quantidade, pi.status_logistica, pr.nome AS produto_nome,
+            COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
         FROM pedido pe
         JOIN pedido_item pi ON pi.id_pedido = pe.id_pedido
         JOIN produtos pr ON pr.id_produto = pi.id_produto
+        LEFT JOIN usuarios v ON v.id_usuario = pi.id_vendedor
         WHERE pe.id_usuario = ?
-        GROUP BY pe.id_pedido
-        ORDER BY pe.data_pedido DESC");
+        ORDER BY pe.data_pedido DESC, pe.id_pedido DESC, pi.id_item ASC");
     $stmt->bind_param('i', $idUsuario);
     $stmt->execute();
     $res = $stmt->get_result();
 
     $statusLabel = ['aguardando' => 'Aguardando', 'pago' => 'Pago', 'processando' => 'Processando', 'entregue' => 'Entregue', 'cancelado' => 'Cancelado', 'devolvido' => 'Devolvido'];
+    $statusLogisticaLabel = ['aguardando' => 'Aguardando', 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => 'Devolvido', 'extraviado' => 'Extraviado'];
     $finalizados = ['entregue', 'cancelado', 'devolvido'];
 
+    $pedidos = [];
     while ($row = $res->fetch_assoc()) {
-        $item = [
-            'transacao' => 'TRX-' . str_pad($row['id_pedido'], 4, '0', STR_PAD_LEFT),
-            'produto' => $row['produtos'],
-            'quantidade' => (int) $row['quantidade'],
-            'valor' => (float) $row['valor'],
-            'status' => $statusLabel[$row['status']] ?? ucfirst($row['status']),
-            'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
-        ];
-        if (in_array($row['status'], $finalizados, true)) {
-            $historico[] = $item;
-        } else {
-            $emAndamento[] = $item;
+        $idPedido = (int) $row['id_pedido'];
+        if (!isset($pedidos[$idPedido])) {
+            $pedidos[$idPedido] = [
+                'transacao' => 'TRX-' . str_pad((string) $idPedido, 4, '0', STR_PAD_LEFT),
+                'valor' => (float) $row['valor_total'],
+                'status' => $statusLabel[$row['status']] ?? ucfirst($row['status']),
+                'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
+                'statusBanco' => $row['status'],
+                'itens' => [],
+                // Mantido por compatibilidade com quem ainda espera um resumo em texto.
+                'produto' => '',
+            ];
         }
+        $pedidos[$idPedido]['itens'][] = [
+            'produto' => $row['produto_nome'],
+            'quantidade' => (int) $row['quantidade'],
+            'vendedor' => $row['vendedor_nome'],
+            'statusLogistica' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+        ];
     }
     $stmt->close();
 
+    $emAndamento = [];
+    $historico = [];
+    foreach ($pedidos as $pedido) {
+        $pedido['produto'] = implode(', ', array_column($pedido['itens'], 'produto'));
+        if (in_array($pedido['statusBanco'], $finalizados, true)) {
+            $historico[] = $pedido;
+        } else {
+            $emAndamento[] = $pedido;
+        }
+    }
+
     return [$emAndamento, $historico];
+}
+
+/**
+ * Catálogo de produtos filtrado por vendedor (id_vendedor = usuarios.id_usuario
+ * do dono). Passe null para trazer todos os vendedores (visão agregada do
+ * admin na tela "Vendas Marketplace"). Mesmo shape de $produtos em
+ * "Produtos" do admin, com o nome do vendedor a mais.
+ */
+function bo_carregar_produtos_vendedor(mysqli $conn, ?int $idVendedor): array
+{
+    $sql = "SELECT p.id_produto, p.nome, p.categoria, p.preco, p.desconto, p.cashback_valor, p.estoque, p.status, p.imagem, p.descricao,
+                   COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
+            FROM produtos p
+            LEFT JOIN usuarios v ON v.id_usuario = p.id_vendedor"
+        . ($idVendedor !== null ? ' WHERE p.id_vendedor = ?' : '')
+        . ' ORDER BY p.nome';
+    $stmt = $conn->prepare($sql);
+    if ($idVendedor !== null) {
+        $stmt->bind_param('i', $idVendedor);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $produtos = [];
+    while ($row = $res->fetch_assoc()) {
+        $desconto = (float) $row['desconto'];
+        $preco = (float) $row['preco'];
+        $produtos[] = [
+            'id' => (int) $row['id_produto'],
+            'nome' => $row['nome'],
+            'categoria' => $row['categoria'],
+            'preco' => $preco,
+            'desconto' => $desconto,
+            'valorFinal' => round($preco - ($preco * $desconto / 100), 2),
+            'cashback' => (float) $row['cashback_valor'],
+            'estoque' => (int) $row['estoque'],
+            'status' => $row['status'] === 'ativo' ? 'disponivel' : 'indisponivel',
+            'imagem' => $row['imagem'],
+            'descricao' => $row['descricao'],
+            'vendedor' => $row['vendedor_nome'],
+        ];
+    }
+    $stmt->close();
+
+    return $produtos;
+}
+
+/**
+ * Vendas (itens de pedido) de um vendedor, com produto, comprador,
+ * transportadora e status de logística. Passe null para trazer as vendas
+ * de todos os vendedores (visão agregada do admin).
+ */
+function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
+{
+    $sql = "SELECT pi.id_item, pi.id_pedido, pi.quantidade, pi.subtotal, pi.valor_frete, pi.status_logistica, pi.codigo_rastreio,
+                   pr.nome AS produto_nome, u.nome AS comprador_nome, pe.data_pedido,
+                   t.nome AS transportadora_nome, COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
+            FROM pedido_item pi
+            JOIN pedido pe ON pe.id_pedido = pi.id_pedido
+            JOIN produtos pr ON pr.id_produto = pi.id_produto
+            JOIN usuarios u ON u.id_usuario = pe.id_usuario
+            LEFT JOIN transportadoras t ON t.id_transportadora = pi.id_transportadora
+            LEFT JOIN usuarios v ON v.id_usuario = pi.id_vendedor"
+        . ($idVendedor !== null ? ' WHERE pi.id_vendedor = ?' : '')
+        . ' ORDER BY pe.data_pedido DESC';
+    $stmt = $conn->prepare($sql);
+    if ($idVendedor !== null) {
+        $stmt->bind_param('i', $idVendedor);
+    }
+    $stmt->execute();
+    $res = $stmt->get_result();
+
+    $statusLogisticaLabel = ['aguardando' => 'Aguardando', 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => 'Devolvido', 'extraviado' => 'Extraviado'];
+
+    $vendas = [];
+    while ($row = $res->fetch_assoc()) {
+        $vendas[] = [
+            'id' => (int) $row['id_item'],
+            'idPedido' => (int) $row['id_pedido'],
+            'produto' => $row['produto_nome'],
+            'vendedor' => $row['vendedor_nome'],
+            'comprador' => $row['comprador_nome'],
+            'quantidade' => (int) $row['quantidade'],
+            'valor' => (float) $row['subtotal'],
+            'valorFrete' => (float) $row['valor_frete'],
+            'transportadora' => $row['transportadora_nome'] ?? '—',
+            'statusLogistica' => $row['status_logistica'],
+            'statusLogisticaLabel' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+            'codigoRastreio' => $row['codigo_rastreio'],
+            'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
+        ];
+    }
+    $stmt->close();
+
+    return $vendas;
+}
+
+/**
+ * Transportadoras globais (cadastradas pelo admin) com suas faixas de CEP.
+ */
+function bo_carregar_transportadoras(mysqli $conn): array
+{
+    $transportadoras = [];
+    $res = $conn->query('SELECT id_transportadora, nome, tipo, status FROM transportadoras ORDER BY nome');
+    while ($row = $res->fetch_assoc()) {
+        $transportadoras[(int) $row['id_transportadora']] = [
+            'id' => (int) $row['id_transportadora'],
+            'nome' => $row['nome'],
+            'tipo' => $row['tipo'],
+            'status' => $row['status'],
+            'faixas' => [],
+        ];
+    }
+
+    $resFaixas = $conn->query('SELECT id_faixa, id_transportadora, cep_inicial, cep_final, valor_frete, prazo_dias FROM faixas_cep_frete ORDER BY cep_inicial');
+    while ($row = $resFaixas->fetch_assoc()) {
+        $idTransportadora = (int) $row['id_transportadora'];
+        if (isset($transportadoras[$idTransportadora])) {
+            $transportadoras[$idTransportadora]['faixas'][] = [
+                'id' => (int) $row['id_faixa'],
+                'cepInicial' => $row['cep_inicial'],
+                'cepFinal' => $row['cep_final'],
+                'valorFrete' => (float) $row['valor_frete'],
+                'prazoDias' => (int) $row['prazo_dias'],
+            ];
+        }
+    }
+
+    return array_values($transportadoras);
 }

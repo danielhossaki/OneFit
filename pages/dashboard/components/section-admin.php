@@ -545,6 +545,195 @@
     <?php endforeach; ?>
 </section>
 
+<!-- ===== ADMIN · Vendas Marketplace (visão agregada de todos os vendedores) ===== -->
+<section class="bo-content-section" data-perfil="admin" data-section="vendas">
+    <div class="bo-page-title">
+        <div>
+            <h1>Vendas Marketplace</h1>
+            <p>Produtos, vendas e logística de todos os vendedores do marketplace.</p>
+        </div>
+    </div>
+
+    <?php $admVendasStatusLabel = ['aguardando' => 'Aguardando', 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => 'Devolvido', 'extraviado' => 'Extraviado']; ?>
+
+    <ul class="nav nav-tabs bo-nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#admVendasTabProdutos" type="button" role="tab">Produtos</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabVendas" type="button" role="tab">Vendas e logística</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabTransportadoras" type="button" role="tab">Transportadoras</button>
+        </li>
+    </ul>
+
+    <div class="tab-content">
+        <!-- ===== Produtos de todos os vendedores ===== -->
+        <div class="tab-pane fade show active" id="admVendasTabProdutos" role="tabpanel">
+            <div class="bo-filters mt-3">
+                <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome, ID ou vendedor"
+                    data-bo-filter="search" data-bo-target="admVendasProdutos">
+                <select class="form-select" style="max-width:200px" data-bo-filter="status" data-bo-target="admVendasProdutos">
+                    <option value="">Todos</option>
+                    <option value="disponivel">Ativo</option>
+                    <option value="indisponivel">Inativo / pausado</option>
+                </select>
+            </div>
+            <div class="bo-table-wrap">
+                <div class="table-responsive">
+                    <table class="bo-table" data-bo-table="admVendasProdutos">
+                        <thead>
+                            <tr>
+                                <th>Foto</th><th>ID</th><th>Nome</th><th>Vendedor</th><th>Preço</th><th>Estoque</th><th>Status</th><th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($admVendasProdutos as $p): ?>
+                                <tr data-status="<?php echo $p['status']; ?>"
+                                    data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome'] . ' ' . $p['vendedor']); ?>">
+                                    <td>
+                                        <div class="bo-thumb">
+                                            <?php if ($p['imagem']): ?><img src="<?php echo htmlspecialchars($p['imagem']); ?>" alt=""><?php else: ?><i class="bi bi-image"></i><?php endif; ?>
+                                        </div>
+                                    </td>
+                                    <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
+                                    <td><?php echo $p['nome']; ?></td>
+                                    <td><?php echo htmlspecialchars($p['vendedor']); ?></td>
+                                    <td><?php echo bo_money($p['valorFinal']); ?></td>
+                                    <td><?php echo $p['estoque']; ?></td>
+                                    <td><?php echo bo_badge($p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?></td>
+                                    <td>
+                                        <div class="bo-table-actions">
+                                            <?php bo_form_toggle('produtos', $p['id'], 'vendas', $p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?>
+                                            <?php echo bo_botao_excluir('produtos', $p['id']); ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <tr class="bo-empty-row" style="display:none"><td colspan="8">Nenhum produto encontrado para os filtros selecionados.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php foreach ($admVendasProdutos as $p): ?>
+                <?php bo_modal_confirmar_exclusao('produtos', $p['id'], $p['nome'], 'vendas'); ?>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- ===== Vendas de todos os vendedores ===== -->
+        <div class="tab-pane fade" id="admVendasTabVendas" role="tabpanel">
+            <div class="bo-filters mt-3">
+                <select class="form-select" style="max-width:220px" data-bo-filter="status" data-bo-target="admVendasVendas">
+                    <option value="">Todos os status</option>
+                    <?php foreach ($admVendasStatusLabel as $valor => $label): ?>
+                        <option value="<?php echo $valor; ?>"><?php echo $label; ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="bo-table-wrap">
+                <div class="table-responsive">
+                    <table class="bo-table" data-bo-table="admVendasVendas">
+                        <thead>
+                            <tr><th>Data</th><th>Produto</th><th>Vendedor</th><th>Comprador</th><th>Qtd.</th><th>Valor</th><th>Transportadora</th><th>Frete</th><th>Rastreio / Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($admVendas as $v): ?>
+                                <tr data-status="<?php echo $v['statusLogistica']; ?>">
+                                    <td><?php echo $v['data']; ?></td>
+                                    <td><?php echo htmlspecialchars($v['produto']); ?></td>
+                                    <td><?php echo htmlspecialchars($v['vendedor']); ?></td>
+                                    <td><?php echo htmlspecialchars($v['comprador']); ?></td>
+                                    <td><?php echo $v['quantidade']; ?></td>
+                                    <td><?php echo bo_money($v['valor']); ?></td>
+                                    <td><?php echo htmlspecialchars($v['transportadora']); ?></td>
+                                    <td><?php echo bo_money($v['valorFrete']); ?></td>
+                                    <td>
+                                        <form method="POST" action="<?php echo bo_form_action('vendas.php'); ?>" class="bo-inline-form">
+                                            <?php echo bo_csrf_field(); ?>
+                                            <?php echo bo_hidden('secao', 'vendas'); ?>
+                                            <?php echo bo_hidden('acao', 'update-status'); ?>
+                                            <?php echo bo_hidden('id', $v['id']); ?>
+                                            <select class="form-select form-select-sm" name="status_logistica" style="min-width:150px">
+                                                <?php foreach ($admVendasStatusLabel as $valor => $label): ?>
+                                                    <option value="<?php echo $valor; ?>" <?php echo $v['statusLogistica'] === $valor ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="Código de rastreio" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
+                                            <button type="submit" class="btn-bo-outline btn-sm mt-1">Salvar</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <tr class="bo-empty-row" <?php echo empty($admVendas) ? '' : 'style="display:none"'; ?>><td colspan="9">Nenhuma venda registrada ainda.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== Transportadoras (globais) ===== -->
+        <div class="tab-pane fade" id="admVendasTabTransportadoras" role="tabpanel">
+            <div class="bo-page-title mt-3">
+                <div><p class="mb-0">Cadastradas pelo admin, disponíveis para todos os vendedores.</p></div>
+                <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalTransportadoraNova">
+                    <i class="bi bi-plus-lg"></i> Adicionar transportador
+                </button>
+            </div>
+            <?php bo_modal_transportadora(null, 'vendas'); ?>
+
+            <?php foreach ($transportadoras as $t): ?>
+                <div class="bo-card mb-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <strong><?php echo htmlspecialchars($t['nome']); ?></strong>
+                            <span class="bo-card-sub"><?php echo ucfirst($t['tipo']); ?></span>
+                            <?php echo bo_badge($t['status'] === 'ativo', 'Ativo', 'Inativo'); ?>
+                        </div>
+                        <div class="bo-table-actions">
+                            <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalTransportadoraEditar<?php echo $t['id']; ?>"><i class="bi bi-pencil"></i></button>
+                            <?php bo_form_toggle('transportadoras', $t['id'], 'vendas', $t['status'] === 'ativo', 'Ativo', 'Inativo'); ?>
+                            <?php echo bo_botao_excluir('transportadoras', $t['id']); ?>
+                            <button type="button" class="btn-bo-outline btn-sm" data-bs-toggle="modal" data-bs-target="#modalFaixaCep<?php echo $t['id']; ?>"><i class="bi bi-plus-lg"></i> Faixa de CEP</button>
+                        </div>
+                    </div>
+                    <?php if (!empty($t['faixas'])): ?>
+                        <div class="table-responsive mt-2">
+                            <table class="bo-table">
+                                <thead><tr><th>CEP inicial</th><th>CEP final</th><th>Frete</th><th>Prazo</th><th></th></tr></thead>
+                                <tbody>
+                                    <?php foreach ($t['faixas'] as $f): ?>
+                                        <tr>
+                                            <td><?php echo $f['cepInicial']; ?></td>
+                                            <td><?php echo $f['cepFinal']; ?></td>
+                                            <td><?php echo bo_money($f['valorFrete']); ?></td>
+                                            <td><?php echo $f['prazoDias']; ?> dia(s)</td>
+                                            <td>
+                                                <form method="POST" action="<?php echo bo_form_action('transportadoras.php'); ?>">
+                                                    <?php echo bo_csrf_field(); ?>
+                                                    <?php echo bo_hidden('secao', 'vendas'); ?>
+                                                    <?php echo bo_hidden('acao', 'delete-faixa'); ?>
+                                                    <?php echo bo_hidden('id_faixa', $f['id']); ?>
+                                                    <button type="submit" class="btn-bo-icon danger" title="Remover faixa"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <p class="bo-card-sub mt-2 mb-0">Nenhuma faixa de CEP cadastrada ainda.</p>
+                    <?php endif; ?>
+                </div>
+                <?php bo_modal_transportadora($t, 'vendas'); ?>
+                <?php bo_modal_faixa_cep($t['id'], 'vendas'); ?>
+                <?php bo_modal_confirmar_exclusao('transportadoras', $t['id'], $t['nome'], 'vendas'); ?>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
 <!-- ===== ADMIN · Cadastro de Planos (planos de assinatura oferecidos) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="planos">
     <div class="bo-page-title">

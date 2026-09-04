@@ -29,9 +29,18 @@ const BO_PERFIS = {
             { key: 'cashbacks', label: 'Cashbacks', icon: 'bi-wallet2' },
             { key: 'categorias', label: 'Categorias', icon: 'bi-tags' },
             { key: 'produtos', label: 'Produtos', icon: 'bi-box-seam' },
+            { key: 'vendas', label: 'Vendas Marketplace', icon: 'bi-truck' },
             { key: 'planos', label: 'Cadastro de Planos', icon: 'bi-clipboard-check' },
             { key: 'profissionais', label: 'Profissionais', icon: 'bi-person-badge' },
             { key: 'modalidades', label: 'Modalidades', icon: 'bi-activity' },
+            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
+        ],
+    },
+    vendedor: {
+        label: 'Vendedor',
+        menus: [
+            { key: 'vendas', label: 'Vendas Marketplace', icon: 'bi-truck' },
+            { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
             { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
         ],
     },
@@ -662,6 +671,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyTheme = (theme) => {
         document.documentElement.setAttribute('data-theme', theme);
         try { localStorage.setItem('onefit-theme', theme); } catch (e) { /* armazenamento indisponível */ }
+        try { document.cookie = 'onefit_theme=' + theme + '; path=/; max-age=31536000'; } catch (e) { /* cookie indisponível */ }
         document.querySelectorAll('[data-bo-theme]').forEach((button) => {
             button.classList.toggle('active', button.getAttribute('data-bo-theme') === theme);
         });

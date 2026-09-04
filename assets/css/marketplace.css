@@ -11,6 +11,26 @@
     --bo-danger: #e42e2e;
     --bo-success: #4caf50;
     --bo-header-h: 76px;
+    --bo-header-glow: rgba(14, 11, 8, 0.9);
+    --bo-fav-btn-bg: rgba(14, 11, 8, 0.75);
+}
+
+/* Tema claro: mesma identidade dourada, ajustada para fundo claro (mesmos
+   valores usados em assets/css/dashboard.css). */
+html[data-theme="light"] {
+    --bo-bg: #f8f5f0;
+    --bo-surface: #fffdfa;
+    --bo-surface-2: #f5f0e8;
+    --bo-border: #e8dfd3;
+    --bo-text: #29251f;
+    --bo-text-muted: #766e63;
+    --bo-gold: #b98618;
+    --bo-gold-bright: #a87308;
+    --bo-gold-dim: #e4c98d;
+    --bo-danger: #c11d1d;
+    --bo-success: #2f8132;
+    --bo-header-glow: rgba(255, 253, 250, 0.92);
+    --bo-fav-btn-bg: rgba(255, 253, 250, 0.85);
 }
 
 * {
@@ -30,7 +50,7 @@ body {
     left: 0;
     right: 0;
     height: var(--bo-header-h);
-    background: rgba(14, 11, 8, 0.9);
+    background: var(--bo-header-glow);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--bo-border);
     z-index: 1030;
@@ -216,7 +236,7 @@ body {
     height: 34px;
     border-radius: 50%;
     border: 1px solid var(--bo-border);
-    background: rgba(14, 11, 8, 0.75);
+    background: var(--bo-fav-btn-bg);
     color: var(--bo-text);
     display: flex;
     align-items: center;
@@ -478,6 +498,34 @@ body {
     text-decoration: none;
     color: inherit;
     cursor: pointer;
+}
+
+.mkt-detalhe-modal .modal-content {
+    background: var(--bo-surface);
+    color: var(--bo-text);
+    border: 1px solid var(--bo-border);
+    border-radius: 14px;
+}
+
+.mkt-detalhe-modal .modal-header,
+.mkt-detalhe-modal .modal-footer {
+    border-color: var(--bo-border);
+}
+
+.mkt-detalhe-modal .modal-title {
+    color: var(--bo-text);
+}
+
+.mkt-detalhe-modal .btn-close {
+    filter: invert(1) grayscale(1) brightness(1.6);
+}
+
+html[data-theme="light"] .mkt-detalhe-modal .btn-close {
+    filter: none;
+}
+
+html[data-theme="light"] .mkt-offcanvas .btn-close {
+    filter: none;
 }
 
 .mkt-detalhe-media {

@@ -1,18 +1,37 @@
 <?php
 /**
  * funcionalidades/produtos.php
- * CRUD da tela "Produtos" do admin (tabela `produtos`).
+ * CRUD da tela "Produtos" do admin (tabela `produtos`) — também usado pelo
+ * vendedor na tela "Vendas Marketplace" (mesma tabela, filtrada por dono).
  */
 
+$bo_papeis_permitidos = ['admin', 'vendedor'];
 require __DIR__ . '/_shared.php';
 bo_check_csrf();
+
+$souVendedor = ($_SESSION['tipo_usuario'] ?? '') === 'vendedor';
+$idVendedorLogado = (int) ($_SESSION['id_usuario'] ?? 0);
 
 $acao = bo_str('acao');
 $id = (int) bo_str('id');
 $secao = bo_secao_atual();
 
+/**
+ * Um vendedor só pode agir sobre os próprios produtos — nunca confia no id
+ * vindo do POST sozinho. Admin não tem essa restrição.
+ */
+function prod_pertence_ao_vendedor(mysqli $conn, int $id, int $idVendedor): bool
+{
+    $stmt = $conn->prepare('SELECT id_produto FROM produtos WHERE id_produto = ? AND id_vendedor = ?');
+    $stmt->bind_param('ii', $id, $idVendedor);
+    $stmt->execute();
+    $ok = (bool) $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $ok;
+}
+
 if ($acao === 'toggle-status') {
-    if (!$id) {
+    if (!$id || ($souVendedor && !prod_pertence_ao_vendedor($conn, $id, $idVendedorLogado))) {
         bo_flash('error', 'Produto inválido.');
         bo_redirect($secao);
     }
@@ -25,7 +44,7 @@ if ($acao === 'toggle-status') {
 }
 
 if ($acao === 'delete') {
-    if (!$id) {
+    if (!$id || ($souVendedor && !prod_pertence_ao_vendedor($conn, $id, $idVendedorLogado))) {
         bo_flash('error', 'Produto inválido.');
         bo_redirect($secao);
     }
@@ -57,7 +76,7 @@ if (!$nome || $preco <= 0) {
 }
 
 if ($acao === 'update') {
-    if (!$id) {
+    if (!$id || ($souVendedor && !prod_pertence_ao_vendedor($conn, $id, $idVendedorLogado))) {
         bo_flash('error', 'Produto inválido.');
         bo_redirect($secao);
     }
@@ -69,8 +88,14 @@ if ($acao === 'update') {
     bo_redirect($secao);
 }
 
-$stmt = $conn->prepare('INSERT INTO produtos (nome, categoria, preco, desconto, cashback_valor, estoque, imagem, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, "ativo")');
-$stmt->bind_param('ssdddiss', $nome, $categoria, $preco, $desconto, $cashback, $estoque, $imagem, $descricao);
+// Produto novo: se quem cadastra é vendedor, o produto já nasce com dono
+// (não confia em id_vendedor vindo do POST); se é admin, fica sem dono
+// (produto "ONE FIT"), já que a atribuição de produtos a vendedores é
+// feita pelo próprio vendedor no autoatendimento da tela de Vendas.
+$idVendedorNovo = $souVendedor ? $idVendedorLogado : null;
+
+$stmt = $conn->prepare('INSERT INTO produtos (id_vendedor, nome, categoria, preco, desconto, cashback_valor, estoque, imagem, descricao, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, "ativo")');
+$stmt->bind_param('issdddiss', $idVendedorNovo, $nome, $categoria, $preco, $desconto, $cashback, $estoque, $imagem, $descricao);
 $stmt->execute();
 $stmt->close();
 

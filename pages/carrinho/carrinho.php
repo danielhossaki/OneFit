@@ -1,6 +1,7 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/pages/dashboard/includes/frete.php');
 
 session_start();
 
@@ -12,9 +13,44 @@ if (!isset($_SESSION['id_usuario'])) {
 }
 $idUsuarioLogado = (int) $_SESSION['id_usuario'];
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+function cart_csrf_valido(): bool
+{
+    return hash_equals($_SESSION['csrf_token'] ?? '', (string) ($_POST['csrf_token'] ?? ''));
+}
+
+function cart_csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">';
+}
+
 function cart_money($v)
 {
     return 'R$ ' . number_format((float) $v, 2, ',', '.');
+}
+
+/**
+ * Agrupa os itens do carrinho por vendedor (id_vendedor NULL = produto
+ * legado "ONE FIT", tratado como grupo 0) e calcula o frete mais barato
+ * disponível para o CEP informado em cada grupo. Retorna null quando algum
+ * grupo não tem nenhuma transportadora que cubra o CEP.
+ */
+function cart_calcular_fretes(mysqli $conn, array $itensPorVendedor, string $cep): ?array
+{
+    $fretes = [];
+    $totalFrete = 0.0;
+    foreach ($itensPorVendedor as $idVendedor => $dados) {
+        $opcao = bo_calcular_frete_mais_barato($conn, $cep);
+        if ($opcao === null) {
+            return null;
+        }
+        $fretes[$idVendedor] = $opcao + ['vendedorNome' => $dados['nome']];
+        $totalFrete += $opcao['valor_frete'];
+    }
+    return ['porVendedor' => $fretes, 'total' => round($totalFrete, 2)];
 }
 
 /**
@@ -27,6 +63,20 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
 {
     if (empty($_SESSION['carrinho'])) {
         header('Location: carrinho.php');
+        exit;
+    }
+
+    // Endereço de entrega: precisa ter sido escolhido/salvo antes (etapa
+    // "checkout-endereco") e pertencer ao próprio usuário — nunca confia
+    // em id_endereco_entrega vindo direto do POST.
+    $idEndereco = (int) ($_SESSION['checkout_endereco_id'] ?? 0);
+    $stmtEndereco = $conn->prepare('SELECT * FROM enderecos_entrega WHERE id_endereco = ? AND id_usuario = ?');
+    $stmtEndereco->bind_param('ii', $idEndereco, $idUsuario);
+    $stmtEndereco->execute();
+    $endereco = $stmtEndereco->get_result()->fetch_assoc();
+    $stmtEndereco->close();
+    if (!$endereco) {
+        header('Location: carrinho.php?erro=endereco');
         exit;
     }
 
@@ -50,7 +100,7 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
         // SELECT ... FOR UPDATE dentro da transação: trava as linhas dos produtos
         // do carrinho até o commit/rollback, evitando que duas finalizações
         // concorrentes vendam mais unidades do que o estoque realmente permite.
-        $stmt = $conn->prepare("SELECT id_produto, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders) FOR UPDATE");
+        $stmt = $conn->prepare("SELECT id_produto, id_vendedor, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders) FOR UPDATE");
         $stmt->bind_param($types, ...$ids);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -63,6 +113,9 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
         $itens = [];
         $totalCompra = 0.0;
         $cashbackGanho = 0.0;
+        // Agrupado por vendedor (chave 0 = produto legado "ONE FIT", sem dono)
+        // para calcular o frete de cada loja separadamente.
+        $itensPorVendedor = [];
         foreach ($_SESSION['carrinho'] as $produtoId => $quantidade) {
             if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
                 continue;
@@ -83,14 +136,17 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
             $subtotal = round($valorFinal * $quantidade, 2);
 
             $cashbackUnitario = (float) $p['cashback_valor'];
+            $idVendedor = (int) ($p['id_vendedor'] ?? 0);
 
             $itens[] = [
                 'id' => $produtoId,
+                'idVendedor' => $idVendedor,
                 'quantidade' => $quantidade,
                 'precoUnitario' => $valorFinal,
                 'subtotal' => $subtotal,
                 'cashbackUnitario' => $cashbackUnitario,
             ];
+            $itensPorVendedor[$idVendedor]['nome'] = $idVendedor > 0 ? 'Loja' : 'ONE FIT';
             $totalCompra += $subtotal;
             // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
             $cashbackGanho += round($cashbackUnitario * $quantidade, 2);
@@ -102,18 +158,70 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
             exit;
         }
 
+        $fretes = cart_calcular_fretes($conn, $itensPorVendedor, $endereco['cep']);
+        if ($fretes === null) {
+            $conn->rollback();
+            header('Location: carrinho.php?erro=frete');
+            exit;
+        }
+        $totalCompra = round($totalCompra + $fretes['total'], 2);
+
         $cashbackUsado = round(max(0, min((float) ($post['cashback_usado'] ?? 0), $saldoAtual, $totalCompra)), 2);
 
-        $stmtPedido = $conn->prepare('INSERT INTO pedido (id_usuario, valor_total, forma_pagamento, status, data_pedido) VALUES (?, ?, ?, "aguardando", NOW())');
-        $stmtPedido->bind_param('ids', $idUsuario, $totalCompra, $formaPagamento);
+        $stmtPedido = $conn->prepare(
+            'INSERT INTO pedido (id_usuario, id_endereco_entrega, valor_total, forma_pagamento, status, data_pedido,
+                endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf)
+             VALUES (?, ?, ?, ?, "aguardando", NOW(), ?, ?, ?, ?, ?, ?, ?)'
+        );
+        $stmtPedido->bind_param(
+            'iidssssssss',
+            $idUsuario,
+            $idEndereco,
+            $totalCompra,
+            $formaPagamento,
+            $endereco['cep'],
+            $endereco['logradouro'],
+            $endereco['numero'],
+            $endereco['complemento'],
+            $endereco['bairro'],
+            $endereco['cidade'],
+            $endereco['uf']
+        );
         $stmtPedido->execute();
         $idPedido = (int) $conn->insert_id;
         $stmtPedido->close();
 
-        $stmtItem = $conn->prepare('INSERT INTO pedido_item (id_pedido, id_produto, quantidade, preco_unitario, subtotal) VALUES (?, ?, ?, ?, ?)');
+        $stmtItem = $conn->prepare(
+            'INSERT INTO pedido_item (id_pedido, id_produto, id_vendedor, quantidade, preco_unitario, subtotal, id_transportadora, valor_frete)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        );
         $stmtEstoque = $conn->prepare('UPDATE produtos SET estoque = estoque - ? WHERE id_produto = ?');
+        // O frete é cobrado uma vez por vendedor: para não duplicar o valor
+        // ao somar pedido_item.valor_frete, ele é lançado só no primeiro
+        // item de cada grupo de vendedor (os demais itens do mesmo grupo
+        // ficam com valor_frete = 0).
+        $vendedorJaCobrado = [];
         foreach ($itens as $item) {
-            $stmtItem->bind_param('iiidd', $idPedido, $item['id'], $item['quantidade'], $item['precoUnitario'], $item['subtotal']);
+            $idVendedorItem = $item['idVendedor'];
+            $idVendedorSql = $idVendedorItem > 0 ? $idVendedorItem : null;
+            $idTransportadoraItem = $fretes['porVendedor'][$idVendedorItem]['id_transportadora'];
+            $valorFreteItem = 0.0;
+            if (empty($vendedorJaCobrado[$idVendedorItem])) {
+                $valorFreteItem = $fretes['porVendedor'][$idVendedorItem]['valor_frete'];
+                $vendedorJaCobrado[$idVendedorItem] = true;
+            }
+
+            $stmtItem->bind_param(
+                'iiiiddid',
+                $idPedido,
+                $item['id'],
+                $idVendedorSql,
+                $item['quantidade'],
+                $item['precoUnitario'],
+                $item['subtotal'],
+                $idTransportadoraItem,
+                $valorFreteItem
+            );
             $stmtItem->execute();
             $stmtEstoque->bind_param('ii', $item['quantidade'], $item['id']);
             $stmtEstoque->execute();
@@ -145,9 +253,11 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
     }
 
     $_SESSION['carrinho'] = [];
+    unset($_SESSION['checkout_endereco_id']);
     $_SESSION['ultimo_pedido'] = [
         'id' => $idPedido,
         'total' => $totalCompra,
+        'frete' => $fretes['total'],
         'cashbackUsado' => $cashbackUsado,
         'cashbackGanho' => $cashbackGanho,
         'formaPagamento' => $formaPagamento,
@@ -161,7 +271,7 @@ if (!isset($_SESSION['carrinho']) || !is_array($_SESSION['carrinho'])) {
 }
 
 /* ===== Ações (remover / alterar quantidade) — recarrega a própria página ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && cart_csrf_valido()) {
     $produtoId = (int) ($_POST['produto_id'] ?? 0);
 
     switch ($_POST['acao']) {
@@ -219,7 +329,7 @@ if (!empty($_SESSION['carrinho'])) {
 
     $produtosMap = [];
     try {
-        $stmt = $conn->prepare("SELECT id_produto AS id, nome, categoria, preco, desconto, cashback_valor AS cashback, imagem FROM produtos WHERE id_produto IN ($placeholders)");
+        $stmt = $conn->prepare("SELECT id_produto AS id, id_vendedor, nome, categoria, preco, desconto, cashback_valor AS cashback, imagem FROM produtos WHERE id_produto IN ($placeholders)");
         $stmt->bind_param($types, ...$ids);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -243,12 +353,14 @@ if (!empty($_SESSION['carrinho'])) {
         $subtotal = round($valorFinal * $quantidade, 2);
         // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
         $cashbackItem = round($cashback * $quantidade, 2);
+        $idVendedorItem = (int) ($p['id_vendedor'] ?? 0);
 
         $totalGeral += $subtotal;
         $cashbackTotal += $cashbackItem;
 
         $itens[] = [
             'id' => $produtoId,
+            'idVendedor' => $idVendedorItem,
             'nome' => $p['nome'],
             'categoria' => $p['categoria'],
             'imagem' => $p['imagem'],
@@ -260,6 +372,45 @@ if (!empty($_SESSION['carrinho'])) {
     }
 }
 
+/* ===== Endereços de entrega salvos pelo usuário ===== */
+$enderecosUsuario = [];
+$stmtEnd = $conn->prepare('SELECT * FROM enderecos_entrega WHERE id_usuario = ? ORDER BY principal DESC, data_cadastro DESC');
+$stmtEnd->bind_param('i', $idUsuarioLogado);
+$stmtEnd->execute();
+$resEnd = $stmtEnd->get_result();
+while ($row = $resEnd->fetch_assoc()) {
+    $enderecosUsuario[(int) $row['id_endereco']] = $row;
+}
+$stmtEnd->close();
+
+// Se nada foi escolhido ainda nesta sessão, usa o endereço principal como
+// sugestão inicial (o usuário ainda pode trocar antes de finalizar).
+if (!isset($_SESSION['checkout_endereco_id']) || !isset($enderecosUsuario[(int) $_SESSION['checkout_endereco_id']])) {
+    foreach ($enderecosUsuario as $end) {
+        if ((int) $end['principal'] === 1) {
+            $_SESSION['checkout_endereco_id'] = (int) $end['id_endereco'];
+            break;
+        }
+    }
+}
+$enderecoSelecionadoId = (int) ($_SESSION['checkout_endereco_id'] ?? 0);
+$enderecoSelecionado = $enderecosUsuario[$enderecoSelecionadoId] ?? null;
+
+/* ===== Frete: agrupa os itens do carrinho por vendedor e calcula a opção
+   mais barata disponível para o CEP do endereço selecionado. ===== */
+$freteInfo = null;
+$freteIndisponivel = false;
+if ($enderecoSelecionado && !empty($itens)) {
+    $itensPorVendedorPreview = [];
+    foreach ($itens as $item) {
+        $itensPorVendedorPreview[$item['idVendedor']]['nome'] = $item['idVendedor'] > 0 ? 'Loja' : 'ONE FIT';
+    }
+    $freteInfo = cart_calcular_fretes($conn, $itensPorVendedorPreview, $enderecoSelecionado['cep']);
+    $freteIndisponivel = $freteInfo === null;
+}
+$valorFrete = $freteInfo['total'] ?? 0.0;
+$totalComFrete = round($totalGeral + $valorFrete, 2);
+
 /* ===== Saldo real de cashback do usuário (créditos - débitos, exceto cancelados) ===== */
 $saldoCashback = 0.0;
 $stmtSaldoCashback = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
@@ -268,7 +419,7 @@ $stmtSaldoCashback->execute();
 $saldoCashback = (float) ($stmtSaldoCashback->get_result()->fetch_assoc()['saldo'] ?? 0);
 $stmtSaldoCashback->close();
 $saldoCashback = max(0.0, $saldoCashback);
-$cashbackMaximoUsavel = round(min($saldoCashback, $totalGeral), 2);
+$cashbackMaximoUsavel = round(min($saldoCashback, $totalComFrete), 2);
 
 /* ===== Mensagens vindas do redirecionamento após finalizar a compra ===== */
 $pedidoConcluido = null;
@@ -276,11 +427,16 @@ if (isset($_GET['sucesso']) && !empty($_SESSION['ultimo_pedido'])) {
     $pedidoConcluido = $_SESSION['ultimo_pedido'];
     unset($_SESSION['ultimo_pedido']);
 }
-$erroFinalizar = isset($_GET['erro']);
+$erroFinalizar = isset($_GET['erro']) && $_GET['erro'] === '1';
+$erroSemEndereco = isset($_GET['erro']) && $_GET['erro'] === 'endereco';
+$erroSemFrete = isset($_GET['erro']) && $_GET['erro'] === 'frete';
 $erroSemEstoque = isset($_GET['semestoque']);
+
+/* Tema (dark/light) escolhido no dashboard, persistido em cookie por assets/js/dashboard.js. */
+$cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="<?php echo $cartTema; ?>">
 
 <head>
     <meta charset="UTF-8">
@@ -368,12 +524,14 @@ $erroSemEstoque = isset($_GET['semestoque']);
 
                     <div class="crt-qty">
                         <form method="POST" action="carrinho.php">
+                            <?php echo cart_csrf_field(); ?>
                             <input type="hidden" name="acao" value="decrementar">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
                             <button type="submit" class="crt-qty-btn" aria-label="Diminuir quantidade">−</button>
                         </form>
                         <span class="crt-qty-value"><?php echo (int) $item['quantidade']; ?></span>
                         <form method="POST" action="carrinho.php">
+                            <?php echo cart_csrf_field(); ?>
                             <input type="hidden" name="acao" value="incrementar">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
                             <button type="submit" class="crt-qty-btn" aria-label="Aumentar quantidade">+</button>
@@ -383,6 +541,7 @@ $erroSemEstoque = isset($_GET['semestoque']);
                     <div class="crt-subtotal"><?php echo cart_money($item['subtotal']); ?></div>
 
                     <form method="POST" action="carrinho.php">
+                        <?php echo cart_csrf_field(); ?>
                         <input type="hidden" name="acao" value="remover">
                         <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
                         <button type="submit" class="crt-remove-btn" aria-label="Remover item" title="Remover item">
@@ -397,9 +556,10 @@ $erroSemEstoque = isset($_GET['semestoque']);
                     <div>
                         <span class="checkout-access-kicker">Checkout seguro</span>
                         <h2 id="checkout-access-title">Revise e finalize sua compra</h2>
-                        <p>Abra cada etapa quando precisar: resumo, cashback ou pagamento.</p>
+                        <p>Abra cada etapa quando precisar: resumo, endereço, cashback ou pagamento.</p>
                     </div>
                     <div class="checkout-access-actions">
+                        <button type="button" class="checkout-access-button" data-open-checkout="checkout-endereco"><i class="bi bi-geo-alt"></i> Endereço de entrega</button>
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-cashback"><i class="bi bi-coin"></i> Usar meu cashback</button>
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-pagamento"><i class="bi bi-credit-card"></i> Forma de pagamento</button>
                     </div>
@@ -412,9 +572,16 @@ $erroSemEstoque = isset($_GET['semestoque']);
             <?php if ($erroFinalizar): ?>
                 <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não foi possível finalizar a compra (produto sem estoque ou indisponível). Revise o carrinho e tente novamente.</div>
             <?php endif; ?>
+            <?php if ($erroSemEndereco): ?>
+                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Escolha um endereço de entrega antes de finalizar a compra.</div>
+            <?php endif; ?>
+            <?php if ($erroSemFrete): ?>
+                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não entregamos no CEP do endereço selecionado. Tente outro endereço.</div>
+            <?php endif; ?>
 
             <!-- Formulário real de checkout: processado 100% em PHP (ação "finalizar" no topo deste arquivo) -->
             <form method="POST" action="carrinho.php" id="checkout-form">
+            <?php echo cart_csrf_field(); ?>
             <input type="hidden" name="acao" value="finalizar">
 
             <div class="crt-summary checkout-card checkout-step is-active" id="checkout-resumo">
@@ -424,17 +591,70 @@ $erroSemEstoque = isset($_GET['semestoque']);
                     <span><?php echo cart_money($totalGeral); ?></span>
                 </div>
                 <div class="crt-summary-row">
+                    <span>Frete</span>
+                    <span id="resumo-frete"><?php echo $freteInfo ? cart_money($valorFrete) : 'Escolha um endereço'; ?></span>
+                </div>
+                <div class="crt-summary-row">
                     <span>Cashback a receber</span>
                     <span class="cashback-valor" id="resumo-cashback"><?php echo cart_money($cashbackTotal); ?></span>
                 </div>
                 <div class="crt-summary-row total">
                     <span>Total</span>
-                    <span id="total-final"><?php echo cart_money($totalGeral); ?></span>
+                    <span id="total-final"><?php echo cart_money($totalComFrete); ?></span>
                 </div>
 
-                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento">
-                    <i class="bi bi-credit-card"></i> Ir para pagamento
+                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-endereco">
+                    <i class="bi bi-geo-alt"></i> Ir para endereço de entrega
                 </button>
+            </div>
+
+            <div class="checkout-card checkout-step" id="checkout-endereco">
+                <h2 class="checkout-title">Endereço de entrega</h2>
+
+                <?php if (empty($enderecosUsuario)): ?>
+                    <p class="cashback-remaining">Você ainda não tem nenhum endereço salvo.</p>
+                <?php else: ?>
+                    <?php foreach ($enderecosUsuario as $end): ?>
+                        <div class="crt-endereco-card<?php echo $enderecoSelecionadoId === (int) $end['id_endereco'] ? ' is-selected' : ''; ?>">
+                            <div class="crt-endereco-info">
+                                <strong><?php echo htmlspecialchars($end['apelido'] ?: ($end['logradouro'] . ', ' . $end['numero'])); ?></strong>
+                                <?php if ((int) $end['principal'] === 1): ?><span class="crt-endereco-badge">Principal</span><?php endif; ?>
+                                <p class="mb-0"><?php echo htmlspecialchars($end['logradouro'] . ', ' . $end['numero'] . ($end['complemento'] ? ' - ' . $end['complemento'] : '')); ?></p>
+                                <p class="mb-0"><?php echo htmlspecialchars($end['bairro'] . ' - ' . $end['cidade'] . '/' . $end['uf'] . ' - CEP ' . $end['cep']); ?></p>
+                            </div>
+                            <div class="crt-endereco-actions">
+                                <?php if ($enderecoSelecionadoId === (int) $end['id_endereco']): ?>
+                                    <span class="crt-endereco-badge">Selecionado para entrega</span>
+                                <?php else: ?>
+                                    <form method="POST" action="<?php echo BASE_URL; ?>pages/dashboard/funcionalidades/enderecos.php">
+                                        <?php echo cart_csrf_field(); ?>
+                                        <input type="hidden" name="acao" value="selecionar">
+                                        <input type="hidden" name="id" value="<?php echo (int) $end['id_endereco']; ?>">
+                                        <button type="submit" class="btn-crt-outline">Usar este endereço</button>
+                                    </form>
+                                <?php endif; ?>
+                                <form method="POST" action="<?php echo BASE_URL; ?>pages/dashboard/funcionalidades/enderecos.php">
+                                    <?php echo cart_csrf_field(); ?>
+                                    <input type="hidden" name="acao" value="delete">
+                                    <input type="hidden" name="id" value="<?php echo (int) $end['id_endereco']; ?>">
+                                    <button type="submit" class="crt-remove-btn" aria-label="Excluir endereço" title="Excluir endereço"><i class="bi bi-trash"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+
+                <button type="button" class="btn-crt-outline" data-bs-toggle="modal" data-bs-target="#modalEnderecoNovo">
+                    <i class="bi bi-plus-circle"></i> Adicionar novo endereço
+                </button>
+
+                <?php if ($freteIndisponivel): ?>
+                    <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não entregamos no CEP deste endereço.</p>
+                <?php elseif ($freteInfo): ?>
+                    <p class="cashback-remaining">Frete calculado: <strong><?php echo cart_money($valorFrete); ?></strong></p>
+                <?php endif; ?>
+
+                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
             </div>
 
             <div class="checkout-card checkout-step" id="checkout-cashback">
@@ -449,38 +669,95 @@ $erroSemEstoque = isset($_GET['semestoque']);
                     <button type="button" class="cashback-action" data-cashback="0">Não usar</button>
                 </div>
                 <div class="cashback-aplicado"><span>Aplicado</span><span id="cashback-aplicado">R$ 0,00</span></div>
-                <p class="cashback-remaining">Restante para pagamento: <strong id="cashback-restante"><?php echo cart_money($totalGeral); ?></strong></p>
+                <p class="cashback-remaining">Restante para pagamento: <strong id="cashback-restante"><?php echo cart_money($totalComFrete); ?></strong></p>
                 <button type="button" class="cashback-continue" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
             </div>
             <div class="checkout-card checkout-step" id="checkout-pagamento">
                 <div class="payment-heading"><h2 class="checkout-title">Forma de pagamento</h2></div>
+                <?php if (!$enderecoSelecionado): ?>
+                    <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Escolha um endereço de entrega antes de finalizar.</p>
+                <?php endif; ?>
                 <div class="payment-tabs">
                     <input type="radio" class="payment-radio" name="forma_pagamento" id="payPix" value="pix" checked>
                     <label class="payment-tab" for="payPix"><i class="bi bi-qr-code"></i> PIX</label>
                     <input type="radio" class="payment-radio" name="forma_pagamento" id="payCartao" value="cartao">
                     <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> Cartão</label>
                 </div>
-                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalGeral); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
+                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalComFrete); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
                 <div id="card-payment" class="card-payment"><label class="pix-label">Dados do cartão (simulação)</label><input class="payment-input" type="text" placeholder="Número do cartão"><input class="payment-input" type="text" placeholder="Nome impresso no cartão"></div>
-                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalGeral); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalGeral); ?></strong></div></div>
+                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalComFrete); ?></strong></div></div>
 
                 <button type="submit" class="checkout-finish">Finalizar compra</button>
             </div>
 
             </form>
 
-            <form method="POST" action="carrinho.php"><input type="hidden" name="acao" value="limpar"><button type="submit" class="checkout-clear">Limpar carrinho</button></form>
+            <form method="POST" action="carrinho.php"><?php echo cart_csrf_field(); ?><input type="hidden" name="acao" value="limpar"><button type="submit" class="checkout-clear">Limpar carrinho</button></form>
             </aside>
             <div class="checkout-backdrop" data-close-checkout></div>
+            </div>
+
+            <div class="modal fade crt-modal" id="modalEnderecoNovo" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Novo endereço de entrega</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                        </div>
+                        <form method="POST" action="<?php echo BASE_URL; ?>pages/dashboard/funcionalidades/enderecos.php">
+                            <div class="modal-body row g-3">
+                                <?php echo cart_csrf_field(); ?>
+                                <input type="hidden" name="acao" value="create">
+                                <div class="col-12">
+                                    <label class="form-label">Apelido (opcional)</label>
+                                    <input type="text" class="form-control" name="apelido" placeholder="Casa, trabalho...">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">CEP</label>
+                                    <input type="text" class="form-control" name="cep" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Logradouro</label>
+                                    <input type="text" class="form-control" name="logradouro" required>
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Número</label>
+                                    <input type="text" class="form-control" name="numero" required>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Complemento</label>
+                                    <input type="text" class="form-control" name="complemento">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Bairro</label>
+                                    <input type="text" class="form-control" name="bairro" required>
+                                </div>
+                                <div class="col-8">
+                                    <label class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" name="cidade" required>
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">UF</label>
+                                    <input type="text" class="form-control" name="uf" maxlength="2" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn-crt-outline" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn-crt-gold">Salvar endereço</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
 
         <?php endif; ?>
 
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (() => {
-            const total = <?php echo json_encode($totalGeral); ?>;
+            const total = <?php echo json_encode($totalComFrete); ?>;
             const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
             const range = document.getElementById('cashback-range');
             const checkoutPanel = document.getElementById('checkout-panel');

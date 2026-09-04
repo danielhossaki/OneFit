@@ -32,7 +32,7 @@ if (!isset($_SESSION['id_usuario'])) {
 // usuarios.tipo_usuario, gravada na sessão no momento do login.
 // Ajuste os 3 valores abaixo se os nomes do ENUM no banco forem diferentes.
 $perfilLogado = $_SESSION['tipo_usuario'] ?? 'aluno';
-if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno'], true)) {
+if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno', 'vendedor'], true)) {
     $perfilLogado = 'aluno'; // valor desconhecido -> cai no perfil mais restrito
 }
 
@@ -143,6 +143,8 @@ if ($perfilLogado === 'admin') {
             require __DIR__ . '/components/section-admin.php';
         } elseif ($perfilLogado === 'profissional') {
             require __DIR__ . '/components/section-profissional.php';
+        } elseif ($perfilLogado === 'vendedor') {
+            require __DIR__ . '/components/section-vendedor.php';
         } else {
             require __DIR__ . '/components/section-aluno.php';
         }

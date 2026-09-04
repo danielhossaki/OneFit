@@ -8,6 +8,20 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
 session_start();
 
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+function mkt_csrf_valido(): bool
+{
+    return hash_equals($_SESSION['csrf_token'] ?? '', (string) ($_POST['csrf_token'] ?? ''));
+}
+
+function mkt_csrf_field(): string
+{
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') . '">';
+}
+
 function mkt_money($v)
 { return 'R$ ' . number_format((float) $v, 2, ',', '.'); }
 
@@ -52,7 +66,7 @@ if (!isset($_SESSION['favoritos']) || !is_array($_SESSION['favoritos'])) { $_SES
    modal de detalhes de um favorito. Sempre recarrega a própria página
    (padrão PRG, igual ao carrinho.php), mostrando um aviso quando o estoque
    não permite adicionar mais unidades. ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'add_carrinho') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'add_carrinho' && mkt_csrf_valido()) {
     $produtoIdForm = (int) ($_POST['produto_id'] ?? 0);
     $categoriaVolta = (string) ($_POST['categoria'] ?? '');
     $queryVolta = $categoriaVolta !== '' ? '&categoria=' . urlencode($categoriaVolta) : '';
@@ -73,7 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POS
 /* ===== Ação via formulário real (sem JS): favoritar/desfavoritar um produto
    (usado tanto no botão de estrela do card quanto no botão de remover dentro
    do offcanvas de favoritos). ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'toggle_favorito') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'toggle_favorito' && mkt_csrf_valido()) {
     $produtoIdForm = (int) ($_POST['produto_id'] ?? 0);
     $categoriaVolta = (string) ($_POST['categoria'] ?? '');
     if (isset($produtos[$produtoIdForm])) {
@@ -115,11 +129,14 @@ if (!in_array($categoriaAtiva, $categorias, true)) {
 
 /* URL de "Voltar": usa o referenciador quando disponível, senão a home. */
 $mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (BASE_URL . 'index.php');
+
+/* Tema (dark/light) escolhido no dashboard, persistido em cookie por assets/js/dashboard.js. */
+$mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 ?>
 
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="<?php echo $mktTema; ?>">
 
 <head>
     <meta charset="UTF-8">
@@ -206,6 +223,7 @@ $mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (B
                                 <?php endif; ?>
 
                                 <form method="POST" action="marketplace.php" class="mkt-fav-form">
+                                    <?php echo mkt_csrf_field(); ?>
                                     <input type="hidden" name="form_acao" value="toggle_favorito">
                                     <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
                                     <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
@@ -236,6 +254,7 @@ $mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (B
 
                                 <div class="mkt-card-footer">
                                     <form method="POST" action="marketplace.php">
+                                        <?php echo mkt_csrf_field(); ?>
                                         <input type="hidden" name="form_acao" value="add_carrinho">
                                         <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
                                         <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
@@ -286,6 +305,7 @@ $mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (B
                             </div>
                         </a>
                         <form method="POST" action="marketplace.php">
+                            <?php echo mkt_csrf_field(); ?>
                             <input type="hidden" name="form_acao" value="toggle_favorito">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
                             <button type="submit" class="mkt-off-remove" title="Remover dos favoritos">
@@ -333,6 +353,7 @@ $mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (B
                     </div>
                     <div class="modal-footer">
                         <form method="POST" action="marketplace.php">
+                            <?php echo mkt_csrf_field(); ?>
                             <input type="hidden" name="form_acao" value="add_carrinho">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
                             <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">

@@ -906,6 +906,36 @@ body {
     gap: 8px;
 }
 
+.bo-inline-form {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 160px;
+}
+
+.bo-nav-tabs {
+    border-bottom-color: var(--border);
+    margin-bottom: 18px;
+}
+
+.bo-nav-tabs .nav-link {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.bo-nav-tabs .nav-link:hover {
+    border-color: var(--border);
+    color: var(--text);
+}
+
+.bo-nav-tabs .nav-link.active {
+    background: var(--surface);
+    border-color: var(--border) var(--border) var(--surface);
+    color: var(--gold-bright);
+}
+
 /* Linha "nenhum resultado encontrado", mostrada pelo JS quando o filtro zera a lista */
 .bo-empty-row td {
     text-align: center;

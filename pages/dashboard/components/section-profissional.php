@@ -638,8 +638,9 @@ $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
         <tbody>
             <?php foreach (($profPedidos ?? []) as $ped): ?>
                 <tr>
-                    <td><?php echo $ofH($ped['transacao']); ?></td><td><?php echo $ofH($ped['produto']); ?></td>
-                    <td><?php echo (int) $ped['quantidade']; ?></td><td><?php echo bo_money((float) $ped['valor']); ?></td>
+                    <td><?php echo $ofH($ped['transacao']); ?></td>
+                    <td><?php foreach ($ped['itens'] as $it): ?><div><?php echo (int) $it['quantidade']; ?>x <?php echo $ofH($it['produto']); ?> — <small>Vendido por: <?php echo $ofH($it['vendedor']); ?> · <?php echo $ofH($it['statusLogistica']); ?></small></div><?php endforeach; ?></td>
+                    <td><?php echo array_sum(array_column($ped['itens'], 'quantidade')); ?></td><td><?php echo bo_money((float) $ped['valor']); ?></td>
                     <td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
                 </tr>
             <?php endforeach; ?>
@@ -654,7 +655,8 @@ $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
             <?php foreach (($profPedidosHistorico ?? []) as $ped): ?>
                 <tr>
                     <td><?php echo $ofH($ped['transacao']); ?></td><td><?php echo $ofH($ped['data']); ?></td>
-                    <td><?php echo $ofH($ped['produto']); ?></td><td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
+                    <td><?php foreach ($ped['itens'] as $it): ?><div><?php echo (int) $it['quantidade']; ?>x <?php echo $ofH($it['produto']); ?> — <small>Vendido por: <?php echo $ofH($it['vendedor']); ?></small></div><?php endforeach; ?></td>
+                    <td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
                 </tr>
             <?php endforeach; ?>
             <?php if (empty($profPedidosHistorico)): ?><tr><td colspan="4">Nenhuma compra no histórico.</td></tr><?php endif; ?>

@@ -22,7 +22,7 @@ $secao = bo_secao_atual();
 function bo_sincronizar_tipo_usuario(mysqli $conn, string $email, string $funcaoNome): void
 {
     $tipo = strtolower($funcaoNome);
-    if (!in_array($tipo, ['admin', 'profissional', 'aluno'], true)) {
+    if (!in_array($tipo, ['admin', 'profissional', 'aluno', 'vendedor'], true)) {
         return;
     }
     $stmt = $conn->prepare('UPDATE usuarios SET tipo_usuario = ? WHERE email = ?');
