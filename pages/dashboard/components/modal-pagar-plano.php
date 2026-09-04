@@ -60,22 +60,22 @@
                     <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label">Número do cartão</label>
-                            <input type="text" class="form-control" id="numeroCartao" inputmode="numeric" autocomplete="cc-number" maxlength="23" placeholder="0000 0000 0000 0000">
+                            <input type="text" class="form-control" placeholder="0000 0000 0000 0000">
                         </div>
                         <div class="col-6">
                             <label class="form-label">Validade</label>
-                            <input type="text" class="form-control" id="validadeCartao" inputmode="numeric" autocomplete="cc-exp" maxlength="5" placeholder="MM/AA">
+                            <input type="text" class="form-control" placeholder="MM/AA">
                         </div>
                         <div class="col-6">
                             <label class="form-label">CVV</label>
-                            <input type="password" class="form-control" id="cvvCartao" inputmode="numeric" autocomplete="cc-csc" maxlength="4" placeholder="123">
+                            <input type="text" class="form-control" placeholder="123">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn-bo-gold" id="btnPagar"><span class="bo-pay-label">Pagar</span></button>
+                <button type="button" class="btn-bo-gold" id="btnPagar">Pagar</button>
             </div>
         </div>
     </div>
