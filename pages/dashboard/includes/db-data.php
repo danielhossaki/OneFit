@@ -28,7 +28,7 @@ function bo_label_status_pagamento(string $status): string
 
 function bo_label_forma_pagamento(string $forma): string
 {
-    $labels = ['pix' => 'PIX', 'cartao' => 'Cartão', 'cashback' => 'Cashback'];
+    $labels = ['pix' => 'PIX', 'cartao' => 'Cartão', 'credito' => 'Crédito', 'debito' => 'Débito', 'cashback' => 'Cashback'];
     return $labels[$forma] ?? ucfirst($forma);
 }
 
@@ -487,8 +487,9 @@ if ($perfilLogado === 'aluno') {
         $stmt2->close();
         $alunoHistorico[] = [
             'data' => date('d/m/Y H:i', strtotime($dataRef)),
-            'descricao' => 'Mensalidade ' . ($row['plano'] ?? ''),
-            'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
+            'descricao' => 'Pagamento do plano ' . ($row['plano'] ?? ''),
+            'tipo' => 'Pagamento',
+            'formaPagamento' => bo_label_forma_pagamento($row['forma_pagamento']),
             'status' => bo_label_status_pagamento($row['status']),
             'valor' => (float) $row['valor'],
             'cashback' => (float) ($cb['total'] ?? 0),

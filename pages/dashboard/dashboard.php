@@ -39,6 +39,7 @@ if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno', 'vendedor'], tru
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+$_SESSION['payment_token'] = bin2hex(random_bytes(32));
 
 // Carrega o perfil real do usuário autenticado para preencher a tela e o modal.
 $stmtUsuario = $conn->prepare(
@@ -223,10 +224,15 @@ if ($perfilLogado === 'admin') {
         const BO_CURRENT_USER = <?php echo json_encode($usuarioDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token']); ?>;
         const BO_PROFILE_UPDATE_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/update-profile.php'); ?>;
+<<<<<<< Updated upstream
         const BO_PREFERENCES_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/preferencias.php'); ?>;
         const BO_USER_PREFERENCES = <?php echo json_encode($preferenciasDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_PREFERENCES_AVAILABLE = <?php echo $preferenciasDisponiveis ? 'true' : 'false'; ?>;
         const BO_PREFERENCES_PERSISTED = <?php echo $preferenciasPersistidas ? 'true' : 'false'; ?>;
+=======
+        const BO_PAYMENT_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/process-payment.php'); ?>;
+        const BO_PAYMENT_TOKEN = <?php echo json_encode($_SESSION['payment_token']); ?>;
+>>>>>>> Stashed changes
         const BO_PROFISSIONAIS_SEARCH = <?php echo json_encode($profissionaisPesquisa, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
     </script>
 

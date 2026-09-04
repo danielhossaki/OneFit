@@ -88,7 +88,7 @@
 
     <div class="bo-table-wrap">
         <div class="table-responsive">
-            <table class="bo-table">
+            <table class="bo-table" id="alunoHistoricoTable">
                 <thead>
                     <tr>
                         <th>Data/hora</th>
@@ -102,14 +102,15 @@
                 <tbody>
                     <?php foreach ($alunoHistorico as $h): ?>
                         <tr>
-                            <td><?php echo $h['data']; ?></td>
-                            <td><?php echo $h['descricao']; ?></td>
-                            <td><?php echo $h['tipo']; ?></td>
-                            <td><?php echo $h['status']; ?></td>
+                            <td><?php echo htmlspecialchars($h['data'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo htmlspecialchars($h['descricao'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td title="Forma: <?php echo htmlspecialchars($h['formaPagamento'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($h['tipo'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><span class="bo-status-badge bo-status-<?php echo strtolower($h['status']); ?>"><?php echo htmlspecialchars($h['status'], ENT_QUOTES, 'UTF-8'); ?></span></td>
                             <td><?php echo bo_money($h['valor']); ?></td>
                             <td><?php echo bo_money($h['cashback']); ?></td>
                         </tr>
                     <?php endforeach; ?>
+                    <tr class="bo-empty-row" <?php echo empty($alunoHistorico) ? '' : 'style="display:none"'; ?>><td colspan="6">Você ainda não possui pagamentos ou movimentações.</td></tr>
                 </tbody>
             </table>
         </div>
