@@ -17,8 +17,8 @@ if (!$senhaAtual || !$senhaNova || !$senhaConfirma) {
     bo_flash('error', 'Preencha a senha atual, a nova senha e a confirmação.');
     bo_redirect_perfil();
 }
-if (strlen($senhaNova) < 6) {
-    bo_flash('error', 'A nova senha precisa ter pelo menos 6 caracteres.');
+if (strlen($senhaNova) < 8) {
+    bo_flash('error', 'A nova senha precisa ter pelo menos 8 caracteres.');
     bo_redirect_perfil();
 }
 if ($senhaNova !== $senhaConfirma) {
@@ -37,11 +37,28 @@ if (!$row || !password_verify($senhaAtual, $row['senha'])) {
     bo_redirect_perfil();
 }
 
-$novoHash = password_hash($senhaNova, PASSWORD_DEFAULT);
-$stmt = $conn->prepare('UPDATE usuarios SET senha = ? WHERE id_usuario = ?');
-$stmt->bind_param('si', $novoHash, $idUsuario);
-$stmt->execute();
-$stmt->close();
+try {
+    $conn->begin_transaction();
+    $novoHash = password_hash($senhaNova, PASSWORD_DEFAULT);
+    $stmt = $conn->prepare('UPDATE usuarios SET senha = ? WHERE id_usuario = ?');
+    $stmt->bind_param('si', $novoHash, $idUsuario);
+    $stmt->execute();
+    $stmt->close();
+
+    $stmtTokens = $conn->prepare(
+        'UPDATE recuperacao_senha_tokens SET usado_em = NOW()
+         WHERE usuario_id = ? AND usado_em IS NULL'
+    );
+    $stmtTokens->bind_param('i', $idUsuario);
+    $stmtTokens->execute();
+    $stmtTokens->close();
+    $conn->commit();
+} catch (Throwable $erro) {
+    $conn->rollback();
+    error_log('Falha segura ao alterar senha no painel ONE FIT.');
+    bo_flash('error', 'Não foi possível alterar a senha neste momento. Tente novamente.');
+    bo_redirect_perfil();
+}
 
 bo_flash('success', 'Senha alterada com sucesso!');
 bo_redirect_perfil();

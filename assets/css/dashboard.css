@@ -1255,6 +1255,29 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     padding: 26px;
 }
 
+.bo-settings-stack {
+    display: grid;
+    gap: 18px;
+    max-width: 760px;
+    width: 100%;
+}
+
+.bo-settings-stack .bo-settings-card {
+    max-width: none;
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+    .bo-settings-stack {
+        max-width: 900px;
+    }
+}
+
+@media (min-width: 1200px) {
+    .bo-settings-stack {
+        max-width: 1080px;
+    }
+}
+
 .bo-settings-heading {
     align-items: center;
     display: flex;
@@ -1278,7 +1301,7 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 .bo-theme-choices {
     display: grid;
     gap: 12px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .bo-theme-choice {
@@ -1298,6 +1321,18 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 .bo-theme-choice.active {
     background: rgba(212, 175, 55, .09);
     border-color: var(--gold);
+}
+
+.bo-theme-choice:focus-visible,
+.bo-toggle-input:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, .35);
+    outline-offset: 3px;
+}
+
+.bo-theme-choice:disabled,
+.bo-toggle-input:disabled {
+    cursor: wait;
+    opacity: .65;
 }
 
 .bo-theme-choice>i:first-child {
@@ -1324,17 +1359,8 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     margin-top: 2px;
 }
 
-.bo-theme-check {
-    color: var(--gold-bright);
-    display: none;
-    font-size: 18px;
-}
-
-.bo-theme-choice.active .bo-theme-check {
-    display: block;
-}
-
-.bo-settings-logout {
+.bo-settings-logout,
+.bo-settings-action-row {
     align-items: center;
     border-top: 1px solid var(--border);
     display: flex;
@@ -1345,19 +1371,100 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 }
 
 .bo-settings-logout strong,
-.bo-settings-logout span {
+.bo-settings-logout span,
+.bo-settings-action-row strong,
+.bo-settings-action-row span {
     display: block;
 }
 
-.bo-settings-logout strong {
+.bo-settings-logout strong,
+.bo-settings-action-row strong {
     color: var(--text);
     font-size: 14px;
 }
 
-.bo-settings-logout span {
+.bo-settings-logout span,
+.bo-settings-action-row span {
     color: var(--text-muted);
     font-size: 12px;
     margin-top: 3px;
+}
+
+.bo-preference-list {
+    display: grid;
+}
+
+.bo-preference-row {
+    align-items: center;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    min-height: 58px;
+    transition: opacity .2s;
+}
+
+.bo-preference-row:first-child {
+    border-top: 0;
+}
+
+.bo-preference-row label {
+    align-items: center;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    font-size: 14px;
+    gap: 11px;
+}
+
+.bo-preference-row label i {
+    color: var(--gold-bright);
+    font-size: 17px;
+}
+
+.bo-preference-row.is-loading {
+    opacity: .6;
+}
+
+.bo-toggle-input {
+    appearance: none;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    flex: 0 0 auto;
+    height: 26px;
+    margin: 0;
+    position: relative;
+    transition: background .2s, border-color .2s;
+    width: 46px;
+}
+
+.bo-toggle-input::after {
+    background: var(--text-muted);
+    border-radius: 50%;
+    content: '';
+    height: 18px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    transition: transform .2s, background .2s;
+    width: 18px;
+}
+
+.bo-toggle-input:checked {
+    background: rgba(212, 175, 55, .24);
+    border-color: var(--gold);
+}
+
+.bo-toggle-input:checked::after {
+    background: var(--gold-bright);
+    transform: translateX(20px);
+}
+
+.bo-settings-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin: 16px 0 0;
 }
 
 .bo-logout-button:hover {
@@ -1398,6 +1505,10 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 }
 
 @media (max-width: 991px) {
+
+    .bo-theme-choices {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     /* Sidebar vira um painel deslizante (off-canvas) em telas menores */
     .bo-sidebar {
@@ -1459,6 +1570,17 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     .bo-settings-logout {
         align-items: flex-start;
         flex-direction: column;
+    }
+
+    .bo-settings-action-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .bo-settings-action-row .btn-bo-outline,
+    .bo-settings-action-row .logout-button {
+        justify-content: center;
+        width: 100%;
     }
 
     .btn-bo-outline {
