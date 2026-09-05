@@ -62,19 +62,26 @@ foreach ($produtos as $p) {
 if (!isset($_SESSION['carrinho']) || !is_array($_SESSION['carrinho'])) { $_SESSION['carrinho'] = []; }
 if (!isset($_SESSION['favoritos']) || !is_array($_SESSION['favoritos'])) { $_SESSION['favoritos'] = []; }
 
-/* ===== Ação via formulário real (sem JS): adicionar ao carrinho a partir do
-   modal de detalhes de um favorito. Sempre recarrega a própria página
-   (padrão PRG, igual ao carrinho.php), mostrando um aviso quando o estoque
-   não permite adicionar mais unidades. ===== */
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['form_acao']) && $_POST['form_acao'] === 'add_carrinho' && mkt_csrf_valido()) {
+/* ===== Ação via formulário real (sem JS): adicionar ao carrinho, seja pelo
+   botão "Adicionar ao carrinho" (fica no marketplace) ou "Comprar agora"
+   (mesma checagem de estoque, mas manda direto pro checkout). Sempre recarrega
+   uma página de verdade (padrão PRG, igual ao carrinho.php), mostrando um
+   aviso quando o estoque não permite adicionar mais unidades. ===== */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['form_acao'] ?? '', ['add_carrinho', 'comprar_agora'], true) && mkt_csrf_valido()) {
+    $comprarAgora = $_POST['form_acao'] === 'comprar_agora';
     $produtoIdForm = (int) ($_POST['produto_id'] ?? 0);
     $categoriaVolta = (string) ($_POST['categoria'] ?? '');
     $queryVolta = $categoriaVolta !== '' ? '&categoria=' . urlencode($categoriaVolta) : '';
+
     if (isset($produtos[$produtoIdForm])) {
         $qtdAtualForm = $_SESSION['carrinho'][$produtoIdForm] ?? 0;
         if ($qtdAtualForm < (int) $produtos[$produtoIdForm]['estoque']) {
             $_SESSION['carrinho'][$produtoIdForm] = $qtdAtualForm + 1;
-            header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php?adicionado=1' . $queryVolta);
+            if ($comprarAgora) {
+                header('Location: ' . BASE_URL . 'pages/carrinho/carrinho.php?comprar=1');
+            } else {
+                header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php?adicionado=1' . $queryVolta);
+            }
         } else {
             header('Location: ' . BASE_URL . 'pages/marketplace/marketplace.php?semestoque=1' . $queryVolta);
         }
@@ -258,13 +265,15 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 </div>
 
                                 <div class="mkt-card-footer">
-                                    <form method="POST" action="marketplace.php">
+                                    <form method="POST" action="marketplace.php" class="mkt-card-compra">
                                         <?php echo mkt_csrf_field(); ?>
-                                        <input type="hidden" name="form_acao" value="add_carrinho">
                                         <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
                                         <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
-                                        <button type="submit" class="btn-mkt-gold">
+                                        <button type="submit" name="form_acao" value="add_carrinho" class="btn-mkt-outline">
                                             <i class="bi bi-cart-plus"></i> Adicionar
+                                        </button>
+                                        <button type="submit" name="form_acao" value="comprar_agora" class="btn-mkt-gold">
+                                            <i class="bi bi-lightning-charge-fill"></i> Comprar agora
                                         </button>
                                     </form>
                                 </div>
@@ -357,13 +366,15 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         <?php endif; ?>
                     </div>
                     <div class="modal-footer">
-                        <form method="POST" action="marketplace.php">
+                        <form method="POST" action="marketplace.php" class="mkt-card-compra">
                             <?php echo mkt_csrf_field(); ?>
-                            <input type="hidden" name="form_acao" value="add_carrinho">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
                             <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
-                            <button type="submit" class="btn-mkt-gold">
+                            <button type="submit" name="form_acao" value="add_carrinho" class="btn-mkt-outline">
                                 <i class="bi bi-cart-plus"></i> Adicionar ao carrinho
+                            </button>
+                            <button type="submit" name="form_acao" value="comprar_agora" class="btn-mkt-gold">
+                                <i class="bi bi-lightning-charge-fill"></i> Comprar agora
                             </button>
                         </form>
                     </div>

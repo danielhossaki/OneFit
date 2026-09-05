@@ -467,6 +467,11 @@ $erroSemEndereco = isset($_GET['erro']) && $_GET['erro'] === 'endereco';
 $erroSemFrete = isset($_GET['erro']) && $_GET['erro'] === 'frete';
 $erroSemEstoque = isset($_GET['semestoque']);
 
+/* "Comprar agora" no marketplace já manda o produto pro carrinho e cai aqui
+   com ?comprar=1 — abre o checkout direto na etapa de pagamento (renderizado
+   assim já na primeira resposta do servidor, sem depender de JS). */
+$abrirCheckoutPagamento = isset($_GET['comprar']) && !empty($itens);
+
 /* Tema (dark/light) escolhido no dashboard, persistido em cookie por assets/js/dashboard.js. */
 $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 ?>
@@ -492,7 +497,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     </style>
 </head>
 
-<body>
+<body class="<?php echo $abrirCheckoutPagamento ? 'checkout-open' : ''; ?>">
 
     <header class="crt-header">
         <div class="crt-logo">
@@ -601,7 +606,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <button type="button" class="checkout-open-primary" data-open-checkout="checkout-resumo"><i class="bi bi-bag-check"></i> Abrir checkout</button>
                 </section>
 
-            <aside class="crt-checkout" id="checkout-panel" aria-hidden="true" aria-label="Checkout">
+            <aside class="crt-checkout<?php echo $abrirCheckoutPagamento ? ' is-open' : ''; ?>" id="checkout-panel" aria-hidden="<?php echo $abrirCheckoutPagamento ? 'false' : 'true'; ?>" aria-label="Checkout">
             <div class="checkout-panel-header"><strong>Checkout ONE FIT</strong><button class="checkout-close" type="button" aria-label="Fechar checkout"><i class="bi bi-x-lg"></i></button></div>
 
             <?php if ($erroFinalizar): ?>
@@ -631,7 +636,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <input type="hidden" name="acao" value="finalizar">
             </form>
 
-            <div class="crt-summary checkout-card checkout-step is-active" id="checkout-resumo">
+            <div class="crt-summary checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? '' : ' is-active'; ?>" id="checkout-resumo">
                 <h2 class="checkout-title">Resumo da compra</h2>
                 <div class="crt-summary-row">
                     <span>Subtotal</span>
@@ -732,7 +737,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <p class="cashback-remaining">Restante para pagamento: <strong id="cashback-restante"><?php echo cart_money($totalComFrete); ?></strong></p>
                 <button type="button" class="cashback-continue" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
             </div>
-            <div class="checkout-card checkout-step" id="checkout-pagamento">
+            <div class="checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? ' is-active' : ''; ?>" id="checkout-pagamento">
                 <div class="payment-heading"><h2 class="checkout-title">Forma de pagamento</h2></div>
                 <?php if (!$enderecoSelecionado): ?>
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Escolha um endereço de entrega antes de finalizar.</p>

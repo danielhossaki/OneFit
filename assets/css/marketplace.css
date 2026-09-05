@@ -327,6 +327,39 @@ body {
     margin-top: auto;
 }
 
+.mkt-card-compra {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.mkt-card-compra .btn-mkt-gold,
+.mkt-card-compra .btn-mkt-outline {
+    width: 100%;
+    font-size: 11px;
+    padding: 10px 8px;
+}
+
+.btn-mkt-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-radius: 8px;
+    border: 1px solid var(--bo-border);
+    background: transparent;
+    color: var(--bo-text);
+    transition: border-color .2s ease, color .2s ease;
+}
+
+.btn-mkt-outline:hover {
+    border-color: var(--bo-gold);
+    color: var(--bo-gold-bright);
+}
+
 .btn-mkt-gold {
     width: 100%;
     display: inline-flex;
