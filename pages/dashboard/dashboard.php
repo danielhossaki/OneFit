@@ -84,6 +84,14 @@ $preferenciasDashboard = [
 $preferenciasDisponiveis = false;
 $preferenciasPersistidas = false;
 try {
+    // Garante os padrões da tabela no primeiro acesso, preservando registros existentes.
+    $stmtPreferencias = $conn->prepare(
+        'INSERT INTO preferencias_usuario (id_usuario) VALUES (?)
+         ON DUPLICATE KEY UPDATE id_usuario = VALUES(id_usuario)'
+    );
+    $stmtPreferencias->bind_param('i', $_SESSION['id_usuario']);
+    $stmtPreferencias->execute();
+    $stmtPreferencias->close();
     $stmtPreferencias = $conn->prepare(
         'SELECT tema, lembretes_treino, avisos_agendamentos, atualizacoes_compras,
                 ofertas_novidades, notificacoes_email
@@ -105,7 +113,7 @@ try {
         }
     }
 } catch (Throwable $erroPreferencias) {
-    // A tela continua funcional via localStorage enquanto a migração não for aplicada.
+    error_log('Falha ao carregar preferências do painel ONE FIT. Código: ' . $erroPreferencias->getCode());
 }
 
 require __DIR__ . '/includes/db-data.php';

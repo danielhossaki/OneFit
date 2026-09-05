@@ -2,6 +2,15 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
+// WhatsApp da Home: substitua pelo número real com 55 + DDD + número, somente dígitos.
+$whatsappNumero = '55XXXXXXXXXXX';
+$whatsappMensagem = 'Olá! Gostaria de saber mais sobre a OneFit.';
+$whatsappUrl = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($whatsappMensagem);
+
+// Mensagem exclusiva do botão "Agendar aula experimental".
+$whatsappMensagemAula = 'Olá! Vim pelo site da OneFit e gostaria de agendar uma aula experimental. Poderia me passar mais informações?';
+$whatsappUrlAula = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($whatsappMensagemAula);
+
 /* Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
  * na seção "#planos" logo abaixo. */
 $planosAtivos = [];
@@ -309,10 +318,20 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
     <span class="eyebrow">Comece agora!</span>
     <h2>Sua primeira<br>aula é <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, #fff8e1 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;">grátis</span></h2>
     <p>Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.</p>
-    <a href="#" class="btn btn-gold">Agendar aula experimental</a>
+    <a href="<?php echo htmlspecialchars($whatsappUrlAula, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-gold" target="_blank" rel="noopener noreferrer">Agendar aula experimental</a>
   </section>
 
   <?php include __DIR__ . '/components/footer.php'; ?>
+
+  <a class="whatsapp-float"
+     href="<?php echo htmlspecialchars($whatsappUrl, ENT_QUOTES, 'UTF-8'); ?>"
+     target="_blank" rel="noopener noreferrer"
+     aria-label="Converse com a OneFit pelo WhatsApp (abre em nova aba)">
+    <span class="whatsapp-float-message" aria-hidden="true">Fale conosco pelo WhatsApp!</span>
+    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true" focusable="false">
+      <path d="M20.52 3.48A11.87 11.87 0 0 0 12.05 0C5.46 0 .1 5.36 .1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.24-1.64a11.94 11.94 0 0 0 5.8 1.48h.01C18.64 23.84 24 18.48 24 11.89c0-3.19-1.24-6.18-3.48-8.41zM12.05 21.82a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.86 9.86 0 0 1-1.51-5.25c0-5.48 4.46-9.94 9.95-9.94a9.87 9.87 0 0 1 7.03 2.92 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" />
+    </svg>
+  </a>
 
   <!-- Link para JavaScript -->
   <script src="<?php echo BASE_URL; ?>assets/js/home.js"></script>

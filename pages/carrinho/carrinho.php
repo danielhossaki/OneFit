@@ -262,6 +262,15 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
         'cashbackGanho' => $cashbackGanho,
         'formaPagamento' => $formaPagamento,
     ];
+    // Somente após o commit e a limpeza do carrinho: reenvios não geram outro aviso.
+    try {
+        require_once __DIR__ . '/../../config/notificacoes.php';
+        criarNotificacao($idUsuario, 'Pedido recebido',
+            'Seu pedido #' . $idPedido . ' foi recebido e está aguardando processamento.',
+            'compra', '/AN25/OneFit/pages/dashboard/dashboard.php?section=compras');
+    } catch (\Throwable $erroNotificacao) {
+        error_log('ONE FIT: falha ao notificar pedido recebido #' . $idPedido . '; código ' . $erroNotificacao->getCode());
+    }
     header('Location: carrinho.php?sucesso=1');
     exit;
 }

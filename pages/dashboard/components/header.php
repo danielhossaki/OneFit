@@ -26,6 +26,22 @@
     </div>
 
     <div class="bo-user">
+        <div class="bo-notifications-wrap" id="boNotificationsWrap" data-url="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/actions/notificacoes.php', ENT_QUOTES, 'UTF-8'); ?>">
+            <button class="bo-avatar bo-notifications-toggle" id="boNotificationsToggle" type="button" aria-label="Abrir notificações" aria-expanded="false" aria-controls="boNotificationsPanel">
+                <i class="bi bi-bell" aria-hidden="true"></i>
+                <span class="bo-notifications-count" id="boNotificationsCount" aria-hidden="true" hidden></span>
+            </button>
+            <section class="bo-notifications-panel" id="boNotificationsPanel" aria-labelledby="boNotificationsTitle" tabindex="-1" hidden>
+                <div class="bo-notifications-heading">
+                    <h2 id="boNotificationsTitle">Notificações</h2>
+                    <button type="button" id="boNotificationsReadAll" disabled>Marcar todas como lidas</button>
+                </div>
+                <ul class="bo-notifications-list" id="boNotificationsList"></ul>
+                <p class="bo-notifications-empty" id="boNotificationsEmpty" hidden>Nenhuma notificação por enquanto</p>
+                <p class="bo-notifications-feedback" id="boNotificationsFeedback" role="status">Carregando notificações…</p>
+                <span class="visually-hidden" id="boNotificationsStatus" role="status"></span>
+            </section>
+        </div>
         <div class="bo-user-menu-wrap" id="boUserMenuWrap">
             <button class="bo-avatar" id="boAvatar" type="button" aria-label="Abrir menu do usuário" aria-expanded="false" aria-controls="boUserMenu"><?php echo strtoupper(substr($_SESSION['nome'] ?? $perfilLogado, 0, 1)); ?></button>
             <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">

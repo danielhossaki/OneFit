@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS preferencias_usuario (
     lembretes_treino TINYINT(1) NOT NULL DEFAULT 1,
     avisos_agendamentos TINYINT(1) NOT NULL DEFAULT 1,
     atualizacoes_compras TINYINT(1) NOT NULL DEFAULT 1,
-    ofertas_novidades TINYINT(1) NOT NULL DEFAULT 0,
+    ofertas_novidades TINYINT(1) NOT NULL DEFAULT 1,
     notificacoes_email TINYINT(1) NOT NULL DEFAULT 1,
     atualizado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id_usuario),
