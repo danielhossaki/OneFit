@@ -158,7 +158,6 @@ $resumoAluno = [
                 <?php endforeach; ?>
             </div>
             <div class="bo-actions bo-student-actions">
-                <button class="btn-bo-outline" type="button" data-bs-toggle="modal" data-bs-target="#modalSenhaAlterar"><i class="bi bi-key"></i> Alterar senha</button>
                 <button class="btn-bo-gold" type="button" data-bs-toggle="modal" data-bs-target="#modalPerfilEditar"><i class="bi bi-pencil-square"></i> EDITAR PERFIL</button>
             </div>
         </div>
