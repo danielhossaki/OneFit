@@ -203,6 +203,7 @@
                         <th>Quantidade</th>
                         <th>Valor</th>
                         <th>Status</th>
+                        <th>Recebimento</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -217,6 +218,21 @@
                             <td><?php echo array_sum(array_column($ped['itens'], 'quantidade')); ?></td>
                             <td><?php echo bo_money($ped['valor']); ?></td>
                             <td><?php echo $ped['status']; ?></td>
+                            <td>
+                                <?php foreach ($ped['itens'] as $it): ?>
+                                    <?php if ($it['statusLogisticaBanco'] === 'despachado'): ?>
+                                        <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
+                                            <?php echo bo_csrf_field(); ?>
+                                            <?php echo bo_hidden('secao', 'compras'); ?>
+                                            <?php echo bo_hidden('acao', 'confirmar-recebimento'); ?>
+                                            <?php echo bo_hidden('id_item', $it['idItem']); ?>
+                                            <button type="submit" class="btn-bo-outline btn-sm">Confirmar recebimento</button>
+                                        </form>
+                                    <?php elseif ($it['confirmadoRecebimento']): ?>
+                                        <small>Recebido em <?php echo $it['confirmadoRecebimentoEm']; ?></small>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

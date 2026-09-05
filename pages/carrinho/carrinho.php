@@ -34,23 +34,36 @@ function cart_money($v)
 
 /**
  * Agrupa os itens do carrinho por vendedor (id_vendedor NULL = produto
- * legado "ONE FIT", tratado como grupo 0) e calcula o frete mais barato
- * disponível para o CEP informado em cada grupo. Retorna null quando algum
- * grupo não tem nenhuma transportadora que cubra o CEP.
+ * legado "ONE FIT", tratado como grupo 0) e aplica a transportadora
+ * escolhida (tipo de entrega) a cada grupo. Se nenhuma transportadora foi
+ * escolhida ainda (ou a escolhida não cobre mais o CEP), cai para a opção
+ * mais barata disponível. Retorna null quando não há nenhuma transportadora
+ * que cubra o CEP informado.
  */
-function cart_calcular_fretes(mysqli $conn, array $itensPorVendedor, string $cep): ?array
+function cart_calcular_fretes(mysqli $conn, array $itensPorVendedor, string $cep, ?int $idTransportadoraEscolhida = null): ?array
 {
+    $opcoes = bo_listar_opcoes_frete($conn, $cep);
+    if (empty($opcoes)) {
+        return null;
+    }
+
+    $opcaoEscolhida = $opcoes[0];
+    if ($idTransportadoraEscolhida !== null) {
+        foreach ($opcoes as $opcao) {
+            if ($opcao['id_transportadora'] === $idTransportadoraEscolhida) {
+                $opcaoEscolhida = $opcao;
+                break;
+            }
+        }
+    }
+
     $fretes = [];
     $totalFrete = 0.0;
     foreach ($itensPorVendedor as $idVendedor => $dados) {
-        $opcao = bo_calcular_frete_mais_barato($conn, $cep);
-        if ($opcao === null) {
-            return null;
-        }
-        $fretes[$idVendedor] = $opcao + ['vendedorNome' => $dados['nome']];
-        $totalFrete += $opcao['valor_frete'];
+        $fretes[$idVendedor] = $opcaoEscolhida + ['vendedorNome' => $dados['nome']];
+        $totalFrete += $opcaoEscolhida['valor_frete'];
     }
-    return ['porVendedor' => $fretes, 'total' => round($totalFrete, 2)];
+    return ['porVendedor' => $fretes, 'total' => round($totalFrete, 2), 'opcoes' => $opcoes, 'escolhida' => $opcaoEscolhida['id_transportadora']];
 }
 
 /**
@@ -158,7 +171,8 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
             exit;
         }
 
-        $fretes = cart_calcular_fretes($conn, $itensPorVendedor, $endereco['cep']);
+        $idTransportadoraEscolhida = isset($_SESSION['checkout_transportadora_id']) ? (int) $_SESSION['checkout_transportadora_id'] : null;
+        $fretes = cart_calcular_fretes($conn, $itensPorVendedor, $endereco['cep'], $idTransportadoraEscolhida);
         if ($fretes === null) {
             $conn->rollback();
             header('Location: carrinho.php?erro=frete');
@@ -254,6 +268,7 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
 
     $_SESSION['carrinho'] = [];
     unset($_SESSION['checkout_endereco_id']);
+    unset($_SESSION['checkout_transportadora_id']);
     $_SESSION['ultimo_pedido'] = [
         'id' => $idPedido,
         'total' => $totalCompra,
@@ -304,6 +319,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && cart_csrf_
                 if ($_SESSION['carrinho'][$produtoId] <= 0) {
                     unset($_SESSION['carrinho'][$produtoId]);
                 }
+            }
+            break;
+
+        case 'escolher_transportadora':
+            $idTransportadoraForm = (int) ($_POST['transportadora_id'] ?? 0);
+            if ($idTransportadoraForm > 0) {
+                $_SESSION['checkout_transportadora_id'] = $idTransportadoraForm;
+            } else {
+                unset($_SESSION['checkout_transportadora_id']);
             }
             break;
 
@@ -396,8 +420,9 @@ if (!isset($_SESSION['checkout_endereco_id']) || !isset($enderecosUsuario[(int) 
 $enderecoSelecionadoId = (int) ($_SESSION['checkout_endereco_id'] ?? 0);
 $enderecoSelecionado = $enderecosUsuario[$enderecoSelecionadoId] ?? null;
 
-/* ===== Frete: agrupa os itens do carrinho por vendedor e calcula a opção
-   mais barata disponível para o CEP do endereço selecionado. ===== */
+/* ===== Frete: agrupa os itens do carrinho por vendedor e aplica a
+   transportadora (tipo de entrega) escolhida pelo cliente para o CEP do
+   endereço selecionado — ou a mais barata, se ele ainda não escolheu. ===== */
 $freteInfo = null;
 $freteIndisponivel = false;
 if ($enderecoSelecionado && !empty($itens)) {
@@ -405,7 +430,8 @@ if ($enderecoSelecionado && !empty($itens)) {
     foreach ($itens as $item) {
         $itensPorVendedorPreview[$item['idVendedor']]['nome'] = $item['idVendedor'] > 0 ? 'Loja' : 'ONE FIT';
     }
-    $freteInfo = cart_calcular_fretes($conn, $itensPorVendedorPreview, $enderecoSelecionado['cep']);
+    $idTransportadoraEscolhidaPreview = isset($_SESSION['checkout_transportadora_id']) ? (int) $_SESSION['checkout_transportadora_id'] : null;
+    $freteInfo = cart_calcular_fretes($conn, $itensPorVendedorPreview, $enderecoSelecionado['cep'], $idTransportadoraEscolhidaPreview);
     $freteIndisponivel = $freteInfo === null;
 }
 $valorFrete = $freteInfo['total'] ?? 0.0;
@@ -561,7 +587,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <div class="checkout-access-actions">
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-endereco"><i class="bi bi-geo-alt"></i> Endereço de entrega</button>
                         <button type="button" class="checkout-access-button" data-open-checkout="checkout-cashback"><i class="bi bi-coin"></i> Usar meu cashback</button>
-                        <button type="button" class="checkout-access-button" data-open-checkout="checkout-pagamento"><i class="bi bi-credit-card"></i> Forma de pagamento</button>
+                        <button type="button" class="checkout-access-button" data-open-checkout="checkout-pagamento"<?php echo ($freteIndisponivel || !$enderecoSelecionado) ? ' disabled' : ''; ?>><i class="bi bi-credit-card"></i> Forma de pagamento</button>
                     </div>
                     <button type="button" class="checkout-open-primary" data-open-checkout="checkout-resumo"><i class="bi bi-bag-check"></i> Abrir checkout</button>
                 </section>
@@ -579,10 +605,22 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não entregamos no CEP do endereço selecionado. Tente outro endereço.</div>
             <?php endif; ?>
 
-            <!-- Formulário real de checkout: processado 100% em PHP (ação "finalizar" no topo deste arquivo) -->
+            <!--
+                Formulário real de checkout: processado 100% em PHP (ação "finalizar" no topo
+                deste arquivo). Este <form> só contém os campos fixos (csrf/acao) e é fechado
+                imediatamente: os passos abaixo (endereço, cashback, pagamento) NÃO ficam
+                aninhados dentro dele, porque o passo "endereço" já tem seus próprios <form>
+                (selecionar/excluir endereço) e HTML não permite <form> dentro de <form> — um
+                <form> aninhado fecha o <form> externo mais cedo, deixando o botão "Finalizar
+                compra" fora de qualquer formulário (por isso ele não funcionava). Os campos que
+                precisam ser enviados junto com o "finalizar" (cashback, forma de pagamento,
+                botão) usam o atributo form="checkout-form" para continuar associados a este
+                formulário mesmo estando fora dele.
+            -->
             <form method="POST" action="carrinho.php" id="checkout-form">
             <?php echo cart_csrf_field(); ?>
             <input type="hidden" name="acao" value="finalizar">
+            </form>
 
             <div class="crt-summary checkout-card checkout-step is-active" id="checkout-resumo">
                 <h2 class="checkout-title">Resumo da compra</h2>
@@ -651,17 +689,30 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <?php if ($freteIndisponivel): ?>
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Não entregamos no CEP deste endereço.</p>
                 <?php elseif ($freteInfo): ?>
-                    <p class="cashback-remaining">Frete calculado: <strong><?php echo cart_money($valorFrete); ?></strong></p>
+                    <h3 class="checkout-subtitle">Tipo de entrega</h3>
+                    <form method="POST" action="carrinho.php" class="crt-frete-opcoes">
+                        <?php echo cart_csrf_field(); ?>
+                        <input type="hidden" name="acao" value="escolher_transportadora">
+                        <?php foreach ($freteInfo['opcoes'] as $opcao): ?>
+                            <label class="crt-frete-opcao<?php echo $freteInfo['escolhida'] === $opcao['id_transportadora'] ? ' is-selected' : ''; ?>">
+                                <input type="radio" name="transportadora_id" value="<?php echo (int) $opcao['id_transportadora']; ?>" <?php echo $freteInfo['escolhida'] === $opcao['id_transportadora'] ? 'checked' : ''; ?>>
+                                <span class="crt-frete-opcao-nome"><?php echo htmlspecialchars($opcao['nome']); ?> <small>(<?php echo htmlspecialchars(ucfirst($opcao['tipo'])); ?>)</small></span>
+                                <span class="crt-frete-opcao-prazo"><?php echo (int) $opcao['prazo_dias']; ?> dia(s)</span>
+                                <span class="crt-frete-opcao-valor"><?php echo cart_money($opcao['valor_frete']); ?></span>
+                            </label>
+                        <?php endforeach; ?>
+                        <button type="submit" class="btn-crt-outline">Usar esta forma de entrega</button>
+                    </form>
                 <?php endif; ?>
 
-                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
+                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo ($freteIndisponivel || !$enderecoSelecionado) ? ' disabled' : ''; ?>>Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
             </div>
 
             <div class="checkout-card checkout-step" id="checkout-cashback">
                 <h2 class="checkout-title">Usar meu cashback</h2>
                 <div class="cashback-disponivel"><span>Disponível</span><strong><?php echo cart_money($saldoCashback); ?></strong></div>
                 <div class="cashback-disponivel"><span>Máximo permitido nesta compra: <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
-                <input id="cashback-range" class="cashback-range" type="range" name="cashback_usado"
+                <input id="cashback-range" class="cashback-range" type="range" name="cashback_usado" form="checkout-form"
                     min="0" max="<?php echo $cashbackMaximoUsavel; ?>" value="0" step="0.01"
                     aria-label="Cashback a utilizar">
                 <div class="cashback-actions">
@@ -678,19 +729,25 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Escolha um endereço de entrega antes de finalizar.</p>
                 <?php endif; ?>
                 <div class="payment-tabs">
-                    <input type="radio" class="payment-radio" name="forma_pagamento" id="payPix" value="pix" checked>
+                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payPix" value="pix" checked>
                     <label class="payment-tab" for="payPix"><i class="bi bi-qr-code"></i> PIX</label>
-                    <input type="radio" class="payment-radio" name="forma_pagamento" id="payCartao" value="cartao">
+                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payCartao" value="cartao">
                     <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> Cartão</label>
                 </div>
                 <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalComFrete); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
-                <div id="card-payment" class="card-payment"><label class="pix-label">Dados do cartão (simulação)</label><input class="payment-input" type="text" placeholder="Número do cartão"><input class="payment-input" type="text" placeholder="Nome impresso no cartão"></div>
+                <div id="card-payment" class="card-payment">
+                    <label class="pix-label">Dados do cartão (simulação)</label>
+                    <input class="payment-input" type="text" inputmode="numeric" maxlength="19" placeholder="Número do cartão" name="cartao_numero" form="checkout-form">
+                    <input class="payment-input" type="text" placeholder="Nome impresso no cartão" name="cartao_nome" form="checkout-form">
+                    <div class="card-payment-row">
+                        <input class="payment-input" type="text" inputmode="numeric" maxlength="5" placeholder="Validade (MM/AA)" name="cartao_validade" form="checkout-form">
+                        <input class="payment-input" type="text" inputmode="numeric" maxlength="4" placeholder="CVV" name="cartao_cvv" form="checkout-form">
+                    </div>
+                </div>
                 <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalComFrete); ?></strong></div></div>
 
-                <button type="submit" class="checkout-finish">Finalizar compra</button>
+                <button type="submit" form="checkout-form" class="checkout-finish">Finalizar compra</button>
             </div>
-
-            </form>
 
             <form method="POST" action="carrinho.php"><?php echo cart_csrf_field(); ?><input type="hidden" name="acao" value="limpar"><button type="submit" class="checkout-clear">Limpar carrinho</button></form>
             </aside>

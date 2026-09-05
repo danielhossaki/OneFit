@@ -29,7 +29,7 @@ function mkt_money($v)
 $produtos = [];
 $sql = "SELECT id_produto AS id, nome, descricao, categoria, preco, desconto, cashback_valor AS cashback, imagem, estoque, status
         FROM produtos
-        WHERE status = 'ativo'
+        WHERE status = 'ativo' AND estoque > 0
         ORDER BY categoria, nome";
 try {
     $result = $conn->query($sql);
@@ -127,8 +127,8 @@ if (!in_array($categoriaAtiva, $categorias, true)) {
     $categoriaAtiva = $categorias[0] ?? '';
 }
 
-/* URL de "Voltar": usa o referenciador quando disponível, senão a home. */
-$mktVoltarUrl = !empty($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : (BASE_URL . 'index.php');
+/* Botão "Voltar" do marketplace sempre leva ao dashboard do usuário. */
+$mktVoltarUrl = BASE_URL . 'pages/dashboard/dashboard.php';
 
 /* Tema (dark/light) escolhido no dashboard, persistido em cookie por assets/js/dashboard.js. */
 $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
@@ -251,6 +251,11 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                         Ganhe cashback: <?php echo mkt_money($produto['cashbackValor']); ?>
                                     </div>
                                 <?php endif; ?>
+
+                                <div class="mkt-card-estoque">
+                                    <i class="bi bi-box-seam"></i>
+                                    <?php echo (int) $produto['estoque']; ?> em estoque
+                                </div>
 
                                 <div class="mkt-card-footer">
                                     <form method="POST" action="marketplace.php">

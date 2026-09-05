@@ -85,7 +85,7 @@
             <i class="bi bi-plus-lg"></i> Novo Usuário
         </button>
     </div>
-    <?php bo_modal_usuario(null, 'usuarios'); ?>
+    <?php bo_modal_usuario(null, 'usuarios', $planos); ?>
 
     <!-- Filtros: busca por texto + status (ligados à tabela pelo data-bo-target="usuarios") -->
     <div class="bo-filters">
@@ -107,6 +107,7 @@
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>Status</th>
+                        <th>Plano</th>
                         <th>Nº matrícula</th>
                         <th>Data inicial</th>
                         <th>Final de contrato</th>
@@ -121,6 +122,7 @@
                             <td><?php echo $u['nome']; ?></td>
                             <td><?php echo $u['email']; ?></td>
                             <td><?php echo bo_badge($u['status'] === 'ativo'); ?></td>
+                            <td><?php echo htmlspecialchars($u['plano']); ?></td>
                             <td><?php echo $u['matricula']; ?></td>
                             <td><?php echo date('d/m/Y', strtotime($u['dataInicial'])); ?></td>
                             <td><?php echo date('d/m/Y', strtotime($u['dataFinal'])); ?></td>
@@ -137,14 +139,14 @@
                     <?php endforeach; ?>
                     <!-- Linha exibida pelo JS quando o filtro não encontra nada -->
                     <tr class="bo-empty-row" style="display:none">
-                        <td colspan="8">Nenhum usuário encontrado para os filtros selecionados.</td>
+                        <td colspan="9">Nenhum usuário encontrado para os filtros selecionados.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
     <?php foreach ($usuarios as $u): ?>
-        <?php bo_modal_usuario($u, 'usuarios'); ?>
+        <?php bo_modal_usuario($u, 'usuarios', $planos); ?>
         <?php bo_modal_confirmar_exclusao('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
     <?php endforeach; ?>
 </section>
@@ -550,7 +552,7 @@
     <div class="bo-page-title">
         <div>
             <h1>Vendas Marketplace</h1>
-            <p>Produtos, vendas e logística de todos os vendedores do marketplace.</p>
+            <p>Vendas e logística de todos os vendedores do marketplace.</p>
         </div>
     </div>
 
@@ -558,10 +560,7 @@
 
     <ul class="nav nav-tabs bo-nav-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#admVendasTabProdutos" type="button" role="tab">Produtos</button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabVendas" type="button" role="tab">Vendas e logística</button>
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#admVendasTabVendas" type="button" role="tab">Vendas e logística</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabTransportadoras" type="button" role="tab">Transportadoras</button>
@@ -569,61 +568,11 @@
     </ul>
 
     <div class="tab-content">
-        <!-- ===== Produtos de todos os vendedores ===== -->
-        <div class="tab-pane fade show active" id="admVendasTabProdutos" role="tabpanel">
-            <div class="bo-filters mt-3">
-                <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome, ID ou vendedor"
-                    data-bo-filter="search" data-bo-target="admVendasProdutos">
-                <select class="form-select" style="max-width:200px" data-bo-filter="status" data-bo-target="admVendasProdutos">
-                    <option value="">Todos</option>
-                    <option value="disponivel">Ativo</option>
-                    <option value="indisponivel">Inativo / pausado</option>
-                </select>
-            </div>
-            <div class="bo-table-wrap">
-                <div class="table-responsive">
-                    <table class="bo-table" data-bo-table="admVendasProdutos">
-                        <thead>
-                            <tr>
-                                <th>Foto</th><th>ID</th><th>Nome</th><th>Vendedor</th><th>Preço</th><th>Estoque</th><th>Status</th><th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($admVendasProdutos as $p): ?>
-                                <tr data-status="<?php echo $p['status']; ?>"
-                                    data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome'] . ' ' . $p['vendedor']); ?>">
-                                    <td>
-                                        <div class="bo-thumb">
-                                            <?php if ($p['imagem']): ?><img src="<?php echo htmlspecialchars($p['imagem']); ?>" alt=""><?php else: ?><i class="bi bi-image"></i><?php endif; ?>
-                                        </div>
-                                    </td>
-                                    <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                                    <td><?php echo $p['nome']; ?></td>
-                                    <td><?php echo htmlspecialchars($p['vendedor']); ?></td>
-                                    <td><?php echo bo_money($p['valorFinal']); ?></td>
-                                    <td><?php echo $p['estoque']; ?></td>
-                                    <td><?php echo bo_badge($p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?></td>
-                                    <td>
-                                        <div class="bo-table-actions">
-                                            <?php bo_form_toggle('produtos', $p['id'], 'vendas', $p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?>
-                                            <?php echo bo_botao_excluir('produtos', $p['id']); ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                            <tr class="bo-empty-row" style="display:none"><td colspan="8">Nenhum produto encontrado para os filtros selecionados.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            <?php foreach ($admVendasProdutos as $p): ?>
-                <?php bo_modal_confirmar_exclusao('produtos', $p['id'], $p['nome'], 'vendas'); ?>
-            <?php endforeach; ?>
-        </div>
-
         <!-- ===== Vendas de todos os vendedores ===== -->
-        <div class="tab-pane fade" id="admVendasTabVendas" role="tabpanel">
+        <div class="tab-pane fade show active" id="admVendasTabVendas" role="tabpanel">
             <div class="bo-filters mt-3">
+                <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por produto, vendedor, comprador ou rastreio"
+                    data-bo-filter="search" data-bo-target="admVendasVendas">
                 <select class="form-select" style="max-width:220px" data-bo-filter="status" data-bo-target="admVendasVendas">
                     <option value="">Todos os status</option>
                     <?php foreach ($admVendasStatusLabel as $valor => $label): ?>
@@ -639,7 +588,8 @@
                         </thead>
                         <tbody>
                             <?php foreach ($admVendas as $v): ?>
-                                <tr data-status="<?php echo $v['statusLogistica']; ?>">
+                                <tr data-status="<?php echo $v['statusLogistica']; ?>"
+                                    data-search="<?php echo strtolower($v['produto'] . ' ' . $v['vendedor'] . ' ' . $v['comprador'] . ' ' . $v['transportadora'] . ' ' . ($v['codigoRastreio'] ?? '')); ?>">
                                     <td><?php echo $v['data']; ?></td>
                                     <td><?php echo htmlspecialchars($v['produto']); ?></td>
                                     <td><?php echo htmlspecialchars($v['vendedor']); ?></td>

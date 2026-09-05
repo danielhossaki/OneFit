@@ -109,13 +109,14 @@ if ($perfilLogado === 'admin') {
     $usuarios = [];
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
                    u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
-                   m.id_matricula, m.data_inicio, m.data_fim
+                   m.id_matricula, m.data_inicio, m.data_fim, m.id_plano, pl.nome AS plano_nome
             FROM usuarios u
             LEFT JOIN matricula m ON m.id_matricula = (
                 SELECT id_matricula FROM matricula
                 WHERE id_usuario = u.id_usuario
                 ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1
             )
+            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
             ORDER BY u.nome";
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
@@ -129,6 +130,8 @@ if ($perfilLogado === 'admin') {
                 'matricula' => $row['id_matricula'] ? 'MAT-' . str_pad($row['id_matricula'], 4, '0', STR_PAD_LEFT) : '—',
                 'dataInicial' => $row['data_inicio'] ?: '',
                 'dataFinal' => $row['data_fim'] ?: '',
+                'idPlano' => $row['id_plano'] ? (int) $row['id_plano'] : null,
+                'plano' => $row['plano_nome'] ?: '—',
                 'acesso' => $row['status'] === 'bloqueado' ? 'Bloqueado' : 'Liberado',
                 'observacao' => '',
                 'celular' => $row['celular'],
@@ -582,7 +585,8 @@ if (!isset($planosAtivosOptions)) {
 function bo_carregar_pedidos(mysqli $conn, int $idUsuario): array
 {
     $stmt = $conn->prepare("SELECT pe.id_pedido, pe.status, pe.data_pedido, pe.valor_total,
-            pi.quantidade, pi.status_logistica, pr.nome AS produto_nome,
+            pi.id_item, pi.quantidade, pi.status_logistica, pi.confirmado_recebimento,
+            pi.confirmado_recebimento_em, pr.nome AS produto_nome,
             COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
         FROM pedido pe
         JOIN pedido_item pi ON pi.id_pedido = pe.id_pedido
@@ -614,10 +618,14 @@ function bo_carregar_pedidos(mysqli $conn, int $idUsuario): array
             ];
         }
         $pedidos[$idPedido]['itens'][] = [
+            'idItem' => (int) $row['id_item'],
             'produto' => $row['produto_nome'],
             'quantidade' => (int) $row['quantidade'],
             'vendedor' => $row['vendedor_nome'],
+            'statusLogisticaBanco' => $row['status_logistica'],
             'statusLogistica' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+            'confirmadoRecebimento' => (bool) $row['confirmado_recebimento'],
+            'confirmadoRecebimentoEm' => $row['confirmado_recebimento_em'] ? date('d/m/Y H:i', strtotime($row['confirmado_recebimento_em'])) : null,
         ];
     }
     $stmt->close();

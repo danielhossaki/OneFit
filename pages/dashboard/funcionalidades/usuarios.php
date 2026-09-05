@@ -95,6 +95,46 @@ if ($acao === 'update') {
         }
     }
 
+    // Troca de plano: reflete direto na matrícula mais recente do usuário
+    // (é ela que o próprio painel do aluno lê para mostrar o plano atual).
+    // "Sem plano" (campo vazio) não mexe em nada — nunca apaga matrícula por aqui.
+    $idPlanoForm = bo_str('id_plano');
+    if ($idPlanoForm !== '') {
+        $idPlanoNovo = (int) $idPlanoForm;
+        $stmtPlano = $conn->prepare('SELECT valor, duracao_dias FROM cadastro_planos WHERE id_plano = ?');
+        $stmtPlano->bind_param('i', $idPlanoNovo);
+        $stmtPlano->execute();
+        $planoNovo = $stmtPlano->get_result()->fetch_assoc();
+        $stmtPlano->close();
+
+        if ($planoNovo) {
+            $valorPlanoNovo = (float) $planoNovo['valor'];
+            $duracaoDiasNovo = (int) $planoNovo['duracao_dias'];
+
+            $stmtMatPlano = $conn->prepare('SELECT id_matricula FROM matricula WHERE id_usuario = ? ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1');
+            $stmtMatPlano->bind_param('i', $id);
+            $stmtMatPlano->execute();
+            $matPlano = $stmtMatPlano->get_result()->fetch_assoc();
+            $stmtMatPlano->close();
+
+            if ($matPlano) {
+                $stmtUpPlano = $conn->prepare('UPDATE matricula SET id_plano = ?, valor_contratado = ? WHERE id_matricula = ?');
+                $stmtUpPlano->bind_param('idi', $idPlanoNovo, $valorPlanoNovo, $matPlano['id_matricula']);
+                $stmtUpPlano->execute();
+                $stmtUpPlano->close();
+            } else {
+                // Usuário nunca teve matrícula: cria uma já ativa a partir de hoje.
+                $stmtInsPlano = $conn->prepare(
+                    "INSERT INTO matricula (id_usuario, id_plano, data_matricula, data_inicio, data_fim, status, valor_contratado)
+                     VALUES (?, ?, CURDATE(), CURDATE(), DATE_ADD(CURDATE(), INTERVAL ? DAY), 'ativa', ?)"
+                );
+                $stmtInsPlano->bind_param('iiid', $id, $idPlanoNovo, $duracaoDiasNovo, $valorPlanoNovo);
+                $stmtInsPlano->execute();
+                $stmtInsPlano->close();
+            }
+        }
+    }
+
     bo_flash('success', 'Usuário atualizado.');
     bo_redirect($secao);
 }

@@ -14,11 +14,13 @@ function bo_normalizar_cep(string $cep): string
 }
 
 /**
- * Entre as transportadoras ativas que têm uma faixa de CEP cobrindo o CEP
- * informado, retorna a de menor valor de frete. Não depende de vendedor:
- * as transportadoras são sempre globais (cadastradas pelo admin).
+ * Todas as transportadoras ativas que têm uma faixa de CEP cobrindo o CEP
+ * informado, da mais barata para a mais cara. Não depende de vendedor: as
+ * transportadoras são sempre globais (cadastradas pelo admin). Usada para
+ * deixar o cliente escolher o tipo de entrega no checkout, em vez de só
+ * aplicar automaticamente a opção mais barata.
  */
-function bo_calcular_frete_mais_barato(mysqli $conn, string $cep): ?array
+function bo_listar_opcoes_frete(mysqli $conn, string $cep): array
 {
     $cepNormalizado = bo_normalizar_cep($cep);
 
@@ -27,23 +29,33 @@ function bo_calcular_frete_mais_barato(mysqli $conn, string $cep): ?array
          FROM faixas_cep_frete f
          INNER JOIN transportadoras t ON t.id_transportadora = f.id_transportadora
          WHERE t.status = 'ativo' AND ? BETWEEN f.cep_inicial AND f.cep_final
-         ORDER BY f.valor_frete ASC
-         LIMIT 1"
+         ORDER BY f.valor_frete ASC"
     );
     $stmt->bind_param('s', $cepNormalizado);
     $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
+    $res = $stmt->get_result();
+
+    $opcoes = [];
+    while ($row = $res->fetch_assoc()) {
+        $opcoes[] = [
+            'id_transportadora' => (int) $row['id_transportadora'],
+            'nome' => $row['nome'],
+            'tipo' => $row['tipo'],
+            'valor_frete' => (float) $row['valor_frete'],
+            'prazo_dias' => (int) $row['prazo_dias'],
+        ];
+    }
     $stmt->close();
 
-    if (!$row) {
-        return null;
-    }
+    return $opcoes;
+}
 
-    return [
-        'id_transportadora' => (int) $row['id_transportadora'],
-        'nome' => $row['nome'],
-        'tipo' => $row['tipo'],
-        'valor_frete' => (float) $row['valor_frete'],
-        'prazo_dias' => (int) $row['prazo_dias'],
-    ];
+/**
+ * Entre as opções de frete disponíveis para o CEP, retorna a de menor valor
+ * (usada como sugestão inicial/padrão antes do cliente escolher).
+ */
+function bo_calcular_frete_mais_barato(mysqli $conn, string $cep): ?array
+{
+    $opcoes = bo_listar_opcoes_frete($conn, $cep);
+    return $opcoes[0] ?? null;
 }

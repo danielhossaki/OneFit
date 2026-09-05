@@ -46,7 +46,7 @@ function bo_val($value): string
 /* =======================================================================
  * USUÁRIOS
  * ===================================================================== */
-function bo_modal_usuario(?array $u, string $secao): void
+function bo_modal_usuario(?array $u, string $secao, array $planos = []): void
 {
     $isEdit = $u !== null;
     $modalId = $isEdit ? 'modalUsuarioEditar' . $u['id'] : 'modalUsuarioNovo';
@@ -131,6 +131,17 @@ function bo_modal_usuario(?array $u, string $secao): void
                             </select>
                         </div>
                         <?php if ($isEdit): ?>
+                            <div class="col-6">
+                                <label class="form-label">Plano</label>
+                                <select class="form-select" name="id_plano">
+                                    <option value="">Sem plano</option>
+                                    <?php foreach ($planos as $p): ?>
+                                        <option value="<?php echo (int) $p['id']; ?>" <?php echo (int) ($u['idPlano'] ?? 0) === $p['id'] ? 'selected' : ''; ?>>
+                                            <?php echo bo_val($p['nome']); ?><?php echo $p['status'] !== 'ativo' ? ' (inativo)' : ''; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <div class="col-6">
                                 <label class="form-label">Data inicial (matrícula)</label>
                                 <input type="date" class="form-control" name="dataInicial" value="<?php echo bo_val($u['dataInicial'] ?? ''); ?>">

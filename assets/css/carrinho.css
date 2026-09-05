@@ -597,6 +597,15 @@ body {
     outline: none;
 }
 
+.card-payment-row {
+    display: flex;
+    gap: 8px;
+}
+
+.card-payment-row .payment-input {
+    width: 50%;
+}
+
 .payment-input:focus {
     border-color: #2679f4;
 }
@@ -856,6 +865,55 @@ body {
     line-height: 1.45;
 }
 
+.checkout-subtitle {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--bo-text);
+    margin: 14px 0 8px;
+}
+
+.crt-frete-opcoes {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.crt-frete-opcao {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid #30323c;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 11px;
+    color: #d7dae2;
+}
+
+.crt-frete-opcao.is-selected {
+    border-color: #ffc400;
+    background: rgba(255, 196, 0, .08);
+}
+
+.crt-frete-opcao-nome {
+    flex: 1;
+    font-weight: 700;
+}
+
+.crt-frete-opcao-nome small {
+    font-weight: 400;
+    color: #8a90a1;
+}
+
+.crt-frete-opcao-prazo {
+    color: #8a90a1;
+}
+
+.crt-frete-opcao-valor {
+    font-weight: 800;
+    color: #ffc400;
+}
+
 .checkout-finish {
     margin-top: 0;
     border-radius: 11px;
@@ -914,7 +972,7 @@ body {
 
 .checkout-access-actions {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 10px;
 }
 
@@ -925,6 +983,7 @@ body {
     justify-content: center;
     gap: 9px;
     min-height: 80px;
+    height: 100%;
     padding: 13px;
     border: 1px solid var(--bo-border);
     border-radius: 11px;
@@ -943,9 +1002,14 @@ body {
     font-size: 17px;
 }
 
-.checkout-access-button:hover {
+.checkout-access-button:hover:not(:disabled) {
     border-color: var(--bo-gold);
     transform: translateY(-2px);
+}
+
+.checkout-access-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
 }
 
 .cashback-remaining {

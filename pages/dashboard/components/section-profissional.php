@@ -634,7 +634,7 @@ $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
 
     <div class="bo-section-heading">Acompanhamento de pedido</div>
     <div class="bo-table-wrap"><div class="table-responsive"><table class="bo-table">
-        <thead><tr><th>ID transação</th><th>Produto</th><th>Quantidade</th><th>Valor</th><th>Status</th></tr></thead>
+        <thead><tr><th>ID transação</th><th>Produto</th><th>Quantidade</th><th>Valor</th><th>Status</th><th>Recebimento</th></tr></thead>
         <tbody>
             <?php foreach (($profPedidos ?? []) as $ped): ?>
                 <tr>
@@ -642,9 +642,24 @@ $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
                     <td><?php foreach ($ped['itens'] as $it): ?><div><?php echo (int) $it['quantidade']; ?>x <?php echo $ofH($it['produto']); ?> — <small>Vendido por: <?php echo $ofH($it['vendedor']); ?> · <?php echo $ofH($it['statusLogistica']); ?></small></div><?php endforeach; ?></td>
                     <td><?php echo array_sum(array_column($ped['itens'], 'quantidade')); ?></td><td><?php echo bo_money((float) $ped['valor']); ?></td>
                     <td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
+                    <td>
+                        <?php foreach ($ped['itens'] as $it): ?>
+                            <?php if ($it['statusLogisticaBanco'] === 'despachado'): ?>
+                                <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
+                                    <?php echo bo_csrf_field(); ?>
+                                    <?php echo bo_hidden('secao', 'compras'); ?>
+                                    <?php echo bo_hidden('acao', 'confirmar-recebimento'); ?>
+                                    <?php echo bo_hidden('id_item', $it['idItem']); ?>
+                                    <button type="submit" class="btn-bo-outline btn-sm">Confirmar recebimento</button>
+                                </form>
+                            <?php elseif ($it['confirmadoRecebimento']): ?>
+                                <small>Recebido em <?php echo $ofH($it['confirmadoRecebimentoEm']); ?></small>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
-            <?php if (empty($profPedidos)): ?><tr><td colspan="5">Nenhum pedido em andamento.</td></tr><?php endif; ?>
+            <?php if (empty($profPedidos)): ?><tr><td colspan="6">Nenhum pedido em andamento.</td></tr><?php endif; ?>
         </tbody>
     </table></div></div>
 
