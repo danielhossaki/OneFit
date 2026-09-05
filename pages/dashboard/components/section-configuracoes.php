@@ -1,3 +1,6 @@
+<?php if ($perfilLogado === 'aluno'): ?>
+<?php require __DIR__ . '/student-profile.php'; ?>
+<?php else: ?>
 <section class="bo-content-section" id="boProfileSection">
     <div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-person-circle"></i> Conta</span><h1>Meu perfil</h1><p>Consulte e atualize os dados da sua conta.</p></div></div>
     <div class="bo-settings-card bo-profile-settings">
@@ -10,6 +13,8 @@
     <?php bo_modal_perfil_editar($usuarioDashboard, (int) $_SESSION['id_usuario']); ?>
     <?php bo_modal_senha_alterar(); ?>
 </section>
+
+<?php endif; ?>
 
 <section class="bo-content-section" id="boSettingsSection">
     <div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-gear"></i> Preferências</span><h1>Configurações</h1><p>Personalize sua experiência e gerencie a segurança da conta.</p></div></div>

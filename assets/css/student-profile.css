@@ -1,0 +1,43 @@
+/* Escopo exclusivo do resumo e modal do aluno. */
+.bo-student-avatar { position: relative; overflow: hidden; padding: 0; }
+.bo-student-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.bo-student-profile, .bo-student-modal {
+    --surface: #1e1a15;
+    --surface-2: #241f18;
+    --border: rgba(243, 237, 226, .12);
+    --text: #f3ede2;
+    --text-muted: #b0a896;
+    --gold: #d4af37;
+    color: var(--text);
+}
+.bo-student-summary { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 36px; padding: 32px; background: var(--surface); }
+.bo-student-photo { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: var(--surface-2); color: var(--gold); font-size: 76px; }
+.bo-student-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bo-student-photo-column form { display: grid; gap: 12px; margin-top: 16px; }
+.bo-student-photo-column small, .bo-student-modal small { color: var(--text-muted); font-size: 12px; }
+.bo-student-details { min-width: 0; }
+.bo-student-details h2 { margin: 0 0 6px; font-size: 26px; font-weight: 800; overflow-wrap: anywhere; }
+.bo-student-details p { color: var(--text-muted); margin-bottom: 6px; overflow-wrap: anywhere; }
+.bo-student-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 24px; }
+.bo-student-metric, .bo-student-imc { border: 1px solid var(--border); background: var(--surface-2); border-radius: 12px; padding: 16px; display: grid; gap: 8px; }
+.bo-student-metric span, .bo-student-imc span { color: var(--text-muted); font-size: 13px; }
+.bo-student-metric i { color: var(--gold); margin-right: 6px; }
+.bo-student-metric strong { font-size: 16px; overflow-wrap: anywhere; }
+.bo-student-actions { justify-content: flex-end; flex-wrap: wrap; margin-top: 24px; }
+.bo-student-modal .modal-content { background: var(--surface); color: var(--text); max-height: calc(100dvh - 32px); }
+.bo-student-modal form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.bo-student-modal .modal-body { overflow-y: auto; margin: 0; padding: 8px 12px 24px; }
+.bo-student-modal .modal-header, .bo-student-modal .modal-footer { flex-shrink: 0; border-color: var(--border); }
+.bo-student-modal .form-control, .bo-student-modal .form-select { min-width: 0; }
+.bo-student-modal .form-control[readonly] { opacity: .7; }
+html[data-theme] .bo-student-modal .btn-close { filter: invert(1) grayscale(1) brightness(1.6); }
+.bo-student-imc strong { font-size: 24px; color: var(--gold); }
+.bo-student-preview { display: block; width: 96px; height: 96px; object-fit: cover; border-radius: 12px; margin-top: 12px; }
+.bo-student-preview[hidden] { display: none; }
+@media (max-width: 575.98px) {
+    .bo-student-summary { grid-template-columns: minmax(0, 1fr); padding: 20px; gap: 24px; }
+    .bo-student-photo-column { width: 180px; justify-self: center; text-align: center; }
+    .bo-student-metrics { grid-template-columns: minmax(0, 1fr); }
+    .bo-student-actions > button { width: 100%; }
+    .bo-student-modal .modal-content { max-height: calc(100dvh - 16px); }
+}
