@@ -10,6 +10,32 @@
 require __DIR__ . '/_shared.php';
 bo_check_csrf();
 
+$isAluno = ($_SESSION['tipo_usuario'] ?? '') === 'aluno';
+if ($isAluno) {
+    require_once __DIR__ . '/../includes/aluno-profile.php';
+    $idAluno = (int) $_SESSION['id_usuario'];
+    $consultaFoto = $conn->prepare('SELECT foto FROM usuarios WHERE id_usuario = ?');
+    $consultaFoto->bind_param('i', $idAluno);
+    $consultaFoto->execute();
+    $perfilAtual = $consultaFoto->get_result()->fetch_assoc();
+    $consultaFoto->close();
+    if (!$perfilAtual) { bo_flash('error', 'Conta não encontrada.'); bo_redirect_perfil(); }
+    if (bo_str('acao') === 'foto') {
+        try {
+            $novaFoto = bo_aluno_upload();
+            if ($novaFoto === null) throw new RuntimeException('Selecione uma foto.');
+            $salvarFoto = $conn->prepare('UPDATE usuarios SET foto = ? WHERE id_usuario = ?');
+            $salvarFoto->bind_param('si', $novaFoto, $idAluno);
+            $salvarFoto->execute();
+            $salvarFoto->close();
+            bo_flash('success', 'Foto atualizada com sucesso!');
+        } catch (RuntimeException $erro) {
+            bo_flash('error', $erro instanceof mysqli_sql_exception ? 'Não foi possível salvar a foto.' : $erro->getMessage());
+        }
+        bo_redirect_perfil();
+    }
+}
+
 $nome = bo_str('nome');
 $cpf = preg_replace('/\D/', '', bo_str('documento'));
 $email = bo_str('email');
@@ -26,6 +52,11 @@ $fotoAtual = bo_str('foto_atual');
 
 $altura = $alturaStr === '' ? null : filter_var($alturaStr, FILTER_VALIDATE_FLOAT);
 $peso = $pesoStr === '' ? null : filter_var($pesoStr, FILTER_VALIDATE_FLOAT);
+if ($isAluno) {
+    $altura = $alturaStr === '' ? null : (bo_aluno_medida($alturaStr, 3) ?? false);
+    $peso = $pesoStr === '' ? null : (bo_aluno_medida($pesoStr, 500) ?? false);
+    $fotoAtual = $perfilAtual['foto']; // Nunca confiar no caminho enviado pelo navegador.
+}
 
 if (!$nome || !$cpf || !$email || !$celular || !$nacionalidade || !$nascimento || !$genero || !$endereco || !$cidade || !$estado) {
     bo_flash('error', 'Preencha todos os campos obrigatórios.');
@@ -63,8 +94,7 @@ if (($altura !== null && ($altura === false || $altura <= 0 || $altura > 3)) ||
     bo_flash('error', 'Confira os valores de altura e peso.');
     bo_redirect_perfil();
 }
-$fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'perfil');
-$foto = $fotoUpload ?? $fotoAtual;
+
 
 $cidadeEstado = $cidade . '/' . $estado;
 $idUsuario = (int) $_SESSION['id_usuario'];
@@ -78,6 +108,15 @@ if ($check->get_result()->fetch_assoc()) {
     bo_redirect_perfil();
 }
 $check->close();
+
+try {
+    $fotoUpload = $isAluno ? bo_aluno_upload() : bo_processar_upload_imagem('foto_arquivo', 'perfil');
+} catch (RuntimeException $erro) {
+    bo_flash('error', $erro->getMessage());
+    bo_redirect_perfil();
+}
+$foto = $fotoUpload ?? $fotoAtual;
+if ($isAluno) $imcCalculado = bo_aluno_imc($altura, $peso); // Derivado, não persistido.
 
 $stmt = $conn->prepare(
     'UPDATE usuarios SET nome = ?, nacionalidade = ?, data_nascimento = ?, genero = ?, cpf = ?,
@@ -100,7 +139,13 @@ $stmt->bind_param(
     $foto,
     $idUsuario
 );
-$stmt->execute();
+try {
+    $stmt->execute();
+} catch (mysqli_sql_exception $erro) {
+    if (!$isAluno) throw $erro;
+    bo_flash('error', 'Não foi possível atualizar o perfil. Confira os dados e tente novamente.');
+    bo_redirect_perfil();
+}
 $stmt->close();
 
 $_SESSION['nome'] = $nome;
