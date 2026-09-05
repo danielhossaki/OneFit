@@ -47,10 +47,41 @@ if ($acao === 'update-status') {
         bo_redirect($secao);
     }
 
-    $stmt = $conn->prepare('UPDATE pedido_item SET status_logistica = ?, codigo_rastreio = ? WHERE id_item = ?');
-    $stmt->bind_param('ssi', $status, $codigoRastreio, $id);
-    $stmt->execute();
-    $stmt->close();
+    $conn->begin_transaction();
+    try {
+        // Serializa alterações do mesmo item e obtém o comprador pelo pedido real.
+        $stmt = $conn->prepare('SELECT pi.id_pedido, pi.id_vendedor, pi.status_logistica, pe.id_usuario FROM pedido_item pi JOIN pedido pe ON pe.id_pedido = pi.id_pedido WHERE pi.id_item = ? FOR UPDATE');
+        $stmt->bind_param('i', $id);
+        $stmt->execute();
+        $itemAnterior = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$itemAnterior || ($souVendedor && (int) $itemAnterior['id_vendedor'] !== $idVendedorLogado)) {
+            throw new RuntimeException('Venda inválida.');
+        }
+        $statusAlterado = $itemAnterior['status_logistica'] !== $status;
+        $stmt = $conn->prepare('UPDATE pedido_item SET status_logistica = ?, codigo_rastreio = ? WHERE id_item = ?');
+        $stmt->bind_param('ssi', $status, $codigoRastreio, $id);
+        $stmt->execute();
+        $stmt->close();
+        $conn->commit();
+    } catch (Throwable $erroVenda) {
+        $conn->rollback();
+        error_log('ONE FIT: falha ao atualizar item #' . $id . '; código ' . $erroVenda->getCode());
+        bo_flash('error', 'Não foi possível atualizar a venda.');
+        bo_redirect($secao);
+    }
+
+    // Reenviar o mesmo status (ou só editar rastreio) não é uma nova transição.
+    if ($statusAlterado) {
+        try {
+            require_once __DIR__ . '/../../../config/notificacoes.php';
+            criarNotificacao((int) $itemAnterior['id_usuario'], 'Atualização do pedido',
+                'O status do item #' . $id . ' do pedido #' . $itemAnterior['id_pedido'] . ' foi atualizado para ' . $status . '.',
+                'compra', '/AN25/OneFit/pages/dashboard/dashboard.php?section=compras');
+        } catch (Throwable $erroNotificacao) {
+            error_log('ONE FIT: falha ao notificar status do item #' . $id . '; código ' . $erroNotificacao->getCode());
+        }
+    }
 
     bo_flash('success', 'Status da venda atualizado.');
     bo_redirect($secao);

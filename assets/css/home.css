@@ -718,6 +718,94 @@ footer {
     }
 }
 
+/* ---------- WhatsApp flutuante (somente Home) ---------- */
+.whatsapp-float {
+    position: fixed;
+    right: calc(24px + env(safe-area-inset-right, 0px));
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #25D366;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.whatsapp-float svg {
+    display: block;
+    flex-shrink: 0;
+}
+
+.whatsapp-float-message {
+    position: absolute;
+    right: calc(100% + 12px);
+    width: max-content;
+    max-width: calc(100vw - 124px - env(safe-area-inset-right, 0px));
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: #25D366;
+    color: #14110E;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+/* Mantém a mensagem visível ao mover o mouse até ela. */
+.whatsapp-float-message::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 100%;
+    width: 12px;
+    height: 100%;
+}
+
+.whatsapp-float:hover .whatsapp-float-message,
+.whatsapp-float:focus-visible .whatsapp-float-message {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .whatsapp-float-message {
+        transform: none;
+        transition: none;
+    }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .whatsapp-float:hover {
+        transform: scale(1.06);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.whatsapp-float:focus-visible {
+    outline: 3px solid var(--text);
+    outline-offset: 4px;
+}
+
+@media (max-width: 860px) {
+    .whatsapp-float {
+        right: calc(16px + env(safe-area-inset-right, 0px));
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        width: 56px;
+        height: 56px;
+    }
+}
+
 /* ---------- Mobile ---------- */
 @media (max-width: 860px) {
 

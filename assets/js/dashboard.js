@@ -11,6 +11,165 @@
      - BO_PLANOS_OPTIONS      (nomes dos planos cadastrados)
    ========================================================================= */
 
+/* ---------- Notificações reais do usuário autenticado ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+    const wrap = document.getElementById('boNotificationsWrap');
+    if (!wrap) return;
+    const toggle = document.getElementById('boNotificationsToggle');
+    const panel = document.getElementById('boNotificationsPanel');
+    const count = document.getElementById('boNotificationsCount');
+    const list = document.getElementById('boNotificationsList');
+    const empty = document.getElementById('boNotificationsEmpty');
+    const readAll = document.getElementById('boNotificationsReadAll');
+    const status = document.getElementById('boNotificationsStatus');
+    const feedback = document.getElementById('boNotificationsFeedback');
+    let busy = false;
+    let unread = 0;
+    const render = (data) => {
+        unread = data.nao_lidas;
+        count.textContent = unread > 99 ? '99+' : String(unread);
+        count.hidden = unread === 0;
+        toggle.setAttribute('aria-label', `Notificações: ${unread} não lidas`);
+        readAll.disabled = unread === 0;
+        empty.hidden = data.notificacoes.length > 0;
+        list.replaceChildren();
+        data.notificacoes.forEach(item => {
+            const row = document.createElement('li');
+            row.className = `bo-notifications-item${item.lida_em ? '' : ' is-unread'}`;
+            const title = document.createElement('strong');
+            title.className = 'bo-notifications-item-title';
+            title.textContent = item.titulo;
+            const text = document.createElement('p');
+            text.textContent = item.mensagem;
+            if (!item.lida_em) {
+                const label = document.createElement('span');
+                label.className = 'visually-hidden';
+                label.textContent = 'Não lida. ';
+                text.prepend(label);
+            }
+            const time = document.createElement('time');
+            const date = new Date(item.criada_em.replace(' ', 'T') + 'Z');
+            time.dateTime = date.toISOString();
+            time.textContent = date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            row.append(title, text, time);
+            // Defesa adicional para links eventualmente inseridos por outros serviços.
+            if (typeof item.link === 'string' && /^\/(?!\/)/.test(item.link) && !/[\\\s\u0000-\u001f]/.test(item.link)) {
+                const url = new URL(item.link, location.origin);
+                if (url.origin === location.origin) {
+                    const link = document.createElement('a');
+                    link.href = url.href;
+                    link.className = 'bo-notifications-item-link';
+                    link.textContent = 'Ver detalhes';
+                    row.append(link);
+                }
+            }
+            list.append(row);
+        });
+    };
+    const refresh = async (markRead = false) => {
+        if (busy) return;
+        busy = true;
+        readAll.disabled = true;
+        panel.setAttribute('aria-busy', 'true');
+        try {
+            const options = { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } };
+            if (markRead) {
+                options.method = 'POST';
+                options.body = new URLSearchParams({ csrf_token: BO_CSRF_TOKEN });
+            }
+            const response = await fetch(wrap.dataset.url, options);
+            const data = await response.json();
+            if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível carregar as notificações.');
+            render(data);
+            feedback.hidden = true;
+            if (markRead) {
+                panel.focus();
+                status.textContent = 'Todas as notificações foram marcadas como lidas.';
+            }
+        } catch (error) {
+            feedback.textContent = error.message || 'Não foi possível atualizar. Reabra as notificações para tentar novamente.';
+            feedback.hidden = false;
+        } finally {
+            busy = false;
+            readAll.disabled = unread === 0;
+            panel.setAttribute('aria-busy', 'false');
+        }
+    };
+    const close = () => {
+        panel.hidden = true;
+        toggle.setAttribute('aria-expanded', 'false');
+    };
+    toggle.addEventListener('click', () => {
+        if (!panel.hidden) { close(); return; }
+        panel.hidden = false;
+        toggle.setAttribute('aria-expanded', 'true');
+        panel.focus();
+        refresh();
+    });
+    readAll.addEventListener('click', () => refresh(true));
+    document.addEventListener('click', event => {
+        if (!wrap.contains(event.target)) close();
+    });
+    document.addEventListener('focusin', event => {
+        if (!wrap.contains(event.target)) close();
+    });
+    wrap.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && !panel.hidden) {
+            event.preventDefault();
+            close();
+            toggle.focus();
+        }
+    });
+    refresh();
+    // Atualiza ao retornar à aba e periodicamente, sem requisições sobrepostas.
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) refresh();
+    });
+    window.setInterval(() => { if (!document.hidden) refresh(); }, 60000);
+});
+
+/* ---------- Preferências de notificações: salvar cada switch na conta ---------- */
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-bo-preference]').forEach((input) => {
+        let savedValue = input.checked;
+        let saving = false;
+        input.addEventListener('change', async () => {
+            if (saving) return;
+            const value = input.checked ? 1 : 0;
+            saving = true;
+            input.disabled = true;
+            input.setAttribute('aria-busy', 'true');
+            try {
+                const response = await fetch(BO_PREFERENCES_URL, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { Accept: 'application/json' },
+                    body: new URLSearchParams({
+                        csrf_token: BO_CSRF_TOKEN,
+                        key: input.dataset.boPreference,
+                        value: String(value),
+                    }),
+                });
+                const result = await response.json();
+                if (!response.ok || result.ok !== true) {
+                    throw new Error(result.message || 'Não foi possível salvar a preferência.');
+                }
+                savedValue = value === 1;
+                input.checked = savedValue;
+            } catch (error) {
+                input.checked = savedValue;
+                boToast(error instanceof SyntaxError || error instanceof TypeError
+                    ? 'Não foi possível confirmar a gravação. Atualize a página e tente novamente.'
+                    : error.message);
+            } finally {
+                saving = false;
+                input.disabled = false;
+                input.removeAttribute('aria-busy');
+            }
+        });
+    });
+});
+
 /* ---------- Perfis de acesso ----------
    Cada perfil define o rótulo mostrado no header e os itens do menu
    lateral (chave da seção + label + ícone Bootstrap Icons). A seção
