@@ -29,7 +29,8 @@ function bo_flash(string $type, string $text): void
 
 function bo_redirect_perfil(): never
 {
-    header('Location: ' . BASE_URL . 'pages/dashboard/dashboard.php?section=configuracoes');
+    $section = ($_SESSION['tipo_usuario'] ?? '') === 'aluno' && basename($_SERVER['SCRIPT_NAME'] ?? '') === 'update-profile.php' ? 'perfil' : 'configuracoes';
+    header('Location: ' . BASE_URL . 'pages/dashboard/dashboard.php?section=' . $section);
     exit;
 }
 

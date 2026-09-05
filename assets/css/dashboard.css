@@ -325,6 +325,189 @@ body {
     outline-offset: 2px;
 }
 
+.bo-notifications-wrap {
+    position: relative;
+}
+
+.bo-notifications-toggle {
+    position: relative;
+    font-size: 18px;
+}
+
+.bo-notifications-count {
+    position: absolute;
+    top: -5px;
+    right: -6px;
+    min-width: 19px;
+    padding: 2px 4px;
+    border-radius: 20px;
+    background: #b42318;
+    color: #fff;
+    border: 2px solid var(--surface);
+    font-size: 10px;
+    line-height: 13px;
+}
+
+.bo-notifications-panel {
+    position: absolute;
+    top: calc(100% + 9px);
+    right: -50px;
+    width: min(360px, calc(100vw - 36px));
+    max-height: calc(100dvh - var(--header-h) - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .24);
+    z-index: 1041;
+    transform-origin: top right;
+}
+
+.bo-notifications-panel:not([hidden]) {
+    animation: bo-notifications-enter .22s ease-out;
+}
+
+@keyframes bo-notifications-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bo-notifications-panel:not([hidden]) {
+        animation: none;
+    }
+}
+
+.bo-notifications-heading {
+    padding: 18px 18px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.bo-notifications-heading h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.bo-notifications-heading button {
+    background: transparent;
+    border: 0;
+    color: var(--gold-bright);
+    font: inherit;
+    font-size: 12px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.bo-notifications-heading button:hover:not(:disabled) {
+    background: var(--surface-2);
+}
+
+.bo-notifications-heading button:disabled {
+    color: var(--text-muted);
+    cursor: default;
+}
+
+.bo-notifications-heading button:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+.bo-notifications-feedback,
+.bo-notifications-empty {
+    padding: 0 18px 16px;
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.bo-notifications-feedback {
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.bo-notifications-empty {
+    padding: 28px 18px;
+    text-align: center;
+}
+
+.bo-notifications-list {
+    list-style: none;
+    padding: 0 8px 8px;
+    margin: 0;
+}
+
+.bo-notifications-item {
+    position: relative;
+    padding: 14px 14px 14px 28px;
+    border-radius: 10px;
+    margin-top: 4px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.bo-notifications-item.is-unread {
+    background: var(--surface-2);
+}
+
+.bo-notifications-item.is-unread::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 21px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+}
+
+.bo-notifications-item p {
+    margin: 0 0 6px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.bo-notifications-item-title {
+    display: block;
+    margin-bottom: 4px;
+    overflow-wrap: anywhere;
+}
+
+.bo-notifications-item-link {
+    display: block;
+    width: fit-content;
+    margin-top: 8px;
+    color: var(--gold-bright);
+}
+
+.bo-notifications-item-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+.bo-notifications-item time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 560px) {
+    .bo-notifications-panel { right: -46px; }
+    .bo-header-search { max-width: calc(100vw - 180px); }
+}
+
 .bo-user-menu-wrap {
     position: relative;
 }

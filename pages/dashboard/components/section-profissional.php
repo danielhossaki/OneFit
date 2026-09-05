@@ -197,6 +197,10 @@ try {
             $stmt->close();
             $ofFeedback = ['type' => 'success', 'message' => 'Horário disponível removido.'];
         } elseif ($ofAction === 'agendar') {
+            $operacaoAgendamento = (string) ($_POST['operacao_agendamento'] ?? '');
+            if ($operacaoAgendamento === '' || !isset($_SESSION['operacoes_agendamento'][$operacaoAgendamento])) {
+                throw new RuntimeException('Formulário já utilizado ou expirado. Abra um novo agendamento.');
+            }
             $idAluno = filter_input(INPUT_POST, 'id_aluno', FILTER_VALIDATE_INT);
             $titulo = trim((string) ($_POST['titulo'] ?? ''));
             $tipo = (string) ($_POST['tipo'] ?? 'aula');
@@ -271,12 +275,29 @@ try {
                 throw new RuntimeException('Não foi possível criar o agendamento.');
             }
             $stmt->close();
+            unset($_SESSION['operacoes_agendamento'][$operacaoAgendamento]);
+            // INSERT concluído em autocommit. A falha secundária não desfaz a aula.
+            try {
+                require_once __DIR__ . '/../../../config/notificacoes.php';
+                criarNotificacao($idAluno, 'Agendamento criado',
+                    'Seu agendamento foi marcado para ' . $dataValida->format('d/m/Y') . ' às ' . $horaInicio . '.', 'agendamento');
+            } catch (Throwable $erroNotificacao) {
+                error_log('ONE FIT: falha ao notificar agendamento criado #' . $proximoId . '; código ' . $erroNotificacao->getCode());
+            }
             $ofFeedback = ['type' => 'success', 'message' => 'Agendamento criado com sucesso.'];
         } elseif ($ofAction === 'cancelar_agendamento') {
             $idAgendamento = filter_input(INPUT_POST, 'id_agendamento', FILTER_VALIDATE_INT);
             if (!$idAgendamento) {
                 throw new RuntimeException('Agendamento inválido.');
             }
+
+            // Destinatário e data vêm do agendamento pertencente ao profissional.
+            $stmt = $conn->prepare('SELECT id_usuario, data_evento, hora_inicio FROM agendamento WHERE id_agendamento = ? AND id_profissional = ?');
+            $stmt->bind_param('ii', $idAgendamento, $ofIdProfissional);
+            $stmt->execute();
+            $agendamentoCancelado = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+            if (!$agendamentoCancelado) throw new RuntimeException('Agendamento não encontrado.');
 
             $stmt = $conn->prepare(
                 "UPDATE agendamento SET status = 'cancelado'
@@ -289,6 +310,15 @@ try {
                 throw new RuntimeException('Agendamento não encontrado ou já encerrado.');
             }
             $stmt->close();
+            // affected_rows acima impede aviso em cancelamentos repetidos.
+            try {
+                require_once __DIR__ . '/../../../config/notificacoes.php';
+                criarNotificacao((int) $agendamentoCancelado['id_usuario'], 'Agendamento cancelado',
+                    'Seu agendamento de ' . date('d/m/Y', strtotime($agendamentoCancelado['data_evento']))
+                    . ' às ' . substr($agendamentoCancelado['hora_inicio'], 0, 5) . ' foi cancelado.', 'agendamento');
+            } catch (Throwable $erroNotificacao) {
+                error_log('ONE FIT: falha ao notificar agendamento cancelado #' . $idAgendamento . '; código ' . $erroNotificacao->getCode());
+            }
             $ofFeedback = ['type' => 'success', 'message' => 'Agendamento cancelado.'];
         } elseif ($ofAction === 'usar_cashback') {
             $valorTexto = str_replace(',', '.', trim((string) ($_POST['valor'] ?? '')));
@@ -434,6 +464,10 @@ try {
 }
 
 $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
+// Tokens por formulário permitem abas simultâneas e bloqueiam reenvios já concluídos.
+$_SESSION['operacoes_agendamento'] = array_slice($_SESSION['operacoes_agendamento'] ?? [], -49, null, true);
+$ofOperacaoAgendamento = bin2hex(random_bytes(16));
+$_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 ?>
 
 <?php if ($ofFeedback): ?>
@@ -748,6 +782,7 @@ $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');
             <div class="modal-body row g-3">
                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                 <input type="hidden" name="prof_action" value="agendar">
+                <input type="hidden" name="operacao_agendamento" value="<?php echo $ofH($ofOperacaoAgendamento); ?>">
                 <div class="col-12">
                     <label class="form-label">Aluno</label>
                     <select class="form-select" name="id_aluno" required>

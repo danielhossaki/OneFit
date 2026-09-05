@@ -1,8 +1,11 @@
 <?php
 
-require __DIR__ . '/_shared.php';
-
+// Este endpoint retorna JSON inclusive para sessão expirada e método inválido.
+// _shared.php redireciona esses casos para páginas HTML.
+require_once __DIR__ . '/../../../config/parametros.php';
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 header('Content-Type: application/json; charset=UTF-8');
+header('Cache-Control: no-store');
 
 function preferencias_responder(bool $ok, string $mensagem, int $status = 200): never
 {
@@ -11,8 +14,16 @@ function preferencias_responder(bool $ok, string $mensagem, int $status = 200): 
     exit;
 }
 
-$token = (string) ($_POST['csrf_token'] ?? '');
-if ($token === '' || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+$idUsuario = (int) ($_SESSION['id_usuario'] ?? 0);
+if ($idUsuario <= 0) {
+    preferencias_responder(false, 'Sua sessão expirou. Entre novamente.', 401);
+}
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Allow: POST');
+    preferencias_responder(false, 'Método não permitido.', 405);
+}
+$token = $_POST['csrf_token'] ?? null;
+if (!is_string($token) || $token === '' || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
     preferencias_responder(false, 'Sua sessão expirou. Atualize a página e tente novamente.', 403);
 }
 
@@ -23,11 +34,14 @@ $campos = [
     'ofertas_novidades',
     'notificacoes_email',
 ];
-$chave = (string) ($_POST['key'] ?? '');
-$valor = (string) ($_POST['value'] ?? '');
-$idUsuario = (int) $_SESSION['id_usuario'];
+$chave = $_POST['key'] ?? null;
+$valor = $_POST['value'] ?? null;
+if (!is_string($chave) || !is_string($valor)) {
+    preferencias_responder(false, 'Preferência inválida.', 422);
+}
 
 try {
+    require_once __DIR__ . '/../../../config/conn.php';
     if ($chave === 'tema') {
         if (!in_array($valor, ['light', 'dark', 'system'], true)) {
             preferencias_responder(false, 'Tema inválido.', 422);
@@ -53,6 +67,6 @@ try {
     $stmt->close();
     preferencias_responder(true, 'Preferência salva.');
 } catch (Throwable $erro) {
-    error_log('Falha segura ao salvar preferência do painel ONE FIT.');
+    error_log('Falha ao salvar preferência do painel ONE FIT. Código: ' . $erro->getCode());
     preferencias_responder(false, 'Não foi possível salvar. Tente novamente.', 500);
 }
