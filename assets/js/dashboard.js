@@ -1151,3 +1151,54 @@ function boExportTableCsv(tableId) {
     link.click();
     boToast('Exportação gerada.');
 }
+// As duas tabelas e o total são renderizados a partir da mesma consulta autenticada.
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-bo-compras]').forEach((section) => {
+        const search = section.querySelector('[data-compras-busca]');
+        const status = section.querySelector('[data-compras-status]');
+        const results = section.querySelector('[data-compras-resultados]');
+        const feedback = section.querySelector('[data-compras-feedback]');
+        let timer;
+        let controller;
+        let version = 0;
+        const schedule = (delay) => {
+            clearTimeout(timer);
+            if (controller) controller.abort();
+            const current = ++version;
+            results.hidden = true;
+            results.setAttribute('aria-busy', 'true');
+            feedback.hidden = false;
+            feedback.textContent = 'Carregando compras…';
+            timer = setTimeout(async () => {
+                controller = new AbortController();
+                const url = new URL(section.dataset.endpoint, window.location.href);
+                url.searchParams.set('busca', search.value.trim());
+                url.searchParams.set('status', status.value);
+                try {
+                    const response = await fetch(url, { signal: controller.signal, credentials: 'same-origin' });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Não foi possível carregar as compras.');
+                    if (current !== version) return;
+                    results.innerHTML = data.html;
+                    results.hidden = false;
+                    feedback.textContent = `${data.total} pedido(s) encontrado(s).`;
+                } catch (error) {
+                    if (current !== version || error.name === 'AbortError') return;
+                    feedback.textContent = `${error.message} Altere a busca ou o status para tentar novamente.`;
+                } finally {
+                    if (current === version) results.setAttribute('aria-busy', 'false');
+                }
+            }, delay);
+        };
+        search.addEventListener('input', () => schedule(250));
+        search.addEventListener('search', () => schedule(0));
+        status.addEventListener('change', () => schedule(0));
+        // O acesso pelo recibo começa em Todos, mesmo se o navegador restaurar
+        // um filtro antigo (por exemplo Entregue). Depois, os filtros são livres.
+        if (new URLSearchParams(window.location.search).get('compra_finalizada') === '1') {
+            search.value = '';
+            status.value = '';
+            schedule(0);
+        }
+    });
+});

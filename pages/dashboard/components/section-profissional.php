@@ -659,59 +659,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 </section>
 
 <!-- ===== PROFISSIONAL · Compras ===== -->
-<section class="bo-content-section" data-perfil="profissional" data-section="compras">
-    <div class="bo-page-title"><div><h1>Minhas compras</h1><p>Acompanhamento e histórico dos seus pedidos.</p></div></div>
-    <div class="row g-3 mb-3"><div class="col-12 col-md-4"><div class="bo-card">
-        <div class="bo-card-label">Total de pedidos</div>
-        <div class="bo-card-value"><?php echo count($profPedidos ?? []) + count($profPedidosHistorico ?? []); ?></div>
-    </div></div></div>
-
-    <div class="bo-section-heading">Acompanhamento de pedido</div>
-    <div class="bo-table-wrap"><div class="table-responsive"><table class="bo-table">
-        <thead><tr><th>ID transação</th><th>Produto</th><th>Quantidade</th><th>Valor</th><th>Status</th><th>Recebimento</th></tr></thead>
-        <tbody>
-            <?php foreach (($profPedidos ?? []) as $ped): ?>
-                <tr>
-                    <td><?php echo $ofH($ped['transacao']); ?></td>
-                    <td><?php foreach ($ped['itens'] as $it): ?><div><?php echo (int) $it['quantidade']; ?>x <?php echo $ofH($it['produto']); ?> — <small>Vendido por: <?php echo $ofH($it['vendedor']); ?> · <?php echo $ofH($it['statusLogistica']); ?></small></div><?php endforeach; ?></td>
-                    <td><?php echo array_sum(array_column($ped['itens'], 'quantidade')); ?></td><td><?php echo bo_money((float) $ped['valor']); ?></td>
-                    <td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
-                    <td>
-                        <?php foreach ($ped['itens'] as $it): ?>
-                            <?php if ($it['statusLogisticaBanco'] === 'despachado'): ?>
-                                <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
-                                    <?php echo bo_csrf_field(); ?>
-                                    <?php echo bo_hidden('secao', 'compras'); ?>
-                                    <?php echo bo_hidden('acao', 'confirmar-recebimento'); ?>
-                                    <?php echo bo_hidden('id_item', $it['idItem']); ?>
-                                    <button type="submit" class="btn-bo-outline btn-sm">Confirmar recebimento</button>
-                                </form>
-                            <?php elseif ($it['confirmadoRecebimento']): ?>
-                                <small>Recebido em <?php echo $ofH($it['confirmadoRecebimentoEm']); ?></small>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-            <?php if (empty($profPedidos)): ?><tr><td colspan="6">Nenhum pedido em andamento.</td></tr><?php endif; ?>
-        </tbody>
-    </table></div></div>
-
-    <div class="bo-section-heading">Histórico de compra</div>
-    <div class="bo-table-wrap"><div class="table-responsive"><table class="bo-table">
-        <thead><tr><th>ID transação</th><th>Data/hora</th><th>Produto</th><th>Status</th></tr></thead>
-        <tbody>
-            <?php foreach (($profPedidosHistorico ?? []) as $ped): ?>
-                <tr>
-                    <td><?php echo $ofH($ped['transacao']); ?></td><td><?php echo $ofH($ped['data']); ?></td>
-                    <td><?php foreach ($ped['itens'] as $it): ?><div><?php echo (int) $it['quantidade']; ?>x <?php echo $ofH($it['produto']); ?> — <small>Vendido por: <?php echo $ofH($it['vendedor']); ?></small></div><?php endforeach; ?></td>
-                    <td><?php echo $ofH(ucfirst((string) $ped['status'])); ?></td>
-                </tr>
-            <?php endforeach; ?>
-            <?php if (empty($profPedidosHistorico)): ?><tr><td colspan="4">Nenhuma compra no histórico.</td></tr><?php endif; ?>
-        </tbody>
-    </table></div></div>
-</section>
+<?php $perfilCompras = 'profissional'; $comprasPedidos = $profPedidos ?? []; $comprasHistorico = $profPedidosHistorico ?? []; require __DIR__ . '/section-compras.php'; ?>
 
 <!-- Modal: vínculo de aluno -->
 <div class="modal fade" id="ofAlunoModal" tabindex="-1" aria-hidden="true">
