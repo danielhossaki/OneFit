@@ -1,955 +1,29 @@
-# Treino - arquivos completos
+# Treino semanal - arquivos completos
 
-Implementado CRUD persistente e restrito ao aluno da sessao. Modal com exercicios por grupo muscular, series de 1 a 10, repeticoes de 1 a 50 e cargas inteiras de 0 a 300 kg. A tabela atualiza depois da resposta do servidor. Excluir e limpar exigem confirmacao; token unico impede duplicacao de um mesmo envio. Mantidas as classes e o tema existentes.
+Implementado sobre a tela existente: dia no modal e na tabela, filtro por dia, ordem de segunda a domingo, persistencia, edicao do dia e exclusao individual. Mantidos tema, campos existentes, confirmacao para limpar a ficha inteira, token contra reenvio duplicado e isolamento por usuario.
 
-A estrutura do banco foi inspecionada e nao havia tabela de treino. A migracao abaixo ja foi aplicada neste ambiente, sem inserir fichas de exemplo. Em outra instalacao, execute a migracao antes de copiar os arquivos PHP. Cada aluno tem uma ficha atual representada pelas suas linhas em treino_exercicio.
+## Banco de dados
 
-Validacao: 16 testes de SQL real em tabela temporaria para CRUD, limites, reenvio e isolamento; renderizacao dos quatro selects; sintaxe PHP e JavaScript. Nao foi realizado teste visual/login em navegador.
+A tabela treino_exercicio foi inspecionada: nao havia campo de dia. A migracao treino-dias-semana.sql ja foi aplicada neste ambiente. Registros antigos permanecem com NULL e aparecem como "Nao definido", depois de domingo em Todos os dias; ao editar, o aluno deve selecionar um dia. Nenhum exercicio foi criado automaticamente.
 
-SQL NECESSÁRIO:
+Em outra instalacao existente, execute apenas treino-dias-semana.sql uma vez antes de atualizar os arquivos. Para uma instalacao sem a tabela, execute apenas treino-exercicios.sql, que ja inclui o campo. Nao execute as duas migracoes em uma instalacao nova.
 
-```sql
-CREATE TABLE IF NOT EXISTS treino_exercicio (
-    id_exercicio INT NOT NULL AUTO_INCREMENT,
-    id_usuario INT NOT NULL,
-    nome VARCHAR(100) NOT NULL,
-    series TINYINT UNSIGNED NOT NULL,
-    repeticoes TINYINT UNSIGNED NOT NULL,
-    carga SMALLINT UNSIGNED NOT NULL,
-    token_criacao CHAR(32) NOT NULL,
-    data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id_exercicio),
-    UNIQUE KEY uq_treino_envio (id_usuario, token_criacao),
-    CONSTRAINT fk_treino_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuarios (id_usuario) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+## Verificacao
 
-```
+24 verificacoes de banco real em tabelas temporarias passaram: CRUD, dias validos e invalidos, ordem semanal, mesmo exercicio em dias diferentes, edicao do dia, duplicidade por reenvio e isolamento. Teste de renderizacao PHP dos seis selects e seis colunas passou, assim como sintaxe PHP/JavaScript e git diff --check. Nao foi realizado teste visual em navegador.
 
-ARQUIVO:
-pages/dashboard/includes/db-data.php
+## Arquivos completos
 
-CÓDIGO COMPLETO:
+### pages/dashboard/includes/treino.php
 
 ```php
 <?php
-require_once __DIR__ . '/treino.php';
-require_once __DIR__ . '/compras.php';
-/**
- * includes/db-data.php
- * Substitui includes/mock-data.php: monta as mesmas variáveis que os
- * components/section-admin.php, section-profissional.php e
- * section-aluno.php esperam, só que lendo do banco de verdade em vez de
- * usar dados fictícios. Cada bloco só roda para o perfil correspondente
- * ($perfilLogado), evitando consultas (e exposição de dados) desnecessárias.
- *
- * Depende de $conn (config/conn.php) e $perfilLogado/$_SESSION['id_usuario']
- * (já carregados em dashboard.php antes deste require).
- */
-
-/**
- * Mapeia o status de pagamento/matrícula do banco para um rótulo em pt-BR.
- */
-function bo_label_status_pagamento(string $status): string
+function bo_treino_dias(): array
 {
-    $labels = [
-        'pendente' => 'Pendente',
-        'aprovado' => 'Pago',
-        'recusado' => 'Recusado',
-        'cancelado' => 'Cancelado',
-        'atrasado' => 'Atrasado',
-    ];
-    return $labels[$status] ?? ucfirst($status);
+    return ['segunda' => 'Segunda-feira', 'terca' => 'Terça-feira', 'quarta' => 'Quarta-feira',
+        'quinta' => 'Quinta-feira', 'sexta' => 'Sexta-feira', 'sabado' => 'Sábado', 'domingo' => 'Domingo'];
 }
 
-function bo_label_forma_pagamento(string $forma): string
-{
-    $labels = ['pix' => 'PIX', 'cartao' => 'Cartão', 'cashback' => 'Cashback'];
-    return $labels[$forma] ?? ucfirst($forma);
-}
-
-function bo_ciclo_por_duracao(?int $dias): string
-{
-    if ($dias === null) return '—';
-    if ($dias <= 31) return 'Mensal';
-    if ($dias <= 93) return 'Trimestral';
-    if ($dias <= 186) return 'Semestral';
-    return 'Anual';
-}
-
-/* =======================================================================
- * PERFIL: ADMINISTRADOR
- * ===================================================================== */
-if ($perfilLogado === 'admin') {
-
-    // Cards da tela "Dashboard"
-    $admDashboard = [
-        'usuariosAtivos' => 0, 'usuariosNovosMes' => 0,
-        'saldoDia' => 0, 'saldoSemana' => 0, 'saldoMes' => 0, 'saldoAno' => 0,
-        'cashbackDia' => 0, 'cashbackSemana' => 0, 'cashbackMes' => 0, 'cashbackAno' => 0,
-        'acessosLiberados' => 0, 'acessosBloqueados' => 0, 'totalUsuarios' => 0,
-        'profissionaisAtivos' => 0, 'profissionaisPendentes' => 0,
-    ];
-
-    if ($r = $conn->query("SELECT
-            SUM(status = 'ativo') AS usuarios_ativos,
-            SUM(status != 'bloqueado') AS acessos_liberados,
-            SUM(status = 'bloqueado') AS acessos_bloqueados,
-            SUM(data_cadastro >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS usuarios_novos_mes,
-            COUNT(*) AS total
-        FROM usuarios")) {
-        $row = $r->fetch_assoc();
-        $admDashboard['usuariosAtivos'] = (int) $row['usuarios_ativos'];
-        $admDashboard['acessosLiberados'] = (int) $row['acessos_liberados'];
-        $admDashboard['acessosBloqueados'] = (int) $row['acessos_bloqueados'];
-        $admDashboard['usuariosNovosMes'] = (int) $row['usuarios_novos_mes'];
-        $admDashboard['totalUsuarios'] = (int) $row['total'];
-    }
-
-    if ($r = $conn->query("SELECT
-            SUM(CASE WHEN DATE(data_pagamento) = CURDATE() THEN valor ELSE 0 END) AS dia,
-            SUM(CASE WHEN YEARWEEK(data_pagamento, 1) = YEARWEEK(CURDATE(), 1) THEN valor ELSE 0 END) AS semana,
-            SUM(CASE WHEN YEAR(data_pagamento) = YEAR(CURDATE()) AND MONTH(data_pagamento) = MONTH(CURDATE()) THEN valor ELSE 0 END) AS mes,
-            SUM(CASE WHEN YEAR(data_pagamento) = YEAR(CURDATE()) THEN valor ELSE 0 END) AS ano
-        FROM pagamento WHERE status = 'aprovado'")) {
-        $row = $r->fetch_assoc();
-        $admDashboard['saldoDia'] = (float) $row['dia'];
-        $admDashboard['saldoSemana'] = (float) $row['semana'];
-        $admDashboard['saldoMes'] = (float) $row['mes'];
-        $admDashboard['saldoAno'] = (float) $row['ano'];
-    }
-
-    if ($r = $conn->query("SELECT
-            SUM(CASE WHEN DATE(data_criacao) = CURDATE() THEN valor ELSE 0 END) AS dia,
-            SUM(CASE WHEN YEARWEEK(data_criacao, 1) = YEARWEEK(CURDATE(), 1) THEN valor ELSE 0 END) AS semana,
-            SUM(CASE WHEN YEAR(data_criacao) = YEAR(CURDATE()) AND MONTH(data_criacao) = MONTH(CURDATE()) THEN valor ELSE 0 END) AS mes,
-            SUM(CASE WHEN YEAR(data_criacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) AS ano
-        FROM cashback WHERE tipo = 'credito'")) {
-        $row = $r->fetch_assoc();
-        $admDashboard['cashbackDia'] = (float) $row['dia'];
-        $admDashboard['cashbackSemana'] = (float) $row['semana'];
-        $admDashboard['cashbackMes'] = (float) $row['mes'];
-        $admDashboard['cashbackAno'] = (float) $row['ano'];
-    }
-
-    if ($r = $conn->query("SELECT
-            SUM(status = 'ativo') AS ativos,
-            SUM(status = 'inativo') AS pendentes
-        FROM cadastro_profissional")) {
-        $row = $r->fetch_assoc();
-        $admDashboard['profissionaisAtivos'] = (int) $row['ativos'];
-        $admDashboard['profissionaisPendentes'] = (int) $row['pendentes'];
-    }
-
-    // Tela "Usuários"
-    $usuarios = [];
-    $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
-                   u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
-                   m.id_matricula, m.data_inicio, m.data_fim, m.id_plano, pl.nome AS plano_nome
-            FROM usuarios u
-            LEFT JOIN matricula m ON m.id_matricula = (
-                SELECT id_matricula FROM matricula
-                WHERE id_usuario = u.id_usuario
-                ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1
-            )
-            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-            ORDER BY u.nome";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $cidadeEstadoUsr = explode('/', $row['cidade_estado'] ?? '', 2);
-            $usuarios[] = [
-                'id' => (int) $row['id_usuario'],
-                'nome' => $row['nome'],
-                'email' => $row['email'],
-                'cpf' => $row['cpf'],
-                'status' => $row['status'] === 'ativo' ? 'ativo' : 'inativo',
-                'matricula' => $row['id_matricula'] ? 'MAT-' . str_pad($row['id_matricula'], 4, '0', STR_PAD_LEFT) : '—',
-                'dataInicial' => $row['data_inicio'] ?: '',
-                'dataFinal' => $row['data_fim'] ?: '',
-                'idPlano' => $row['id_plano'] ? (int) $row['id_plano'] : null,
-                'plano' => $row['plano_nome'] ?: '—',
-                'acesso' => $row['status'] === 'bloqueado' ? 'Bloqueado' : 'Liberado',
-                'observacao' => '',
-                'celular' => $row['celular'],
-                'genero' => $row['genero'],
-                'nascimento' => $row['data_nascimento'],
-                'nacionalidade' => $row['nacionalidade'],
-                'endereco' => $row['endereco'],
-                'cidade' => trim($cidadeEstadoUsr[0] ?? ''),
-                'estado' => trim($cidadeEstadoUsr[1] ?? ''),
-            ];
-        }
-    }
-
-    // Tela "Funções" — tabela `funcao`
-    $funcoes = [];
-    if ($r = $conn->query('SELECT id_funcao, nome FROM funcao ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $funcoes[] = ['id' => (int) $row['id_funcao'], 'nome' => $row['nome']];
-        }
-    }
-
-    // Tela "Permissões" — tabela `permissoes` (email + função concedida)
-    $permissoes = [];
-    $sql = "SELECT pe.id_permissao, pe.nome, pe.email, pe.funcao AS id_funcao, f.nome AS funcaoLabel
-            FROM permissoes pe
-            LEFT JOIN funcao f ON f.id_funcao = pe.funcao
-            ORDER BY pe.nome";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $permissoes[] = [
-                'id' => (int) $row['id_permissao'],
-                'nome' => $row['nome'],
-                'email' => $row['email'],
-                'id_funcao' => (int) $row['id_funcao'],
-                'funcaoLabel' => $row['funcaoLabel'] ?? '—',
-            ];
-        }
-    }
-
-    // Tela "Pagamentos"
-    $pagamentos = [];
-    $sql = "SELECT p.id_pagamento, COALESCE(p.data_pagamento, p.data_vencimento) AS data, p.forma_pagamento, p.valor, p.status, m.id_usuario
-            FROM pagamento p
-            JOIN matricula m ON m.id_matricula = p.id_matricula
-            ORDER BY data DESC";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $pagamentos[] = [
-                'id' => (int) $row['id_pagamento'],
-                'data' => $row['data'],
-                'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
-                'valor' => (float) $row['valor'],
-                'usuarioId' => (int) $row['id_usuario'],
-                'observacao' => bo_label_status_pagamento($row['status']),
-            ];
-        }
-    }
-
-    // Tela "Cashbacks"
-    $cashbackResumo = ['saldoTotal' => 0, 'distribuidos' => 0, 'debitado' => 0, 'creditado' => 0];
-    if ($r = $conn->query("SELECT
-            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE 0 END) AS creditado,
-            SUM(CASE WHEN tipo = 'debito' THEN valor ELSE 0 END) AS debitado
-        FROM cashback WHERE status != 'cancelado'")) {
-        $row = $r->fetch_assoc();
-        $cashbackResumo['creditado'] = (float) $row['creditado'];
-        $cashbackResumo['distribuidos'] = (float) $row['creditado'];
-        $cashbackResumo['debitado'] = (float) $row['debitado'];
-        $cashbackResumo['saldoTotal'] = $cashbackResumo['creditado'] - $cashbackResumo['debitado'];
-    }
-
-    $cashbackTransacoes = [];
-    $sql = "SELECT id_cashback, data_criacao, tipo, valor, id_usuario, descricao FROM cashback ORDER BY data_criacao DESC";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $cashbackTransacoes[] = [
-                'id' => (int) $row['id_cashback'],
-                'data' => $row['data_criacao'],
-                'tipo' => $row['tipo'],
-                'valor' => (float) $row['valor'],
-                'usuarioId' => (int) $row['id_usuario'],
-                'motivo' => $row['descricao'],
-            ];
-        }
-    }
-
-    // Tela "Categorias"
-    $categorias = [];
-    if ($r = $conn->query('SELECT id_categoria, nome, status FROM categorias ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $categorias[] = ['id' => (int) $row['id_categoria'], 'nome' => $row['nome'], 'status' => $row['status']];
-        }
-    }
-    $categoriasAtivasOptions = array_values(array_map(
-        static fn(array $c): string => $c['nome'],
-        array_filter($categorias, static fn(array $c): bool => $c['status'] === 'ativo')
-    ));
-
-    // Tela "Produtos"
-    $produtosResumo = ['total' => 0, 'disponiveis' => 0, 'indisponiveis' => 0];
-    if ($r = $conn->query("SELECT COUNT(*) total, SUM(status='ativo') disponiveis, SUM(status='inativo') indisponiveis FROM produtos")) {
-        $row = $r->fetch_assoc();
-        $produtosResumo['total'] = (int) $row['total'];
-        $produtosResumo['disponiveis'] = (int) $row['disponiveis'];
-        $produtosResumo['indisponiveis'] = (int) $row['indisponiveis'];
-    }
-
-    $produtos = [];
-    $sql = "SELECT id_produto, nome, categoria, preco, desconto, cashback_valor, estoque, status, imagem, descricao FROM produtos ORDER BY nome";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $desconto = (float) $row['desconto'];
-            $preco = (float) $row['preco'];
-            $produtos[] = [
-                'id' => (int) $row['id_produto'],
-                'nome' => $row['nome'],
-                'categoria' => $row['categoria'],
-                'preco' => $preco,
-                'desconto' => $desconto,
-                'valorFinal' => round($preco - ($preco * $desconto / 100), 2),
-                'cashback' => (float) $row['cashback_valor'],
-                'estoque' => (int) $row['estoque'],
-                'status' => $row['status'] === 'ativo' ? 'disponivel' : 'indisponivel',
-                'imagem' => $row['imagem'],
-                'descricao' => $row['descricao'],
-            ];
-        }
-    }
-
-    // Tela "Vendas Marketplace" (visão agregada de todos os vendedores)
-    $admVendasProdutos = bo_carregar_produtos_vendedor($conn, null);
-    $admVendas = bo_carregar_vendas_vendedor($conn, null);
-    $transportadoras = bo_carregar_transportadoras($conn);
-
-    // Tela "Cadastro de Planos"
-    $planos = [];
-    $sql = "SELECT id_plano, nome, valor, duracao_dias, descricao, beneficios, status FROM cadastro_planos ORDER BY valor";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $planos[] = [
-                'id' => (int) $row['id_plano'],
-                'nome' => $row['nome'],
-                'valor' => (float) $row['valor'],
-                'ciclo' => bo_ciclo_por_duracao((int) $row['duracao_dias']),
-                'descricao' => $row['descricao'],
-                'beneficios' => $row['beneficios'],
-                'status' => $row['status'],
-                'textoBotao' => 'Assinar agora',
-            ];
-        }
-    }
-    $planosAtivosOptions = array_values(array_map(
-        static fn(array $p): string => $p['nome'],
-        array_filter($planos, static fn(array $p): bool => $p['status'] === 'ativo')
-    ));
-
-    // Tela "Modalidades"
-    $modalidadesAdm = [];
-    if ($r = $conn->query('SELECT id_modalidade, nome FROM modalidades ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $modalidadesAdm[] = ['id' => (int) $row['id_modalidade'], 'nome' => $row['nome']];
-        }
-    }
-    $modalidadesOptions = array_map(static fn(array $m): string => $m['nome'], $modalidadesAdm);
-
-    // Tela "Profissionais"
-    $profissionaisAdm = [];
-    try {
-        $sql = "SELECT id_profissional, nome, especialidade, modalidades, registro_profissional, status, email, celular, descricao, foto
-                FROM cadastro_profissional ORDER BY nome";
-        $r = $conn->query($sql);
-    } catch (\mysqli_sql_exception $e) {
-        // Coluna "modalidades" ainda não existe neste banco (migração
-        // modalidades-profissional-migration.sql pendente): consulta sem ela.
-        $sql = "SELECT id_profissional, nome, especialidade, registro_profissional, status, email, celular, descricao, foto
-                FROM cadastro_profissional ORDER BY nome";
-        $r = $conn->query($sql);
-    }
-    if ($r) {
-        while ($row = $r->fetch_assoc()) {
-            $profissionaisAdm[] = [
-                'id' => (int) $row['id_profissional'],
-                'nome' => $row['nome'],
-                'funcao' => $row['especialidade'],
-                'tituloCard' => $row['especialidade'],
-                'modalidades' => $row['modalidades'] ?? '',
-                'documento' => $row['registro_profissional'],
-                'status' => $row['status'],
-                'email' => $row['email'],
-                'telefone' => $row['celular'],
-                'celular' => $row['celular'],
-                'descricao' => $row['descricao'],
-                'experiencia' => '',
-                'foto' => $row['foto'],
-                'observacaoInterna' => '',
-            ];
-        }
-    }
-}
-
-/* =======================================================================
- * PERFIL: PROFISSIONAL
- * ===================================================================== */
-if ($perfilLogado === 'profissional') {
-
-    $idUsuarioLogado = (int) $_SESSION['id_usuario'];
-    $idProfissional = null;
-    $stmt = $conn->prepare('SELECT id_profissional, status FROM cadastro_profissional WHERE id_usuario = ? LIMIT 1');
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $cadProf = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    $idProfissional = $cadProf['id_profissional'] ?? null;
-
-    $profContrato = ['status' => $cadProf ? ucfirst($cadProf['status']) : '—', 'validade' => '—', 'saldoCashback' => 0];
-
-    $stmt = $conn->prepare("SELECT
-            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo
-        FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    $profContrato['saldoCashback'] = (float) ($row['saldo'] ?? 0);
-
-    // Tela "Histórico" — não há tabela de repasses/comissão por competência no banco
-    $profHistorico = [];
-
-    // Tela "Alunos" — vinculados por agendamentos já realizados com este profissional
-    $profAlunos = [];
-    if ($idProfissional) {
-        $stmt = $conn->prepare("SELECT DISTINCT u.id_usuario, u.nome, u.celular
-                FROM agendamento a
-                JOIN usuarios u ON u.id_usuario = a.id_usuario
-                WHERE a.id_profissional = ?
-                ORDER BY u.nome");
-        $stmt->bind_param('i', $idProfissional);
-        $stmt->execute();
-        $alunosRes = $stmt->get_result();
-        while ($aluno = $alunosRes->fetch_assoc()) {
-            $stmt2 = $conn->prepare("SELECT m.status, m.valor_contratado, pl.nome AS plano
-                    FROM matricula m
-                    LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-                    WHERE m.id_usuario = ?
-                    ORDER BY m.data_matricula DESC LIMIT 1");
-            $stmt2->bind_param('i', $aluno['id_usuario']);
-            $stmt2->execute();
-            $mat = $stmt2->get_result()->fetch_assoc();
-            $stmt2->close();
-            $profAlunos[] = [
-                'id' => (int) $aluno['id_usuario'],
-                'nome' => $aluno['nome'],
-                'contato' => $aluno['celular'],
-                'plano' => $mat['plano'] ?? '—',
-                'status' => ($mat['status'] ?? '') === 'ativa' ? 'ativo' : 'inativo',
-                'valor' => (float) ($mat['valor_contratado'] ?? 0),
-                'observacao' => '',
-            ];
-        }
-        $stmt->close();
-    }
-
-    // Tela "Agenda"
-    $profAgendados = [];
-    $profDisponiveis = []; // não há tabela de horários "livres" oferecidos pelo profissional no banco
-    if ($idProfissional) {
-        $stmt = $conn->prepare("SELECT a.titulo, a.tipo, a.data_evento, a.hora_inicio, u.nome, u.celular
-                FROM agendamento a
-                JOIN usuarios u ON u.id_usuario = a.id_usuario
-                WHERE a.id_profissional = ? AND a.status IN ('agendado','confirmado')
-                ORDER BY a.data_evento, a.hora_inicio");
-        $stmt->bind_param('i', $idProfissional);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            $profAgendados[] = [
-                'aluno' => $row['nome'],
-                'contato' => $row['celular'],
-                'data' => date('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5),
-                'modalidade' => $row['titulo'] ?: ucfirst($row['tipo']),
-            ];
-        }
-        $stmt->close();
-    }
-
-    // Tela "Meu cashback"
-    $profCashbackHistorico = [];
-    $stmt = $conn->prepare('SELECT data_criacao, descricao, valor FROM cashback WHERE id_usuario = ? ORDER BY data_criacao DESC');
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $profCashbackHistorico[] = [
-            'data' => date('d/m/Y', strtotime($row['data_criacao'])),
-            'descricao' => $row['descricao'],
-            'valor' => (float) $row['valor'],
-        ];
-    }
-    $stmt->close();
-
-    // Tela "Minhas compras"
-    [$profPedidos, $profPedidosHistorico] = bo_carregar_pedidos($conn, $idUsuarioLogado);
-}
-
-/* =======================================================================
- * PERFIL: ALUNO
- * ===================================================================== */
-if ($perfilLogado === 'aluno') {
-
-    $idUsuarioLogado = (int) $_SESSION['id_usuario'];
-
-    $stmt = $conn->prepare("SELECT m.status, m.valor_contratado, pl.nome AS plano
-            FROM matricula m
-            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-            WHERE m.id_usuario = ?
-            ORDER BY m.data_matricula DESC LIMIT 1");
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $matriculaAtual = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    $statusLabel = ['ativa' => 'Ativo', 'pendente' => 'Pendente', 'vencida' => 'Vencido', 'cancelada' => 'Cancelado'];
-
-    $alunoPerfil = [
-        'nome' => $usuarioBanco['nome'],
-        'email' => $usuarioBanco['email'],
-        'plano' => $matriculaAtual['plano'] ?? '—',
-        'status' => $statusLabel[$matriculaAtual['status'] ?? ''] ?? '—',
-        'documento' => $usuarioBanco['cpf'],
-        'telefone' => $usuarioBanco['celular'],
-        'dataCadastro' => $usuarioBanco['data_cadastro'] ? date('d/m/Y', strtotime($usuarioBanco['data_cadastro'] ?? '')) : '—',
-        'nascimento' => $usuarioBanco['data_nascimento'] ? date('d/m/Y', strtotime($usuarioBanco['data_nascimento'])) : '—',
-        'altura' => (float) $usuarioBanco['altura'],
-        'peso' => (float) $usuarioBanco['peso'],
-        'objetivo' => $usuarioBanco['objetivo'] ?: '',
-        'valorContratado' => (float) ($matriculaAtual['valor_contratado'] ?? 0),
-    ];
-
-    // Tela "Histórico"
-    $alunoHistorico = [];
-    $stmt = $conn->prepare("SELECT p.data_pagamento, p.data_vencimento, p.forma_pagamento, p.status, p.valor, p.id_pagamento, pl.nome AS plano
-            FROM pagamento p
-            JOIN matricula m ON m.id_matricula = p.id_matricula
-            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-            WHERE m.id_usuario = ?
-            ORDER BY COALESCE(p.data_pagamento, p.data_vencimento) DESC");
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $dataRef = $row['data_pagamento'] ?: $row['data_vencimento'];
-        $stmt2 = $conn->prepare('SELECT SUM(valor) total FROM cashback WHERE id_pagamento = ? AND tipo = "credito"');
-        $stmt2->bind_param('i', $row['id_pagamento']);
-        $stmt2->execute();
-        $cb = $stmt2->get_result()->fetch_assoc();
-        $stmt2->close();
-        $alunoHistorico[] = [
-            'data' => date('d/m/Y H:i', strtotime($dataRef)),
-            'descricao' => 'Mensalidade ' . ($row['plano'] ?? ''),
-            'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
-            'status' => bo_label_status_pagamento($row['status']),
-            'valor' => (float) $row['valor'],
-            'cashback' => (float) ($cb['total'] ?? 0),
-        ];
-    }
-    $stmt->close();
-
-    // Tela "Cashback"
-    $alunoCashbackSaldo = 0;
-    $stmt = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo
-            FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    $alunoCashbackSaldo = (float) ($row['saldo'] ?? 0);
-
-    $alunoCashbackHistorico = [];
-    $stmt = $conn->prepare('SELECT data_criacao, tipo, descricao, valor FROM cashback WHERE id_usuario = ? ORDER BY data_criacao DESC');
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $alunoCashbackHistorico[] = [
-            'data' => date('d/m/Y', strtotime($row['data_criacao'])),
-            'tipo' => $row['tipo'],
-            'descricao' => $row['descricao'],
-            'valor' => (float) $row['valor'],
-        ];
-    }
-    $stmt->close();
-
-    // Tela "Minhas compras"
-    [$alunoPedidos, $alunoPedidosHistorico] = bo_carregar_pedidos($conn, $idUsuarioLogado);
-
-    // Tela "Treino": ficha persistida do aluno autenticado.
-    $alunoTreino = bo_treino_carregar($conn, $idUsuarioLogado);
-
-    // Tela "Minha agenda" — não há tabela de horários "disponíveis" distinta dos agendamentos
-    $alunoAgendaDisponiveis = [];
-}
-
-/* =======================================================================
- * PERFIL: VENDEDOR
- * ===================================================================== */
-if ($perfilLogado === 'vendedor') {
-    $idUsuarioLogado = (int) $_SESSION['id_usuario'];
-
-    $categoriasAtivasOptions = [];
-    if ($r = $conn->query("SELECT nome FROM categorias WHERE status = 'ativo' ORDER BY nome")) {
-        while ($row = $r->fetch_assoc()) {
-            $categoriasAtivasOptions[] = $row['nome'];
-        }
-    }
-
-    $vendedorProdutos = bo_carregar_produtos_vendedor($conn, $idUsuarioLogado);
-    $vendedorProdutosResumo = [
-        'total' => count($vendedorProdutos),
-        'disponiveis' => count(array_filter($vendedorProdutos, static fn(array $p): bool => $p['status'] === 'disponivel')),
-        'indisponiveis' => count(array_filter($vendedorProdutos, static fn(array $p): bool => $p['status'] === 'indisponivel')),
-    ];
-    $vendedorVendas = bo_carregar_vendas_vendedor($conn, $idUsuarioLogado);
-    // Só para exibir o nome da transportadora escolhida em cada venda — o
-    // cadastro de transportadoras em si é exclusivo do admin (globais).
-    $transportadorasAtivas = array_values(array_filter(
-        bo_carregar_transportadoras($conn),
-        static fn(array $t): bool => $t['status'] === 'ativo'
-    ));
-}
-
-// Nomes de planos ativos: usados no <select> do modal "Alterar plano" do
-// aluno. Para o admin, já foi calculado no bloco acima (evita repetir a query).
-if (!isset($planosAtivosOptions)) {
-    $planosAtivosOptions = [];
-    if ($r = $conn->query("SELECT nome FROM cadastro_planos WHERE status = 'ativo' ORDER BY nome")) {
-        while ($row = $r->fetch_assoc()) {
-            $planosAtivosOptions[] = $row['nome'];
-        }
-    }
-}
-
-/**
- * Catálogo de produtos filtrado por vendedor (id_vendedor = usuarios.id_usuario
- * do dono). Passe null para trazer todos os vendedores (visão agregada do
- * admin na tela "Vendas Marketplace"). Mesmo shape de $produtos em
- * "Produtos" do admin, com o nome do vendedor a mais.
- */
-function bo_carregar_produtos_vendedor(mysqli $conn, ?int $idVendedor): array
-{
-    $sql = "SELECT p.id_produto, p.nome, p.categoria, p.preco, p.desconto, p.cashback_valor, p.estoque, p.status, p.imagem, p.descricao,
-                   COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
-            FROM produtos p
-            LEFT JOIN usuarios v ON v.id_usuario = p.id_vendedor"
-        . ($idVendedor !== null ? ' WHERE p.id_vendedor = ?' : '')
-        . ' ORDER BY p.nome';
-    $stmt = $conn->prepare($sql);
-    if ($idVendedor !== null) {
-        $stmt->bind_param('i', $idVendedor);
-    }
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    $produtos = [];
-    while ($row = $res->fetch_assoc()) {
-        $desconto = (float) $row['desconto'];
-        $preco = (float) $row['preco'];
-        $produtos[] = [
-            'id' => (int) $row['id_produto'],
-            'nome' => $row['nome'],
-            'categoria' => $row['categoria'],
-            'preco' => $preco,
-            'desconto' => $desconto,
-            'valorFinal' => round($preco - ($preco * $desconto / 100), 2),
-            'cashback' => (float) $row['cashback_valor'],
-            'estoque' => (int) $row['estoque'],
-            'status' => $row['status'] === 'ativo' ? 'disponivel' : 'indisponivel',
-            'imagem' => $row['imagem'],
-            'descricao' => $row['descricao'],
-            'vendedor' => $row['vendedor_nome'],
-        ];
-    }
-    $stmt->close();
-
-    return $produtos;
-}
-
-/**
- * Vendas (itens de pedido) de um vendedor, com produto, comprador,
- * transportadora e status de logística. Passe null para trazer as vendas
- * de todos os vendedores (visão agregada do admin).
- */
-function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
-{
-    $sql = "SELECT pi.id_item, pi.id_pedido, pi.quantidade, pi.subtotal, pi.valor_frete, pi.status_logistica, pi.codigo_rastreio,
-                   pr.nome AS produto_nome, u.nome AS comprador_nome, pe.data_pedido,
-                   t.nome AS transportadora_nome, COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
-            FROM pedido_item pi
-            JOIN pedido pe ON pe.id_pedido = pi.id_pedido
-            JOIN produtos pr ON pr.id_produto = pi.id_produto
-            JOIN usuarios u ON u.id_usuario = pe.id_usuario
-            LEFT JOIN transportadoras t ON t.id_transportadora = pi.id_transportadora
-            LEFT JOIN usuarios v ON v.id_usuario = pi.id_vendedor"
-        . ($idVendedor !== null ? ' WHERE pi.id_vendedor = ?' : '')
-        . ' ORDER BY pe.data_pedido DESC';
-    $stmt = $conn->prepare($sql);
-    if ($idVendedor !== null) {
-        $stmt->bind_param('i', $idVendedor);
-    }
-    $stmt->execute();
-    $res = $stmt->get_result();
-
-    $statusLogisticaLabel = ['aguardando' => 'Aguardando', 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => 'Devolvido', 'extraviado' => 'Extraviado'];
-
-    $vendas = [];
-    while ($row = $res->fetch_assoc()) {
-        $vendas[] = [
-            'id' => (int) $row['id_item'],
-            'idPedido' => (int) $row['id_pedido'],
-            'produto' => $row['produto_nome'],
-            'vendedor' => $row['vendedor_nome'],
-            'comprador' => $row['comprador_nome'],
-            'quantidade' => (int) $row['quantidade'],
-            'valor' => (float) $row['subtotal'],
-            'valorFrete' => (float) $row['valor_frete'],
-            'transportadora' => $row['transportadora_nome'] ?? '—',
-            'statusLogistica' => $row['status_logistica'],
-            'statusLogisticaLabel' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
-            'codigoRastreio' => $row['codigo_rastreio'],
-            'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
-        ];
-    }
-    $stmt->close();
-
-    return $vendas;
-}
-
-/**
- * Transportadoras globais (cadastradas pelo admin) com suas faixas de CEP.
- */
-function bo_carregar_transportadoras(mysqli $conn): array
-{
-    $transportadoras = [];
-    $res = $conn->query('SELECT id_transportadora, nome, tipo, status FROM transportadoras ORDER BY nome');
-    while ($row = $res->fetch_assoc()) {
-        $transportadoras[(int) $row['id_transportadora']] = [
-            'id' => (int) $row['id_transportadora'],
-            'nome' => $row['nome'],
-            'tipo' => $row['tipo'],
-            'status' => $row['status'],
-            'faixas' => [],
-        ];
-    }
-
-    $resFaixas = $conn->query('SELECT id_faixa, id_transportadora, cep_inicial, cep_final, valor_frete, prazo_dias FROM faixas_cep_frete ORDER BY cep_inicial');
-    while ($row = $resFaixas->fetch_assoc()) {
-        $idTransportadora = (int) $row['id_transportadora'];
-        if (isset($transportadoras[$idTransportadora])) {
-            $transportadoras[$idTransportadora]['faixas'][] = [
-                'id' => (int) $row['id_faixa'],
-                'cepInicial' => $row['cep_inicial'],
-                'cepFinal' => $row['cep_final'],
-                'valorFrete' => (float) $row['valor_frete'],
-                'prazoDias' => (int) $row['prazo_dias'],
-            ];
-        }
-    }
-
-    return array_values($transportadoras);
-}
-
-```
-
-ARQUIVO:
-pages/dashboard/components/section-aluno.php
-
-CÓDIGO COMPLETO:
-
-```php
-<?php
-/**
- * components/section-aluno.php
- * Telas do perfil Aluno. Depende de includes/mock-data.php:
- *   $alunoPerfil, $alunoHistorico, $alunoCashbackHistorico, $alunoPedidos,
- *   $alunoPedidosHistorico, $alunoTreino, $alunoAgendaDisponiveis
- */
-?>
-
-<!-- ===== ALUNO · Perfil (dados cadastrais + avaliação física/IMC) ===== -->
-<section class="bo-content-section" data-perfil="aluno" data-section="perfil">
-    <div class="bo-page-title">
-        <div>
-            <h1>Perfil</h1>
-            <p>Seus dados cadastrais na ONE FIT.</p>
-        </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("perfilEdit","Editar perfil", <?php echo bo_json($alunoPerfil); ?>)'>
-            <i class="bi bi-pencil"></i> Editar
-        </button>
-    </div>
-
-    <!-- Bloco 1: dados cadastrais -->
-    <div class="bo-profile-block">
-        <div class="bo-thumb mb-3" style="width:72px;height:72px;font-size:28px;">
-            <i class="bi bi-person"></i>
-        </div>
-        <div class="bo-profile-row"><span>E-mail</span><span><?php echo $alunoPerfil['email']; ?></span></div>
-        <div class="bo-profile-row">
-            <span>Plano</span>
-            <span>
-                <?php echo $alunoPerfil['plano']; ?>
-                <button type="button" class="btn-bo-outline ms-2" style="padding:4px 10px;font-size:12px;"
-                    onclick='boOpenForm("planoAlterar","Alterar plano", {plano: "<?php echo $alunoPerfil['plano']; ?>"})'>Alterar</button>
-            </span>
-        </div>
-        <div class="bo-profile-row"><span>Status</span><span><?php echo bo_badge($alunoPerfil['status'] === 'Ativo'); ?></span></div>
-        <div class="bo-profile-row"><span>Documento</span><span><?php echo $alunoPerfil['documento']; ?></span></div>
-        <div class="bo-profile-row"><span>Telefone</span><span><?php echo $alunoPerfil['telefone']; ?></span></div>
-        <div class="bo-profile-row"><span>Data de cadastro</span><span><?php echo $alunoPerfil['dataCadastro']; ?></span></div>
-        <div class="bo-profile-row"><span>Data de nascimento</span><span><?php echo $alunoPerfil['nascimento']; ?></span></div>
-    </div>
-
-    <!-- Bloco 2: avaliação física + cálculo de IMC (ver backoffice.js > boCalcularIMC) -->
-    <div class="bo-profile-block">
-        <div class="bo-section-heading">Avaliação física</div>
-        <div class="row g-3 mb-3">
-            <div class="col-6 col-md-3">
-                <label class="form-label">Altura (m)</label>
-                <input type="number" step="0.01" class="form-control" id="imcAltura" value="<?php echo $alunoPerfil['altura']; ?>">
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label">Peso (kg)</label>
-                <input type="number" step="0.1" class="form-control" id="imcPeso" value="<?php echo $alunoPerfil['peso']; ?>">
-            </div>
-            <div class="col-12 col-md-6">
-                <label class="form-label">Objetivo</label>
-                <input type="text" class="form-control" id="imcObjetivo" value="<?php echo $alunoPerfil['objetivo']; ?>">
-            </div>
-        </div>
-        <div class="bo-imc-box mb-3">
-            <button type="button" class="btn-bo-outline" onclick="boCalcularIMC()">
-                <i class="bi bi-calculator"></i> Calcular IMC
-            </button>
-            <div>
-                <div class="bo-card-label" style="margin-bottom:2px;">Status de IMC</div>
-                <div class="bo-card-value" id="imcResultado" style="font-size:18px;">—</div>
-            </div>
-        </div>
-        <div class="bo-table-actions">
-            <button type="button" class="btn-bo-outline">Cancelar</button>
-            <button type="button" class="btn-bo-gold" onclick="boToast('Alterações salvas.')">Salvar</button>
-        </div>
-    </div>
-</section>
-
-<!-- ===== ALUNO · Histórico (pagamentos de mensalidade) ===== -->
-<section class="bo-content-section" data-perfil="aluno" data-section="historico">
-    <div class="bo-page-title">
-        <div>
-            <h1>Histórico</h1>
-            <p>Histórico de pagamentos e movimentações.</p>
-        </div>
-        <!-- Abre o modal fixo de pagamento (components/modal-pagar-plano.php) -->
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPagarPlano">
-            <i class="bi bi-credit-card"></i> Pagar Plano
-        </button>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table">
-                <thead>
-                    <tr>
-                        <th>Data/hora</th>
-                        <th>Descrição</th>
-                        <th>Tipo</th>
-                        <th>Status</th>
-                        <th>Valor</th>
-                        <th>Cashback</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($alunoHistorico as $h): ?>
-                        <tr>
-                            <td><?php echo $h['data']; ?></td>
-                            <td><?php echo $h['descricao']; ?></td>
-                            <td><?php echo $h['tipo']; ?></td>
-                            <td><?php echo $h['status']; ?></td>
-                            <td><?php echo bo_money($h['valor']); ?></td>
-                            <td><?php echo bo_money($h['cashback']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<!-- ===== ALUNO · Cashback (saldo e extrato de crédito/débito) ===== -->
-<section class="bo-content-section" data-perfil="aluno" data-section="cashback">
-    <div class="bo-page-title">
-        <div>
-            <h1>Cashback</h1>
-            <p>Saldo disponível e histórico de movimentações.</p>
-        </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("utilizarCashback","Usar cashback", {})'>
-            <i class="bi bi-wallet2"></i> Usar Cashback
-        </button>
-    </div>
-
-    <div class="row g-3 mb-3">
-        <div class="col-12 col-md-4">
-            <div class="bo-card">
-                <div class="bo-card-label">Saldo de cashback</div>
-                <div class="bo-card-value"><?php echo bo_money($alunoCashbackSaldo); ?></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table">
-                <thead>
-                    <tr>
-                        <th>Data</th>
-                        <th>Tipo</th>
-                        <th>Descrição</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($alunoCashbackHistorico as $h): ?>
-                        <tr>
-                            <td><?php echo $h['data']; ?></td>
-                            <td><?php echo $h['tipo'] === 'credito' ? 'Crédito' : 'Débito'; ?></td>
-                            <td><?php echo $h['descricao']; ?></td>
-                            <td><?php echo bo_money($h['valor']); ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<!-- ===== ALUNO · Minhas compras (pedidos em andamento e histórico) ===== -->
-<?php $perfilCompras = 'aluno'; $comprasPedidos = $alunoPedidos ?? []; $comprasHistorico = $alunoPedidosHistorico ?? []; require __DIR__ . '/section-compras.php'; ?>
-
-<!-- ===== ALUNO · Treino (ficha de exercícios) ===== -->
-<?php require __DIR__ . '/section-treino.php'; ?>
-
-<!-- ===== ALUNO · Minha agenda (horários de avaliação física disponíveis) ===== -->
-<section class="bo-content-section" data-perfil="aluno" data-section="agenda">
-    <div class="bo-page-title">
-        <div>
-            <h1>Minha agenda</h1>
-            <p>Datas disponíveis e agendadas com seus profissionais.</p>
-        </div>
-    </div>
-
-    <div class="bo-section-heading">Agenda de avaliação física</div>
-    <?php foreach ($alunoAgendaDisponiveis as $d): ?>
-        <div class="bo-agenda-card disponivel">
-            <div>
-                <div class="bo-agenda-title"><?php echo $d['tipo']; ?></div>
-                <div class="bo-agenda-sub"><?php echo $d['data']; ?></div>
-            </div>
-            <button type="button" class="btn-bo-gold" style="padding:8px 16px;"
-                onclick='boOpenForm("agendaAgendar","Confirmar agendamento", {data: "<?php echo $d['data']; ?>", modalidade: "<?php echo $d['tipo']; ?>"})'>
-                Agendar
-            </button>
-        </div>
-    <?php endforeach; ?>
-</section>
-
-```
-
-ARQUIVO:
-pages/dashboard/includes/treino.php
-
-CÓDIGO COMPLETO:
-
-```php
-<?php
 function bo_treino_catalogo(): array
 {
     return [
@@ -965,7 +39,7 @@ function bo_treino_catalogo(): array
 
 function bo_treino_carregar(mysqli $conn, int $usuario): array
 {
-    $stmt = $conn->prepare('SELECT id_exercicio AS id, nome, series, repeticoes, carga FROM treino_exercicio WHERE id_usuario = ? ORDER BY id_exercicio');
+    $stmt = $conn->prepare('SELECT id_exercicio AS id, nome, dia_semana, series, repeticoes, carga FROM treino_exercicio WHERE id_usuario = ? ORDER BY CASE dia_semana WHEN \'segunda\' THEN 1 WHEN \'terca\' THEN 2 WHEN \'quarta\' THEN 3 WHEN \'quinta\' THEN 4 WHEN \'sexta\' THEN 5 WHEN \'sabado\' THEN 6 WHEN \'domingo\' THEN 7 ELSE 8 END, id_exercicio');
     $stmt->bind_param('i', $usuario);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -987,6 +61,8 @@ function bo_treino_alterar(mysqli $conn, int $usuario, array $dados): void
         $stmt = $conn->prepare('DELETE FROM treino_exercicio WHERE id_exercicio = ? AND id_usuario = ?');
         $stmt->bind_param('ii', $id, $usuario);
     } else {
+        $dia = $dados['dia_semana'] ?? '';
+        if (!is_string($dia) || !array_key_exists($dia, bo_treino_dias())) throw new DomainException('Selecione um dia da semana.');
         $nome = $dados['nome'] ?? '';
         if (!is_string($nome) || !in_array($nome, array_merge(...array_values(bo_treino_catalogo())), true)) {
             throw new DomainException('Selecione um exercício.');
@@ -998,14 +74,14 @@ function bo_treino_alterar(mysqli $conn, int $usuario, array $dados): void
         if ($repeticoes === false || $repeticoes < 1 || $repeticoes > 50) throw new DomainException('Selecione de 1 a 50 repetições.');
         if ($carga === false || $carga < 0 || $carga > 300) throw new DomainException('Selecione uma carga de 0 a 300 kg.');
         if ($id) {
-            $stmt = $conn->prepare('UPDATE treino_exercicio SET nome = ?, series = ?, repeticoes = ?, carga = ? WHERE id_exercicio = ? AND id_usuario = ?');
-            $stmt->bind_param('siiiii', $nome, $series, $repeticoes, $carga, $id, $usuario);
+            $stmt = $conn->prepare('UPDATE treino_exercicio SET nome = ?, dia_semana = ?, series = ?, repeticoes = ?, carga = ? WHERE id_exercicio = ? AND id_usuario = ?');
+            $stmt->bind_param('ssiiiii', $nome, $dia, $series, $repeticoes, $carga, $id, $usuario);
         } else {
             $token = $dados['token'] ?? '';
             if (!is_string($token) || !preg_match('/^[a-f0-9]{32}$/D', $token)) throw new DomainException('Reabra o formulário e tente novamente.');
             // A mesma requisição não pode criar duas linhas, mesmo após um retry.
-            $stmt = $conn->prepare('INSERT INTO treino_exercicio (id_usuario, nome, series, repeticoes, carga, token_criacao) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id_exercicio = id_exercicio');
-            $stmt->bind_param('isiiis', $usuario, $nome, $series, $repeticoes, $carga, $token);
+            $stmt = $conn->prepare('INSERT INTO treino_exercicio (id_usuario, nome, dia_semana, series, repeticoes, carga, token_criacao) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE id_exercicio = id_exercicio');
+            $stmt->bind_param('issiiis', $usuario, $nome, $dia, $series, $repeticoes, $carga, $token);
         }
     }
     $stmt->execute();
@@ -1014,10 +90,7 @@ function bo_treino_alterar(mysqli $conn, int $usuario, array $dados): void
 
 ```
 
-ARQUIVO:
-pages/dashboard/components/section-treino.php
-
-CÓDIGO COMPLETO:
+### pages/dashboard/components/section-treino.php
 
 ```php
 <section class="bo-content-section" data-perfil="aluno" data-section="treino" id="boTreino"
@@ -1030,12 +103,22 @@ CÓDIGO COMPLETO:
             <button type="button" class="btn-bo-gold" data-treino-adicionar><i class="bi bi-plus-lg"></i> Adicionar Treino</button>
         </div>
     </div>
+    <div class="bo-filters">
+        <label for="boTreinoFiltro">Dia da semana</label>
+        <select class="form-select" style="width: auto; max-width: 100%;" id="boTreinoFiltro" data-treino-filtro>
+            <option value="">Todos os dias</option>
+            <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+                <option value="<?php echo $valor; ?>"><?php echo $dia; ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
     <p data-treino-aviso role="status" aria-live="polite" hidden></p>
     <div class="bo-table-wrap"><div class="table-responsive">
-        <table class="bo-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
+        <table class="bo-table"><thead><tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
             <tbody data-treino-linhas>
                 <?php foreach ($alunoTreino as $exercicio): ?>
                     <tr>
+                        <td><?php echo bo_treino_dias()[$exercicio['dia_semana'] ?? ''] ?? 'Não definido'; ?></td>
                         <td><?php echo htmlspecialchars($exercicio['nome']); ?></td>
                         <td><?php echo (int) $exercicio['series']; ?></td>
                         <td><?php echo (int) $exercicio['repeticoes']; ?></td>
@@ -1046,7 +129,7 @@ CÓDIGO COMPLETO:
                         </div></td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$alunoTreino): ?><tr><td colspan="5">Nenhum exercício cadastrado.</td></tr><?php endif; ?>
+                <?php if (!$alunoTreino): ?><tr><td colspan="6">Nenhum exercício cadastrado.</td></tr><?php endif; ?>
             </tbody>
         </table>
     </div></div>
@@ -1059,6 +142,15 @@ CÓDIGO COMPLETO:
             <form id="boTreinoForm" class="row g-3">
                 <input type="hidden" name="id" value="0">
                 <input type="hidden" name="token">
+                <div class="col-12">
+                    <label class="form-label" for="boTreinoDia">Dia da semana</label>
+                    <select class="form-select" name="dia_semana" id="boTreinoDia" required>
+                        <option value="" disabled>Selecione um dia</option>
+                        <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+                            <option value="<?php echo $valor; ?>" <?php echo $valor === 'segunda' ? 'selected' : ''; ?>><?php echo $dia; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="col-12">
                     <label class="form-label" for="boTreinoNome">Exercício</label>
                     <select class="form-select" name="nome" id="boTreinoNome" required>
@@ -1097,54 +189,7 @@ CÓDIGO COMPLETO:
 
 ```
 
-ARQUIVO:
-pages/dashboard/funcionalidades/treino.php
-
-CÓDIGO COMPLETO:
-
-```php
-<?php
-if (session_status() !== PHP_SESSION_ACTIVE) session_start();
-header('Content-Type: application/json; charset=utf-8');
-header('Cache-Control: no-store');
-if (empty($_SESSION['id_usuario']) || ($_SESSION['tipo_usuario'] ?? '') !== 'aluno') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Entre como aluno para acessar o treino.']);
-    exit;
-}
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    header('Allow: POST');
-    echo json_encode(['error' => 'Método não permitido.']);
-    exit;
-}
-$token = $_POST['csrf_token'] ?? '';
-if (!is_string($token) || $token === '' || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
-    http_response_code(403);
-    echo json_encode(['error' => 'Sua sessão expirou. Atualize a página.']);
-    exit;
-}
-try {
-    require __DIR__ . '/../../../config/conn.php';
-    require __DIR__ . '/../includes/treino.php';
-    mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-    bo_treino_alterar($conn, (int) $_SESSION['id_usuario'], $_POST);
-    echo json_encode(['ok' => true, 'exercicios' => bo_treino_carregar($conn, (int) $_SESSION['id_usuario'])], JSON_THROW_ON_ERROR);
-} catch (DomainException $erro) {
-    http_response_code(422);
-    echo json_encode(['error' => $erro->getMessage()]);
-} catch (Throwable $erro) {
-    error_log('ONE FIT treino: código ' . $erro->getCode());
-    http_response_code(500);
-    echo json_encode(['error' => 'Não foi possível salvar o treino. Tente novamente.']);
-}
-
-```
-
-ARQUIVO:
-assets/js/treino.js
-
-CÓDIGO COMPLETO:
+### assets/js/treino.js
 
 ```js
 document.addEventListener('DOMContentLoaded', () => {
@@ -1159,15 +204,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmError = confirmElement.querySelector('[data-treino-confirmar-erro]');
     const notice = section.querySelector('[data-treino-aviso]');
     let exercises = JSON.parse(section.querySelector('[data-treino-dados]').textContent);
+    const filter = section.querySelector('[data-treino-filtro]');
+    const days = Object.fromEntries(Array.from(filter.options).filter(option => option.value).map(option => [option.value, option.textContent]));
+    filter.addEventListener('change', render);
     let pending = null;
     let busy = false;
 
     function render() {
         const body = section.querySelector('[data-treino-linhas]');
         body.replaceChildren();
-        exercises.forEach(exercise => {
+        const visible = exercises.filter(exercise => !filter.value || exercise.dia_semana === filter.value);
+        visible.forEach(exercise => {
             const row = body.insertRow();
-            [exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
+            [days[exercise.dia_semana] || 'Não definido', exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
                 row.insertCell().textContent = value;
             });
             const actions = document.createElement('div');
@@ -1185,10 +234,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             row.insertCell().append(actions);
         });
-        if (!exercises.length) {
+        if (!visible.length) {
             const cell = body.insertRow().insertCell();
-            cell.colSpan = 5;
-            cell.textContent = 'Nenhum exercício cadastrado.';
+            cell.colSpan = 6;
+            cell.textContent = filter.value ? 'Sem exercícios cadastrados neste dia.' : 'Nenhum exercício cadastrado.';
         }
     }
 
@@ -1229,6 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.id.value = exercise ? exercise.id : 0;
         // Token por abertura; reaproveitado em retries após erro de rede.
         form.elements.token.value = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
+        form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (filter.value || 'segunda');
         if (exercise) ['nome', 'series', 'repeticoes', 'carga'].forEach(key => { form.elements[key].value = exercise[key]; });
         document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : 'Adicionar exercício';
         modal.show();
@@ -1252,7 +302,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmError.hidden = true;
         document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? 'Limpar treino' : 'Excluir exercício';
         confirmElement.querySelector('[data-treino-pergunta]').textContent = clear
-            ? 'Tem certeza que deseja limpar todo o treino?' : 'Tem certeza que deseja excluir este exercício?';
+            ? 'Tem certeza que deseja limpar todo o treino de todos os dias?' : 'Tem certeza que deseja excluir este exercício?';
         confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? 'Limpar treino' : 'Excluir';
         confirmModal.show();
     });
@@ -1266,10 +316,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ```
 
-ARQUIVO:
-tests/treino.php
+### database/migrations/treino-exercicios.sql
 
-CÓDIGO COMPLETO:
+```sql
+CREATE TABLE IF NOT EXISTS treino_exercicio (
+    id_exercicio INT NOT NULL AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    dia_semana VARCHAR(20) NULL DEFAULT NULL,
+    nome VARCHAR(100) NOT NULL,
+    series TINYINT UNSIGNED NOT NULL,
+    repeticoes TINYINT UNSIGNED NOT NULL,
+    carga SMALLINT UNSIGNED NOT NULL,
+    token_criacao CHAR(32) NOT NULL,
+    data_criacao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_exercicio),
+    UNIQUE KEY uq_treino_envio (id_usuario, token_criacao),
+    CONSTRAINT fk_treino_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+```
+
+### database/migrations/treino-dias-semana.sql
+
+```sql
+-- Para bases existentes: executar uma vez, antes de atualizar os arquivos PHP.
+-- Registros antigos ficam sem dia ate serem editados pelo aluno.
+ALTER TABLE treino_exercicio ADD COLUMN dia_semana VARCHAR(20) NULL DEFAULT NULL AFTER nome;
+
+```
+
+### tests/treino.php
 
 ```php
 <?php
@@ -1284,7 +361,7 @@ function treino_check(bool $ok): void {
     if (!$ok) throw new RuntimeException('Falha no teste de treino #' . ($checks + 1));
     $checks++;
 }
-$input = ['acao' => 'salvar', 'nome' => 'Supino reto', 'series' => '4', 'repeticoes' => '12', 'carga' => '30', 'token' => bin2hex(random_bytes(16))];
+$input = ['acao' => 'salvar', 'nome' => 'Supino reto', 'dia_semana' => 'sexta', 'series' => '4', 'repeticoes' => '12', 'carga' => '30', 'token' => bin2hex(random_bytes(16))];
 bo_treino_alterar($conn, 1, $input);
 bo_treino_alterar($conn, 1, $input);
 $rows = bo_treino_carregar($conn, 1);
@@ -1299,9 +376,26 @@ bo_treino_alterar($conn, 2, ['acao' => 'excluir', 'id' => $id]);
 treino_check(count(bo_treino_carregar($conn, 1)) === 1);
 bo_treino_alterar($conn, 1, array_replace($input, ['id' => $id, 'carga' => 0, 'series' => 10, 'repeticoes' => 50]));
 treino_check((int) bo_treino_carregar($conn, 1)[0]['carga'] === 0);
-foreach (['nome' => '', 'series' => 11, 'repeticoes' => 0, 'carga' => 301, 'token' => 'invalido', 'id' => -1] as $key => $value) {
+foreach (['dia_semana' => 'invalido', 'nome' => '', 'series' => 11, 'repeticoes' => 0, 'carga' => 301, 'token' => 'invalido', 'id' => -1] as $key => $value) {
     $failed = false;
     try { bo_treino_alterar($conn, 1, array_replace($input, [$key => $value])); } catch (DomainException $e) { $failed = true; }
+    treino_check($failed);
+}
+// Mesmo exercicio em dias diferentes, inseridos fora da ordem semanal.
+foreach (array_reverse(array_keys(bo_treino_dias())) as $dia) {
+    bo_treino_alterar($conn, 1, array_replace($input, ['dia_semana' => $dia, 'token' => bin2hex(random_bytes(16))]));
+}
+$semana = bo_treino_carregar($conn, 1);
+treino_check(count($semana) === 8);
+treino_check(array_values(array_unique(array_column($semana, 'dia_semana'))) === array_keys(bo_treino_dias()));
+bo_treino_alterar($conn, 1, array_replace($input, ['id' => $id, 'dia_semana' => 'quarta']));
+$editado = array_values(array_filter(bo_treino_carregar($conn, 1), fn($row) => $row['id'] === $id));
+treino_check($editado[0]['dia_semana'] === 'quarta');
+bo_treino_alterar($conn, 1, ['acao' => 'excluir', 'id' => $id]);
+treino_check(count(bo_treino_carregar($conn, 1)) === 7);
+foreach ([null, [], ''] as $diaInvalido) {
+    $failed = false;
+    try { bo_treino_alterar($conn, 1, array_replace($input, ['dia_semana' => $diaInvalido])); } catch (DomainException $e) { $failed = true; }
     treino_check($failed);
 }
 bo_treino_alterar($conn, 2, array_replace($input, ['token' => bin2hex(random_bytes(16))]));
@@ -1312,6 +406,25 @@ $id2 = bo_treino_carregar($conn, 2)[0]['id'];
 bo_treino_alterar($conn, 2, ['acao' => 'excluir', 'id' => $id2]);
 treino_check(bo_treino_carregar($conn, 2) === []);
 echo "OK: $checks verificações de CRUD, validação, duplicidade e isolamento; nenhuma ficha gravada na base de uso.\n";
+
+```
+
+### tests/treino-render.php
+
+```php
+<?php
+require __DIR__ . '/../pages/dashboard/includes/treino.php';
+define('BASE_URL', '/');
+$_SESSION['csrf_token'] = 'teste';
+function bo_json($value) { return json_encode($value); }
+$alunoTreino = [['id' => 1, 'nome' => 'Supino reto', 'dia_semana' => 'terca', 'series' => 4, 'repeticoes' => 12, 'carga' => 30]];
+ob_start();
+require __DIR__ . '/../pages/dashboard/components/section-treino.php';
+$html = ob_get_clean();
+foreach ([substr_count($html, '<select ') === 6, substr_count($html, '<th>') === 6, strpos($html, '<td>Terça-feira</td>') !== false, strpos($html, 'value="domingo"') !== false] as $ok) {
+    if (!$ok) throw new RuntimeException('Falha na renderizacao do treino.');
+}
+echo "OK: selects, colunas, dia persistido e domingo renderizados.\n";
 
 ```
 

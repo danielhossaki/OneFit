@@ -10,7 +10,7 @@ function treino_check(bool $ok): void {
     if (!$ok) throw new RuntimeException('Falha no teste de treino #' . ($checks + 1));
     $checks++;
 }
-$input = ['acao' => 'salvar', 'nome' => 'Supino reto', 'series' => '4', 'repeticoes' => '12', 'carga' => '30', 'token' => bin2hex(random_bytes(16))];
+$input = ['acao' => 'salvar', 'nome' => 'Supino reto', 'dia_semana' => 'sexta', 'series' => '4', 'repeticoes' => '12', 'carga' => '30', 'token' => bin2hex(random_bytes(16))];
 bo_treino_alterar($conn, 1, $input);
 bo_treino_alterar($conn, 1, $input);
 $rows = bo_treino_carregar($conn, 1);
@@ -25,9 +25,26 @@ bo_treino_alterar($conn, 2, ['acao' => 'excluir', 'id' => $id]);
 treino_check(count(bo_treino_carregar($conn, 1)) === 1);
 bo_treino_alterar($conn, 1, array_replace($input, ['id' => $id, 'carga' => 0, 'series' => 10, 'repeticoes' => 50]));
 treino_check((int) bo_treino_carregar($conn, 1)[0]['carga'] === 0);
-foreach (['nome' => '', 'series' => 11, 'repeticoes' => 0, 'carga' => 301, 'token' => 'invalido', 'id' => -1] as $key => $value) {
+foreach (['dia_semana' => 'invalido', 'nome' => '', 'series' => 11, 'repeticoes' => 0, 'carga' => 301, 'token' => 'invalido', 'id' => -1] as $key => $value) {
     $failed = false;
     try { bo_treino_alterar($conn, 1, array_replace($input, [$key => $value])); } catch (DomainException $e) { $failed = true; }
+    treino_check($failed);
+}
+// Mesmo exercicio em dias diferentes, inseridos fora da ordem semanal.
+foreach (array_reverse(array_keys(bo_treino_dias())) as $dia) {
+    bo_treino_alterar($conn, 1, array_replace($input, ['dia_semana' => $dia, 'token' => bin2hex(random_bytes(16))]));
+}
+$semana = bo_treino_carregar($conn, 1);
+treino_check(count($semana) === 8);
+treino_check(array_values(array_unique(array_column($semana, 'dia_semana'))) === array_keys(bo_treino_dias()));
+bo_treino_alterar($conn, 1, array_replace($input, ['id' => $id, 'dia_semana' => 'quarta']));
+$editado = array_values(array_filter(bo_treino_carregar($conn, 1), fn($row) => $row['id'] === $id));
+treino_check($editado[0]['dia_semana'] === 'quarta');
+bo_treino_alterar($conn, 1, ['acao' => 'excluir', 'id' => $id]);
+treino_check(count(bo_treino_carregar($conn, 1)) === 7);
+foreach ([null, [], ''] as $diaInvalido) {
+    $failed = false;
+    try { bo_treino_alterar($conn, 1, array_replace($input, ['dia_semana' => $diaInvalido])); } catch (DomainException $e) { $failed = true; }
     treino_check($failed);
 }
 bo_treino_alterar($conn, 2, array_replace($input, ['token' => bin2hex(random_bytes(16))]));

@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS treino_exercicio (
     id_exercicio INT NOT NULL AUTO_INCREMENT,
     id_usuario INT NOT NULL,
+    dia_semana VARCHAR(20) NULL DEFAULT NULL,
     nome VARCHAR(100) NOT NULL,
     series TINYINT UNSIGNED NOT NULL,
     repeticoes TINYINT UNSIGNED NOT NULL,
