@@ -19,7 +19,10 @@
                 <h5 class="modal-title">Pagar plano</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
+            <form id="formPagarPlano" method="POST" action="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/funcionalidades/pagar-plano.php', ENT_QUOTES, 'UTF-8'); ?>">
             <div class="modal-body">
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="secao" value="historico">
 
                 <!-- Resumo do plano atual (somente leitura) -->
                 <div class="row g-3 mb-3">
@@ -35,11 +38,11 @@
 
                 <!-- Seletor do método de pagamento: alterna painelPix / painelCartao no JS -->
                 <div class="btn-group w-100 mb-3" role="group">
-                    <input type="radio" class="btn-check" name="metodoPagamento" id="metodoPix" checked>
+                    <input type="radio" class="btn-check" name="forma_pagamento" id="metodoPix" value="pix" checked>
                     <label class="btn-bo-outline" for="metodoPix" style="flex:1;text-align:center;">PIX</label>
-                    <input type="radio" class="btn-check" name="metodoPagamento" id="metodoCredito">
+                    <input type="radio" class="btn-check" name="forma_pagamento" id="metodoCredito" value="cartao">
                     <label class="btn-bo-outline" for="metodoCredito" style="flex:1;text-align:center;">Crédito</label>
-                    <input type="radio" class="btn-check" name="metodoPagamento" id="metodoDebito">
+                    <input type="radio" class="btn-check" name="forma_pagamento" id="metodoDebito" value="cartao">
                     <label class="btn-bo-outline" for="metodoDebito" style="flex:1;text-align:center;">Débito</label>
                 </div>
 
@@ -75,8 +78,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn-bo-gold" id="btnPagar">Pagar</button>
+                <button type="submit" class="btn-bo-gold" id="btnPagar">Pagar</button>
             </div>
+            </form>
         </div>
     </div>
 </div>

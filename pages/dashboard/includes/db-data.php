@@ -539,8 +539,119 @@ if ($perfilLogado === 'aluno') {
     // Tela "Treino": ficha persistida do aluno autenticado.
     $alunoTreino = bo_treino_carregar($conn, $idUsuarioLogado);
 
-    // Tela "Minha agenda" — não há tabela de horários "disponíveis" distinta dos agendamentos
-    $alunoAgendaDisponiveis = [];
+    // Tela "Minha agenda": calendário de horários disponíveis cadastrados
+    // pelos profissionais (disponibilidade_profissional) + agendamentos já
+    // confirmados do aluno (agendamento). Navegação de mês/dia é só por
+    // querystring (?section=agenda&mes=AAAA-MM&dia=AAAA-MM-DD), sem JS.
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS disponibilidade_profissional (
+            id_disponibilidade INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_profissional INT NOT NULL,
+            modalidade VARCHAR(100) NOT NULL,
+            data_evento DATE NOT NULL,
+            hora_inicio TIME NOT NULL,
+            hora_fim TIME NOT NULL,
+            local VARCHAR(120) DEFAULT NULL,
+            status ENUM('disponivel','ocupado','cancelado') NOT NULL DEFAULT 'disponivel',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_disponibilidade),
+            KEY idx_disponibilidade_profissional (id_profissional, data_evento, hora_inicio)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS profissional_aluno (
+            id_vinculo INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_profissional INT NOT NULL,
+            id_aluno INT NOT NULL,
+            status ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            observacao VARCHAR(255) DEFAULT NULL,
+            data_vinculo TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            data_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_vinculo),
+            UNIQUE KEY uk_profissional_aluno (id_profissional, id_aluno),
+            KEY idx_profissional_aluno_aluno (id_aluno)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+
+    $alunoAgendaMesRef = (isset($_GET['mes']) && preg_match('/^\d{4}-\d{2}$/', (string) $_GET['mes']))
+        ? (string) $_GET['mes'] . '-01' : date('Y-m-01');
+    $alunoAgendaMesTs = strtotime($alunoAgendaMesRef) ?: strtotime(date('Y-m-01'));
+    $alunoAgendaMes = date('Y-m', $alunoAgendaMesTs);
+    $alunoAgendaDiaSelecionado = (isset($_GET['dia']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $_GET['dia']))
+        ? (string) $_GET['dia'] : null;
+
+    $inicioMes = date('Y-m-01', $alunoAgendaMesTs);
+    $fimMes = date('Y-m-t', $alunoAgendaMesTs);
+
+    $alunoAgendaDiasDisponiveis = [];
+    $stmt = $conn->prepare(
+        "SELECT DISTINCT data_evento FROM disponibilidade_profissional
+         WHERE status = 'disponivel' AND data_evento BETWEEN ? AND ? AND data_evento >= CURDATE()"
+    );
+    $stmt->bind_param('ss', $inicioMes, $fimMes);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $alunoAgendaDiasDisponiveis[$row['data_evento']] = true;
+    }
+    $stmt->close();
+
+    // Agendamentos do aluno dentro do mês exibido, agrupados por dia, para
+    // mostrar o preview do evento direto na célula do calendário.
+    $alunoAgendaEventosPorDia = [];
+    $stmt = $conn->prepare(
+        "SELECT a.tipo, a.data_evento, a.hora_inicio, p.nome AS profissional, p.especialidade
+         FROM agendamento a
+         LEFT JOIN cadastro_profissional p ON p.id_profissional = a.id_profissional
+         WHERE a.id_usuario = ? AND a.status IN ('agendado', 'confirmado') AND a.data_evento BETWEEN ? AND ?
+         ORDER BY a.data_evento, a.hora_inicio"
+    );
+    $stmt->bind_param('iss', $idUsuarioLogado, $inicioMes, $fimMes);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $alunoAgendaEventosPorDia[$row['data_evento']][] = [
+            'titulo' => $row['especialidade'] ?: $row['profissional'] ?: ucfirst($row['tipo']),
+            'hora' => substr($row['hora_inicio'], 0, 5),
+            'tipo' => $row['tipo'],
+        ];
+    }
+    $stmt->close();
+
+    $alunoAgendaSlots = [];
+    if ($alunoAgendaDiaSelecionado) {
+        $stmt = $conn->prepare(
+            "SELECT d.id_disponibilidade, d.modalidade, d.hora_inicio, d.hora_fim, d.local,
+                    p.nome AS profissional, p.especialidade
+             FROM disponibilidade_profissional d
+             JOIN cadastro_profissional p ON p.id_profissional = d.id_profissional
+             WHERE d.status = 'disponivel' AND d.data_evento = ? AND p.status = 'ativo'
+             ORDER BY d.hora_inicio"
+        );
+        $stmt->bind_param('s', $alunoAgendaDiaSelecionado);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $alunoAgendaSlots[] = $row;
+        }
+        $stmt->close();
+    }
+
+    $alunoAgendaMeusAgendamentos = [];
+    $stmt = $conn->prepare(
+        "SELECT a.id_agendamento, a.titulo, a.tipo, a.data_evento, a.hora_inicio, a.status, p.nome AS profissional
+         FROM agendamento a
+         LEFT JOIN cadastro_profissional p ON p.id_profissional = a.id_profissional
+         WHERE a.id_usuario = ? AND a.status IN ('agendado', 'confirmado') AND a.data_evento >= CURDATE()
+         ORDER BY a.data_evento, a.hora_inicio"
+    );
+    $stmt->bind_param('i', $idUsuarioLogado);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $alunoAgendaMeusAgendamentos[] = $row;
+    }
+    $stmt->close();
 }
 
 /* =======================================================================

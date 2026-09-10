@@ -8,36 +8,49 @@
             <button type="button" class="btn-bo-gold" data-treino-adicionar><i class="bi bi-plus-lg"></i> Adicionar Treino</button>
         </div>
     </div>
-    <div class="bo-filters">
-        <label for="boTreinoFiltro">Dia da semana</label>
-        <select class="form-select" style="width: auto; max-width: 100%;" id="boTreinoFiltro" data-treino-filtro>
-            <option value="">Todos os dias</option>
-            <?php foreach (bo_treino_dias() as $valor => $dia): ?>
-                <option value="<?php echo $valor; ?>"><?php echo $dia; ?></option>
-            <?php endforeach; ?>
-        </select>
+    <!-- Sub-abas de dia da semana: mesmo componente Bootstrap (nav-tabs)
+         já usado em "Vendas Marketplace" (ver section-admin.php), sem JS
+         próprio — o bundle do Bootstrap já carregado cuida da troca de
+         aba via data-bs-toggle="tab". Cada aba tem sua própria tabela,
+         já filtrada no PHP. -->
+    <ul class="nav nav-tabs bo-nav-tabs" role="tablist">
+        <?php $boPrimeiroDia = true; ?>
+        <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link<?php echo $boPrimeiroDia ? ' active' : ''; ?>" data-bs-toggle="tab" data-bs-target="#boTreinoDiaTab-<?php echo $valor; ?>" type="button" role="tab"><?php echo $dia; ?></button>
+            </li>
+            <?php $boPrimeiroDia = false; ?>
+        <?php endforeach; ?>
+    </ul>
+
+    <div class="tab-content">
+        <?php $boPrimeiroDia = true; ?>
+        <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+            <?php $boExerciciosDoDia = array_values(array_filter($alunoTreino, static fn(array $e): bool => ($e['dia_semana'] ?? '') === $valor)); ?>
+            <div class="tab-pane fade<?php echo $boPrimeiroDia ? ' show active' : ''; ?>" id="boTreinoDiaTab-<?php echo $valor; ?>" role="tabpanel">
+                <div class="bo-table-wrap"><div class="table-responsive">
+                    <table class="bo-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
+                        <tbody data-treino-linhas="<?php echo $valor; ?>">
+                            <?php foreach ($boExerciciosDoDia as $exercicio): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($exercicio['nome']); ?></td>
+                                    <td><?php echo (int) $exercicio['series']; ?></td>
+                                    <td><?php echo (int) $exercicio['repeticoes']; ?></td>
+                                    <td><?php echo (int) $exercicio['carga']; ?> kg</td>
+                                    <td><div class="bo-table-actions">
+                                        <button type="button" class="btn-bo-icon" title="Editar" data-treino-editar="<?php echo (int) $exercicio['id']; ?>"><i class="bi bi-pencil"></i></button>
+                                        <button type="button" class="btn-bo-icon danger" title="Excluir" data-treino-excluir="<?php echo (int) $exercicio['id']; ?>"><i class="bi bi-trash"></i></button>
+                                    </div></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <?php if (!$boExerciciosDoDia): ?><tr><td colspan="5">Sem exercícios cadastrados neste dia.</td></tr><?php endif; ?>
+                        </tbody>
+                    </table>
+                </div></div>
+            </div>
+            <?php $boPrimeiroDia = false; ?>
+        <?php endforeach; ?>
     </div>
-    <p data-treino-aviso role="status" aria-live="polite" hidden></p>
-    <div class="bo-table-wrap"><div class="table-responsive">
-        <table class="bo-table"><thead><tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
-            <tbody data-treino-linhas>
-                <?php foreach ($alunoTreino as $exercicio): ?>
-                    <tr>
-                        <td><?php echo bo_treino_dias()[$exercicio['dia_semana'] ?? ''] ?? 'Não definido'; ?></td>
-                        <td><?php echo htmlspecialchars($exercicio['nome']); ?></td>
-                        <td><?php echo (int) $exercicio['series']; ?></td>
-                        <td><?php echo (int) $exercicio['repeticoes']; ?></td>
-                        <td><?php echo (int) $exercicio['carga']; ?> kg</td>
-                        <td><div class="bo-table-actions">
-                            <button type="button" class="btn-bo-icon" title="Editar" data-treino-editar="<?php echo (int) $exercicio['id']; ?>"><i class="bi bi-pencil"></i></button>
-                            <button type="button" class="btn-bo-icon danger" title="Excluir" data-treino-excluir="<?php echo (int) $exercicio['id']; ?>"><i class="bi bi-trash"></i></button>
-                        </div></td>
-                    </tr>
-                <?php endforeach; ?>
-                <?php if (!$alunoTreino): ?><tr><td colspan="6">Nenhum exercício cadastrado.</td></tr><?php endif; ?>
-            </tbody>
-        </table>
-    </div></div>
     <script type="application/json" data-treino-dados><?php echo bo_json($alunoTreino); ?></script>
 </section>
 <div class="modal fade bo-modal" id="boTreinoModal" tabindex="-1" aria-labelledby="boTreinoTitulo" aria-hidden="true">

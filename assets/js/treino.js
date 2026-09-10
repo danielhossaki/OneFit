@@ -8,21 +8,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmModal = new bootstrap.Modal(confirmElement);
     const error = form.querySelector('[data-treino-erro]');
     const confirmError = confirmElement.querySelector('[data-treino-confirmar-erro]');
-    const notice = section.querySelector('[data-treino-aviso]');
     let exercises = JSON.parse(section.querySelector('[data-treino-dados]').textContent);
-    const filter = section.querySelector('[data-treino-filtro]');
-    const days = Object.fromEntries(Array.from(filter.options).filter(option => option.value).map(option => [option.value, option.textContent]));
-    filter.addEventListener('change', render);
+    // Uma <tbody data-treino-linhas="dia"> por aba (ver section-treino.php);
+    // o próprio bundle do Bootstrap troca a aba visível (data-bs-toggle="tab").
+    const bodies = Object.fromEntries(Array.from(section.querySelectorAll('[data-treino-linhas]')).map(body => [body.dataset.treinoLinhas, body]));
+    const days = Object.keys(bodies);
     let pending = null;
     let busy = false;
 
     function render() {
-        const body = section.querySelector('[data-treino-linhas]');
-        body.replaceChildren();
-        const visible = exercises.filter(exercise => !filter.value || exercise.dia_semana === filter.value);
-        visible.forEach(exercise => {
+        days.forEach(dia => bodies[dia].replaceChildren());
+        exercises.forEach(exercise => {
+            const body = bodies[exercise.dia_semana];
+            if (!body) return;
             const row = body.insertRow();
-            [days[exercise.dia_semana] || 'Não definido', exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
+            [exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
                 row.insertCell().textContent = value;
             });
             const actions = document.createElement('div');
@@ -40,11 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             row.insertCell().append(actions);
         });
-        if (!visible.length) {
-            const cell = body.insertRow().insertCell();
-            cell.colSpan = 6;
-            cell.textContent = filter.value ? 'Sem exercícios cadastrados neste dia.' : 'Nenhum exercício cadastrado.';
-        }
+        days.forEach(dia => {
+            if (exercises.some(exercise => exercise.dia_semana === dia)) return;
+            const cell = bodies[dia].insertRow().insertCell();
+            cell.colSpan = 5;
+            cell.textContent = 'Sem exercícios cadastrados neste dia.';
+        });
     }
 
     async function send(data, errorElement, onSuccess) {
@@ -62,8 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
             exercises = result.exercicios;
             render();
             onSuccess();
-            notice.hidden = false;
-            notice.textContent = 'Treino atualizado.';
         } catch (failure) {
             errorElement.textContent = failure instanceof SyntaxError ? 'Resposta inválida. Atualize a página e tente novamente.' : failure.message;
             errorElement.hidden = false;
@@ -84,7 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.id.value = exercise ? exercise.id : 0;
         // Token por abertura; reaproveitado em retries após erro de rede.
         form.elements.token.value = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
-        form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (filter.value || 'segunda');
+        const painelAtivo = section.querySelector('.tab-pane.active');
+        const diaAba = painelAtivo ? painelAtivo.id.replace('boTreinoDiaTab-', '') : '';
+        form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (diaAba || 'segunda');
         if (exercise) ['nome', 'series', 'repeticoes', 'carga'].forEach(key => { form.elements[key].value = exercise[key]; });
         document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : 'Adicionar exercício';
         modal.show();

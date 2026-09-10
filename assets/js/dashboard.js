@@ -267,15 +267,6 @@ const BO_FORM_SCHEMAS = {
         { key: 'data', label: 'Data/hora', type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
         { key: 'modalidade', label: 'Modalidade', type: 'text', col: 6 },
     ],
-    agendaAgendar: [
-        { key: 'aluno', label: 'Aluno', type: 'text', col: 12 },
-        { key: 'data', label: 'Data/hora', type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
-        { key: 'modalidade', label: 'Modalidade', type: 'text', col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
-    ],
-    utilizarCashback: [
-        { key: 'valor', label: 'Valor a utilizar', type: 'number', col: 12 },
-    ],
     planoAlterar: [
         { key: 'plano', label: 'Novo plano', type: 'select', options: BO_PLANOS_OPTIONS, col: 12 },
     ],
@@ -1083,7 +1074,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const metodoPix = document.getElementById('metodoPix');
 
     // Alterna entre o painel de Pix e o painel de cartão conforme o método escolhido
-    document.querySelectorAll('input[name="metodoPagamento"]').forEach((radio) => {
+    document.querySelectorAll('input[name="forma_pagamento"]').forEach((radio) => {
         radio.addEventListener('change', () => {
             const isPix = metodoPix.checked;
             painelPix.style.display = isPix ? 'block' : 'none';
@@ -1114,15 +1105,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // "Pagar" apenas fecha o modal e mostra o toast (pagamento simulado)
-    const btnPagar = document.getElementById('btnPagar');
-    if (btnPagar) {
-        btnPagar.addEventListener('click', () => {
-            const modalEl = document.getElementById('modalPagarPlano');
-            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-            boToast('Pagamento simulado com sucesso!');
-        });
-    }
+    // O botão "Pagar" agora é um submit real do <form id="formPagarPlano">
+    // (ver components/modal-pagar-plano.php), processado em
+    // funcionalidades/pagar-plano.php via PRG — sem simulação em JS.
 });
 
 /**
