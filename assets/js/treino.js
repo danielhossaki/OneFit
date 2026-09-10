@@ -10,15 +10,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmError = confirmElement.querySelector('[data-treino-confirmar-erro]');
     const notice = section.querySelector('[data-treino-aviso]');
     let exercises = JSON.parse(section.querySelector('[data-treino-dados]').textContent);
+    const filter = section.querySelector('[data-treino-filtro]');
+    const days = Object.fromEntries(Array.from(filter.options).filter(option => option.value).map(option => [option.value, option.textContent]));
+    filter.addEventListener('change', render);
     let pending = null;
     let busy = false;
 
     function render() {
         const body = section.querySelector('[data-treino-linhas]');
         body.replaceChildren();
-        exercises.forEach(exercise => {
+        const visible = exercises.filter(exercise => !filter.value || exercise.dia_semana === filter.value);
+        visible.forEach(exercise => {
             const row = body.insertRow();
-            [exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
+            [days[exercise.dia_semana] || 'Não definido', exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
                 row.insertCell().textContent = value;
             });
             const actions = document.createElement('div');
@@ -36,10 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             row.insertCell().append(actions);
         });
-        if (!exercises.length) {
+        if (!visible.length) {
             const cell = body.insertRow().insertCell();
-            cell.colSpan = 5;
-            cell.textContent = 'Nenhum exercício cadastrado.';
+            cell.colSpan = 6;
+            cell.textContent = filter.value ? 'Sem exercícios cadastrados neste dia.' : 'Nenhum exercício cadastrado.';
         }
     }
 
@@ -80,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.id.value = exercise ? exercise.id : 0;
         // Token por abertura; reaproveitado em retries após erro de rede.
         form.elements.token.value = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
+        form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (filter.value || 'segunda');
         if (exercise) ['nome', 'series', 'repeticoes', 'carga'].forEach(key => { form.elements[key].value = exercise[key]; });
         document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : 'Adicionar exercício';
         modal.show();
@@ -103,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmError.hidden = true;
         document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? 'Limpar treino' : 'Excluir exercício';
         confirmElement.querySelector('[data-treino-pergunta]').textContent = clear
-            ? 'Tem certeza que deseja limpar todo o treino?' : 'Tem certeza que deseja excluir este exercício?';
+            ? 'Tem certeza que deseja limpar todo o treino de todos os dias?' : 'Tem certeza que deseja excluir este exercício?';
         confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? 'Limpar treino' : 'Excluir';
         confirmModal.show();
     });

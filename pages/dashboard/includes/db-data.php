@@ -628,7 +628,7 @@ function bo_carregar_produtos_vendedor(mysqli $conn, ?int $idVendedor): array
 function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
 {
     $sql = "SELECT pi.id_item, pi.id_pedido, pi.quantidade, pi.subtotal, pi.valor_frete, pi.status_logistica, pi.codigo_rastreio,
-                   pr.nome AS produto_nome, u.nome AS comprador_nome, pe.data_pedido,
+                   pr.nome AS produto_nome, u.nome AS comprador_nome, pe.data_pedido, pe.status AS status_pedido,
                    t.nome AS transportadora_nome, COALESCE(v.nome, 'ONE FIT') AS vendedor_nome
             FROM pedido_item pi
             JOIN pedido pe ON pe.id_pedido = pi.id_pedido
@@ -659,6 +659,7 @@ function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
             'valor' => (float) $row['subtotal'],
             'valorFrete' => (float) $row['valor_frete'],
             'transportadora' => $row['transportadora_nome'] ?? '—',
+            'statusPedido' => $row['status_pedido'],
             'statusLogistica' => $row['status_logistica'],
             'statusLogisticaLabel' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
             'codigoRastreio' => $row['codigo_rastreio'],

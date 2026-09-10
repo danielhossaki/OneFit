@@ -8,12 +8,22 @@
             <button type="button" class="btn-bo-gold" data-treino-adicionar><i class="bi bi-plus-lg"></i> Adicionar Treino</button>
         </div>
     </div>
+    <div class="bo-filters">
+        <label for="boTreinoFiltro">Dia da semana</label>
+        <select class="form-select" style="width: auto; max-width: 100%;" id="boTreinoFiltro" data-treino-filtro>
+            <option value="">Todos os dias</option>
+            <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+                <option value="<?php echo $valor; ?>"><?php echo $dia; ?></option>
+            <?php endforeach; ?>
+        </select>
+    </div>
     <p data-treino-aviso role="status" aria-live="polite" hidden></p>
     <div class="bo-table-wrap"><div class="table-responsive">
-        <table class="bo-table"><thead><tr><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
+        <table class="bo-table"><thead><tr><th>Dia</th><th>Exercício</th><th>Séries</th><th>Repetições</th><th>Carga</th><th>Ações</th></tr></thead>
             <tbody data-treino-linhas>
                 <?php foreach ($alunoTreino as $exercicio): ?>
                     <tr>
+                        <td><?php echo bo_treino_dias()[$exercicio['dia_semana'] ?? ''] ?? 'Não definido'; ?></td>
                         <td><?php echo htmlspecialchars($exercicio['nome']); ?></td>
                         <td><?php echo (int) $exercicio['series']; ?></td>
                         <td><?php echo (int) $exercicio['repeticoes']; ?></td>
@@ -24,7 +34,7 @@
                         </div></td>
                     </tr>
                 <?php endforeach; ?>
-                <?php if (!$alunoTreino): ?><tr><td colspan="5">Nenhum exercício cadastrado.</td></tr><?php endif; ?>
+                <?php if (!$alunoTreino): ?><tr><td colspan="6">Nenhum exercício cadastrado.</td></tr><?php endif; ?>
             </tbody>
         </table>
     </div></div>
@@ -37,6 +47,15 @@
             <form id="boTreinoForm" class="row g-3">
                 <input type="hidden" name="id" value="0">
                 <input type="hidden" name="token">
+                <div class="col-12">
+                    <label class="form-label" for="boTreinoDia">Dia da semana</label>
+                    <select class="form-select" name="dia_semana" id="boTreinoDia" required>
+                        <option value="" disabled>Selecione um dia</option>
+                        <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+                            <option value="<?php echo $valor; ?>" <?php echo $valor === 'segunda' ? 'selected' : ''; ?>><?php echo $dia; ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div class="col-12">
                     <label class="form-label" for="boTreinoNome">Exercício</label>
                     <select class="form-select" name="nome" id="boTreinoNome" required>
