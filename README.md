@@ -151,6 +151,13 @@ O visual segue uma identidade escura e dourada ("gold/bronze"), remetendo a acad
 
 ---
 
+## Pagamentos Pix em testing
+
+Matrícula e carrinho possuem fluxo central Orders/Pix, tela reutilizável,
+conciliação, reservas e webhook autenticado. O teste oficial está restrito a
+fixtures técnicas explícitas; produção permanece bloqueada. Consulte
+[operação, testes e limitações](services/pagamentos/PIX-INTEGRADO.md).
+
 ## 📌 Próximos passos sugeridos
 
 - [ ] Adicionar testes automatizados

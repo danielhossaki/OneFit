@@ -1,8 +1,10 @@
 {
   "name": "onefit/onefit",
+  "description": "Sistema OneFit de gestao de academia e marketplace.",
   "type": "project",
   "license": "proprietary",
   "require": {
-    "phpmailer/phpmailer": "^7.1"
+    "phpmailer/phpmailer": "^7.1",
+    "mercadopago/dx-php": "3.16.0"
   }
 }

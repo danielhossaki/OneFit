@@ -23,7 +23,7 @@ if ($acao === 'confirmar-recebimento') {
         'SELECT pi.id_item, pi.id_pedido, pi.status_logistica
          FROM pedido_item pi
          INNER JOIN pedido pe ON pe.id_pedido = pi.id_pedido
-         WHERE pi.id_item = ? AND pe.id_usuario = ?'
+         WHERE pi.id_item = ? AND pe.id_usuario = ? AND pe.status IN ("pago","processando","entregue")'
     );
     $stmt->bind_param('ii', $idItem, $idUsuarioLogado);
     $stmt->execute();

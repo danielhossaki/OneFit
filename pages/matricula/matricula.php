@@ -7,6 +7,20 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
 }
 
+$matriculaAutenticada = !empty($_SESSION['id_usuario']);
+header('Cache-Control: no-store');
+$_SESSION['csrf_token'] ??= bin2hex(random_bytes(32));
+require_once __DIR__ . '/../../config/matricula-wizard.php';
+require_once __DIR__ . '/../../services/pagamentos/PixTesteLocal.php';
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+  $draft = $_SESSION['matricula_wizard'] ?? null;
+  if (!$draft || $draft['usuario'] !== (int) ($_SESSION['id_usuario'] ?? 0) || !is_string($_GET['fluxo'] ?? null) || !hash_equals($draft['id'], $_GET['fluxo'])) {
+    $draft = MatriculaWizard::novo($_SESSION);
+    header('Location: matricula.php?fluxo=' . $draft['id'], true, 303); exit;
+  }
+}
+$wizard = $_SESSION['matricula_wizard'] ?? ['id'=>'','etapa'=>1,'dados'=>[]];
+
 $hojeMatricula = new DateTimeImmutable('today');
 $dataNascimentoMinima = $hojeMatricula->modify('-120 years');
 
@@ -31,9 +45,10 @@ $mensagemMatricula = $mensagensMatricula[(string) ($_GET['msg'] ?? '')] ?? null;
 // Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
 // na Etapa 3 do formulário logo abaixo.
 $planosAtivos = [];
-if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_planos WHERE status = 'ativo' ORDER BY valor")) {
+if ($r = $conn->query("SELECT id_plano, nome, valor, descricao, beneficios FROM cadastro_planos WHERE status = 'ativo' ORDER BY valor")) {
   while ($row = $r->fetch_assoc()) {
     $planosAtivos[] = [
+      'id_plano' => (int) $row['id_plano'],
       'nome' => $row['nome'],
       'valor' => (float) $row['valor'],
       'descricao' => $row['descricao'],
@@ -137,7 +152,30 @@ function cidadeValidaNoIbgeMatricula(string $estado, string $cidade): ?bool
 // O servidor grava apenas os dados da cobrança. Número do cartão e CVV não
 // são persistidos porque são informações sensíveis protegidas pelo PCI-DSS.
 
+function matriculaErro($code): never {
+  global $mensagensMatricula;
+  $step = in_array((int)$code,[6],true) ? 3 : (in_array((int)$code,[13,14],true) ? 2 : 1);
+  $_SESSION['matricula_wizard']['etapa']=$step;
+  $_SESSION['matricula_wizard']['validado']=$step-1;
+  if (str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
+    header('Content-Type: application/json'); http_response_code(422);
+    echo json_encode(['erro'=>$mensagensMatricula[(string)$code] ?? 'Confira os campos.','etapa'=>$step]); exit;
+  }
+  header('Location: matricula.php?fluxo='.($_SESSION['matricula_wizard']['id']??'').'&msg='.(int)$code); exit;
+}
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'wizard') {
+  header('Content-Type: application/json');
+  try {
+    $next=MatriculaWizard::avancar($_SESSION,$_POST,
+      function(int $id) use ($conn):bool {$q=$conn->prepare("SELECT id_plano FROM cadastro_planos WHERE id_plano=? AND status='ativo'");$q->bind_param('i',$id);$q->execute();return (bool)$q->get_result()->fetch_assoc();},
+      fn($uf,$city)=>cidadeValidaNoIbgeMatricula($uf,$city)===true);
+    echo json_encode(['etapa'=>$next]);
+  } catch (Throwable) {http_response_code(422);echo json_encode(['erro'=>'Confira os campos e conclua as etapas na ordem.','etapa'=>$_SESSION['matricula_wizard']['etapa']??1]);}
+  exit;
+}
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+  try { MatriculaWizard::confirmar($_SESSION,$_POST); } catch (Throwable) { matriculaErro(2); }
+  if ($matriculaAutenticada) { http_response_code(405); exit; }
 
   $nome = trim((string) ($_POST['nome'] ?? ''));
   $cpf = isset($_POST['cpf']) ? preg_replace('/\D/', '', (string) $_POST['cpf']) : '';
@@ -156,7 +194,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $estado = strtoupper(trim((string) ($_POST['estado'] ?? '')));
   $cep = isset($_POST['cep']) ? preg_replace('/\D/', '', $_POST['cep']) : '';
 
-  $plano_nome = $_POST['plano'] ?? null; // Nome usado para localizar o plano ativo no banco.
+  $plano_nome = (int) ($_POST['id_plano'] ?? 0); // Identificador; preço sempre do banco.
   $forma_pagamento = strtolower(trim($_POST['forma_pagamento'] ?? ''));
 
   $termos = isset($_POST['termos']);
@@ -170,22 +208,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // A confirmação deve ser idêntica à senha informada.
     if ($senha !== $confirmar_senha) {
-      header("Location: matricula.php?msg=3");
+      matriculaErro(3);
       exit;
     }
 
     if (strlen($senha) < 8) {
-      header("Location: matricula.php?msg=7");
+      matriculaErro(7);
       exit;
     }
 
     if (!cpfValidoMatricula($cpf)) {
-      header("Location: matricula.php?msg=8");
+      matriculaErro(8);
       exit;
     }
 
     if (!telefoneValidoMatricula($telefone)) {
-      header("Location: matricula.php?msg=12");
+      matriculaErro(12);
       exit;
     }
 
@@ -197,55 +235,55 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       || ($dataNascimento && $dataNascimento->format('Y-m-d') !== $nascimento);
 
     if ($dataNascimentoInvalida || $dataNascimento > $hojeMatricula) {
-      header("Location: matricula.php?msg=11");
+      matriculaErro(11);
       exit;
     }
 
     // DateTime::diff considera ano, mês e dia ao calcular a idade completa.
     $idade = $dataNascimento->diff($hojeMatricula)->y;
     if ($idade > 120 || $dataNascimento < $dataNascimentoMinima) {
-      header("Location: matricula.php?msg=11");
+      matriculaErro(11);
       exit;
     }
 
     $dataMinima = $hojeMatricula->modify('-12 years');
 
     if ($dataNascimento > $dataMinima) {
-      header("Location: matricula.php?msg=10");
+      matriculaErro(10);
       exit;
     }
 
 
     // Valida o formato antes de consultar ou gravar o e-mail.
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-      header("Location: matricula.php?msg=4");
+      matriculaErro(4);
       exit;
     }
 
     // Aceita somente valores de gênero disponíveis no formulário.
     if (!in_array($genero, ['masculino', 'feminino', 'outro'], true)) {
-      header("Location: matricula.php?msg=2");
+      matriculaErro(2);
       exit;
     }
 
     if (!estadoValidoMatricula($estado)) {
-      header("Location: matricula.php?msg=13");
+      matriculaErro(13);
       exit;
     }
 
     $cidadeValida = cidadeValidaNoIbgeMatricula($estado, $cidade);
     if ($cidadeValida === null) {
-      header("Location: matricula.php?msg=14");
+      matriculaErro(14);
       exit;
     }
 
     if (!$cidadeValida) {
-      header("Location: matricula.php?msg=13");
+      matriculaErro(13);
       exit;
     }
 
     if (!in_array($forma_pagamento, ['pix', 'cartao'], true)) {
-      header("Location: matricula.php?msg=9");
+      matriculaErro(9);
       exit;
     }
 
@@ -258,16 +296,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Interrompe o cadastro quando um dos identificadores já existe.
     if ($stmtCheck->num_rows > 0) {
-      header("Location: matricula.php?msg=5");
+      matriculaErro(5);
       exit;
     }
     $stmtCheck->close();
 
     // Localiza o plano ativo sem diferenciar letras maiúsculas e minúsculas.
     $stmtPlano = $conn->prepare(
-      "SELECT id_plano, valor FROM cadastro_planos WHERE LOWER(nome) = LOWER(?) AND status = 'ativo' LIMIT 1"
+      "SELECT id_plano, valor FROM cadastro_planos WHERE id_plano = ? AND status = 'ativo' LIMIT 1"
     );
-    $stmtPlano->bind_param("s", $plano_nome);
+    $stmtPlano->bind_param("i", $plano_nome);
     $stmtPlano->execute();
     $resultPlano = $stmtPlano->get_result();
     $plano = $resultPlano->fetch_assoc();
@@ -276,7 +314,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     // Impede matrícula em plano inexistente ou inativo.
     if (!$plano) {
-      header("Location: matricula.php?msg=6");
+      matriculaErro(6);
       exit;
     }
 
@@ -291,108 +329,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $cidade_estado = $cidade . '/' . $estado;
     $senha_hash = password_hash($senha, PASSWORD_DEFAULT);
-
-    $etapaPersistencia = 'cadastro';
+    $tokenVerificacao = bin2hex(random_bytes(32));
+    $tokenHash = hash('sha256', $tokenVerificacao);
+    $expiraEm = (new DateTimeImmutable('+24 hours'))->format('Y-m-d H:i:s');
 
     try {
       $conn->begin_transaction();
-
-    // Cria a conta que será vinculada à matrícula.
-    $stmt = $conn->prepare(
-      "INSERT INTO usuarios
-                (nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, email_verificado, celular, senha, tipo_usuario, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'aluno', 'ativo')"
-    );
-    $stmt->bind_param(
-      "sssssssss",
-      $nome,
-      $nascimento,
-      $genero,
-      $cpf,
-      $endereco_completo,
-      $cidade_estado,
-      $email,
-      $telefone,
-      $senha_hash
-    );
-
-
-    // Reverte a transação se a conta não puder ser criada.
-    if (!$stmt->execute()) {
-      $codigoErroBanco = (int) $stmt->errno;
+      $stmt = $conn->prepare(
+        "INSERT INTO matricula_cadastros_pendentes
+          (token_hash, expira_em, nome, data_nascimento, genero, cpf, endereco, cidade_estado, email, celular, senha, id_plano)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      );
+      $stmt->bind_param(
+        "sssssssssssi",
+        $tokenHash, $expiraEm, $nome, $nascimento, $genero, $cpf,
+        $endereco_completo, $cidade_estado, $email, $telefone, $senha_hash, $id_plano
+      );
+      if (!$stmt->execute()) {
+        $codigoErroBanco = (int) $stmt->errno;
+        $stmt->close();
+        $conn->rollback();
+        matriculaErro($codigoErroBanco === 1062 ? 5 : 2);
+        exit;
+      }
       $stmt->close();
-      $conn->rollback();
-      header("Location: matricula.php?msg=" . ($codigoErroBanco === 1062 ? 5 : 2));
-      exit;
-    }
-    $id_usuario = $conn->insert_id;
-    $stmt->close();
-
-    $tokenVerificacao = onefitCriarToken($conn, 'verificacao_email_tokens', $id_usuario, '+24 hours');
-
-    // Cria a matrícula pendente com o valor atual do plano.
-    $stmtMatricula = $conn->prepare(
-      "INSERT INTO matricula (id_usuario, id_plano, data_matricula, data_inicio, status, valor_contratado)
-      VALUES (?, ?, CURDATE(), CURDATE(), 'pendente', ?)"
-    );
-    $stmtMatricula->bind_param("iid", $id_usuario, $id_plano, $valor_contratado);
-
-    if (!$stmtMatricula->execute()) {
-      $conn->rollback();
-      header("Location: matricula.php?msg=2");
-      exit;
-    }
-    $id_matricula = $conn->insert_id;
-    $stmtMatricula->close();
-
-    // Cria a cobrança pendente sem armazenar os dados sensíveis do cartão.
-    $data_vencimento = date('Y-m-d');
-    $codigo_transacao = 'MAT-' . $id_matricula . '-' . strtoupper(bin2hex(random_bytes(6)));
-
-    $etapaPersistencia = 'pagamento';
-    $stmtPagamento = $conn->prepare(
-      "INSERT INTO pagamento
-        (id_matricula, valor, data_vencimento, forma_pagamento, status, codigo_transacao)
-       VALUES (?, ?, ?, ?, 'pendente', ?)"
-    );
-    $stmtPagamento->bind_param(
-      "idsss",
-      $id_matricula,
-      $valor_contratado,
-      $data_vencimento,
-      $forma_pagamento,
-      $codigo_transacao
-    );
-
-    if (!$stmtPagamento->execute()) {
-      $stmtPagamento->close();
-      $conn->rollback();
-      header("Location: matricula.php?msg=9");
-      exit;
-    }
-    $stmtPagamento->close();
-
-    $conn->commit();
+      $conn->commit();
+      $_SESSION['matricula_plano_pendente'] = (int) $id_plano;
+      $_SESSION['matricula_retornar'] = true;
+      $_SESSION['matricula_email_pendente'] = $email;
     $emailEnviado = onefitEnviarVerificacaoEmail($email, $nome, $tokenVerificacao);
     $_SESSION['login_tipo'] = $emailEnviado ? 'sucesso' : 'erro';
     $_SESSION['login_msg'] = $emailEnviado
       ? 'Cadastro realizado. Confirme seu e-mail para acessar sua conta.'
       : 'Cadastro realizado, mas não foi possível enviar o e-mail de confirmação. Tente reenviar pela tela de login.';
+    if (str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {header('Content-Type: application/json');echo json_encode(['redirect'=>BASE_URL.'pages/login/login.php']);exit;}
     header("Location: " . BASE_URL . "pages/login/login.php");
     exit;
     } catch (Throwable $erro) {
       $conn->rollback();
-      $codigoMensagem = (int) $erro->getCode() === 1062
-        ? 5
-        : ($etapaPersistencia === 'pagamento' ? 9 : 2);
-      header("Location: matricula.php?msg=" . $codigoMensagem);
+      $codigoMensagem = (int) $erro->getCode() === 1062 ? 5 : 2;
+      matriculaErro($codigoMensagem);
       exit;
     }
   }
 
   // Retorna uma mensagem genérica quando faltam campos obrigatórios.
   else {
-    header("Location: matricula.php?msg=2");
+    matriculaErro(2);
   }
 }
 ?>
@@ -476,8 +459,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           </div>
         </div>
 
-        <form class="login-form matricula-form" action="#" method="POST" novalidate>
+        <form class="login-form matricula-form" action="<?php echo $matriculaAutenticada ? '../pagamentos/api.php' : 'matricula.php'; ?>" method="POST" data-wizard="<?php echo htmlspecialchars($wizard['id'],ENT_QUOTES,'UTF-8'); ?>" data-step-current="<?php echo (int)$wizard['etapa']; ?>" data-draft="<?php echo htmlspecialchars(json_encode($wizard['dados'],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT),ENT_QUOTES,'UTF-8'); ?>" data-authenticated="<?php echo $matriculaAutenticada ? '1' : '0'; ?>" novalidate>
 
+          <p id="wizard-error" role="alert"></p>
           <!-- ETAPA 1 — Dados pessoais -->
           <fieldset class="form-step active" data-step="1">
 
@@ -524,7 +508,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <div class="field">
                 <label for="password">Senha</label>
                 <div class="password-wrap">
-                  <input type="password" id="password" name="password" placeholder="Mínimo de 8 caracteres" minlength="8" required>
+                  <input type="password" id="password" name="password" placeholder="Mínimo de 8 caracteres" minlength="8" <?php echo $matriculaAutenticada ? '' : 'required'; ?>>
                   <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
                     <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" />
@@ -541,7 +525,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <div class="field">
                 <label for="confirmar-senha">Confirmar senha</label>
                 <div class="password-wrap">
-                  <input type="password" id="confirmar-senha" name="confirmar_senha" placeholder="Repita sua senha" minlength="8" required>
+                  <input type="password" id="confirmar-senha" name="confirmar_senha" placeholder="Repita sua senha" minlength="8" <?php echo $matriculaAutenticada ? '' : 'required'; ?>>
                   <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="confirmar-senha">
                     <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" />
@@ -628,12 +612,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
               <?php foreach ($planosAtivos as $i => $p): ?>
                 <label class="plan-option<?php echo $i === 1 ? ' featured' : ''; ?>">
-                  <input type="radio" name="plano" value="<?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $i === 1 ? 'checked' : ''; ?> required>
+                  <input type="radio" name="id_plano" value="<?php echo $p['id_plano']; ?>" <?php echo (isset($wizard['dados']['id_plano']) ? (int)$wizard['dados']['id_plano'] === $p['id_plano'] : $i === 1) ? 'checked' : ''; ?> required>
                   <?php if ($i === 1): ?><span class="badge">Mais escolhido</span><?php endif; ?>
                   <span class="plan-option-body">
                     <span class="plan-option-head">
                       <span class="plan-option-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
-                      <span class="plan-option-price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><i>/mês</i></span>
+                      <span class="plan-option-price">R$<?php echo number_format($p['valor'], 2, ',', '.'); ?><i>/mês</i></span>
                     </span>
                     <span class="plan-option-desc"><?php echo htmlspecialchars($p['beneficios'] ? implode(' · ', $p['beneficios']) : $p['descricao'], ENT_QUOTES, 'UTF-8'); ?></span>
                   </span>
@@ -652,42 +636,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
           <!-- ETAPA 4 — Pagamento -->
           <fieldset class="form-step" data-step="4">
+            <p>Plano selecionado: <strong id="wizard-plan-name"></strong></p>
+            <p>Preço normal do plano: <strong id="wizard-plan-price"></strong></p>
+            <?php if (OneFit\Pagamentos\PixTesteLocal::permitido()): ?>
+            <p>Teste técnico: o Mercado Pago simulará R$ 50,00. Nenhum dinheiro real será movimentado.</p>
+            <?php endif; ?>
 
-            <div class="payment-tabs" role="tablist">
-              <button type="button" class="payment-tab active" data-payment="cartao">Cartão de crédito</button>
-              <button type="button" class="payment-tab" data-payment="pix">Pix</button>
-            </div>
+            <input type="hidden" name="fluxo" value="<?php echo htmlspecialchars($wizard['id'],ENT_QUOTES,'UTF-8'); ?>">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'],ENT_QUOTES,'UTF-8'); ?>">
 
-            <input type="hidden" id="forma-pagamento" name="forma_pagamento" value="cartao">
+            <?php if ($matriculaAutenticada): ?>
+            <input type="hidden" name="acao" value="matricula">
 
-            <div class="payment-panel active" data-payment-panel="cartao">
-
-              <div class="field">
-                <label for="cartao-numero">Número do cartão</label>
-                <input type="text" id="cartao-numero" name="cartao_numero" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19">
-              </div>
-
-              <div class="field">
-                <label for="cartao-nome">Nome impresso no cartão</label>
-                <input type="text" id="cartao-nome" name="cartao_nome" placeholder="Como está no cartão">
-              </div>
-
-              <div class="field-row">
-                <div class="field">
-                  <label for="cartao-validade">Validade</label>
-                  <input type="text" id="cartao-validade" name="cartao_validade" placeholder="MM/AA" inputmode="numeric" maxlength="5">
-                </div>
-                <div class="field">
-                  <label for="cartao-cvv">CVV</label>
-                  <input type="text" id="cartao-cvv" name="cartao_cvv" placeholder="000" inputmode="numeric" maxlength="4">
-                </div>
-              </div>
-            </div>
-
-            <div class="payment-panel" data-payment-panel="pix">
-              <p class="payment-note">O código Pix é gerado após a confirmação da matrícula e enviado para o seu e-mail, com validade de 30 minutos.</p>
-            </div>
-
+            <p>Confirme o plano selecionado para continuar ao Pix. A matrícula será ativada após a confirmação do pagamento.</p>
+            <?php else: ?>
+            <input type="hidden" id="forma-pagamento" name="forma_pagamento" value="pix">
+            <p>Crie sua conta e confirme seu e-mail. Após entrar, continue com o plano selecionado para pagar pelo Pix.</p>
+            <?php endif; ?>
             <label class="checkbox checkbox-terms">
               <input type="checkbox" name="termos" required>
               <span>Li e aceito os <a href="#">termos de uso</a> e a <a href="#">política de privacidade</a></span>
@@ -697,7 +662,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <button type="button" class="btn btn-outline btn-icon-left" data-prev>
                 Voltar
               </button>
-              <button type="submit" class="btn btn-gold">Confirmar matrícula</button>
+              <button type="submit" class="btn btn-gold"><?php echo $matriculaAutenticada ? 'Continuar para o Pix' : 'Criar conta'; ?></button>
             </div>
           </fieldset>
 

@@ -4,7 +4,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-if (!isset($_SESSION['id_usuario'])) {
+if (!isset($_SESSION['id_usuario']) || !empty($_SESSION['pagamento_matricula_sem_login'])) {
     header("Location: " . BASE_URL . "pages/login/login.php");
     exit;
 }

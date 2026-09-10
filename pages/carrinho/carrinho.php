@@ -93,200 +93,21 @@ function cart_finalizar_compra(mysqli $conn, int $idUsuario, array $post): void
         exit;
     }
 
-    $formaPagamento = in_array($post['forma_pagamento'] ?? '', ['pix', 'cartao'], true)
-        ? $post['forma_pagamento']
-        : 'pix';
-
-    // Saldo real de cashback do usuário (créditos - débitos, ignorando cancelados).
-    $stmtSaldo = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
-    $stmtSaldo->bind_param('i', $idUsuario);
-    $stmtSaldo->execute();
-    $saldoAtual = (float) ($stmtSaldo->get_result()->fetch_assoc()['saldo'] ?? 0);
-    $stmtSaldo->close();
-
-    $ids = array_map('intval', array_keys($_SESSION['carrinho']));
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $types = str_repeat('i', count($ids));
-
-    $conn->begin_transaction();
     try {
-        // SELECT ... FOR UPDATE dentro da transação: trava as linhas dos produtos
-        // do carrinho até o commit/rollback, evitando que duas finalizações
-        // concorrentes vendam mais unidades do que o estoque realmente permite.
-        $stmt = $conn->prepare("SELECT id_produto, id_vendedor, preco, desconto, cashback_valor, estoque, status FROM produtos WHERE id_produto IN ($placeholders) FOR UPDATE");
-        $stmt->bind_param($types, ...$ids);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        $produtosBanco = [];
-        while ($row = $res->fetch_assoc()) {
-            $produtosBanco[(int) $row['id_produto']] = $row;
+        require_once __DIR__ . '/../../services/pagamentos/PixCheckout.php';
+        $ship=(int)($_SESSION['checkout_transportadora_id']??0);
+        if(!$ship){$options=bo_listar_opcoes_frete($conn,$endereco['cep']);$ship=(int)($options[0]['id_transportadora']??0);}
+        $pix=new OneFit\Pagamentos\PixCheckout($conn);
+        $cartHash=hash('sha256',json_encode($_SESSION['carrinho']));
+        if(isset($_SESSION['pix_pedido_referencia'])&&($_SESSION['pix_carrinho_hash']??'')===$cartHash){
+            $previous=$pix->dados($idUsuario,$_SESSION['pix_pedido_referencia']);
+            if($previous['status']==='aprovado'){header('Location: ../pagamentos/pix.php?r='.$_SESSION['pix_pedido_referencia'],true,303);exit;}
         }
-        $stmt->close();
-
-        $itens = [];
-        $totalCompra = 0.0;
-        $cashbackGanho = 0.0;
-        // Agrupado por vendedor (chave 0 = produto legado "ONE FIT", sem dono)
-        // para calcular o frete de cada loja separadamente.
-        $itensPorVendedor = [];
-        foreach ($_SESSION['carrinho'] as $produtoId => $quantidade) {
-            if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
-                continue;
-            }
-            $p = $produtosBanco[$produtoId];
-            $quantidade = (int) $quantidade;
-            // Estoque insuficiente: rejeita a compra inteira em vez de reduzir a
-            // quantidade em silêncio, para o cliente não pagar/receber menos do
-            // que via no carrinho nem finalizar um pedido maior que o estoque real.
-            if ($quantidade <= 0 || $quantidade > (int) $p['estoque']) {
-                $conn->rollback();
-                header('Location: carrinho.php?erro=1');
-                exit;
-            }
-            $valorFinal = $p['desconto'] > 0
-                ? round((float) $p['preco'] * (1 - (float) $p['desconto'] / 100), 2)
-                : (float) $p['preco'];
-            $subtotal = round($valorFinal * $quantidade, 2);
-
-            $cashbackUnitario = (float) $p['cashback_valor'];
-            $idVendedor = (int) ($p['id_vendedor'] ?? 0);
-
-            $itens[] = [
-                'id' => $produtoId,
-                'idVendedor' => $idVendedor,
-                'quantidade' => $quantidade,
-                'precoUnitario' => $valorFinal,
-                'subtotal' => $subtotal,
-                'cashbackUnitario' => $cashbackUnitario,
-            ];
-            $itensPorVendedor[$idVendedor]['nome'] = $idVendedor > 0 ? 'Loja' : 'ONE FIT';
-            $totalCompra += $subtotal;
-            // Cashback do produto é um valor fixo em R$ por unidade (não mais %).
-            $cashbackGanho += round($cashbackUnitario * $quantidade, 2);
-        }
-
-        if (empty($itens)) {
-            $conn->rollback();
-            header('Location: carrinho.php?erro=1');
-            exit;
-        }
-
-        $idTransportadoraEscolhida = isset($_SESSION['checkout_transportadora_id']) ? (int) $_SESSION['checkout_transportadora_id'] : null;
-        $fretes = cart_calcular_fretes($conn, $itensPorVendedor, $endereco['cep'], $idTransportadoraEscolhida);
-        if ($fretes === null) {
-            $conn->rollback();
-            header('Location: carrinho.php?erro=frete');
-            exit;
-        }
-        $totalCompra = round($totalCompra + $fretes['total'], 2);
-
-        $cashbackUsado = round(max(0, min((float) ($post['cashback_usado'] ?? 0), $saldoAtual, $totalCompra)), 2);
-
-        $stmtPedido = $conn->prepare(
-            'INSERT INTO pedido (id_usuario, id_endereco_entrega, valor_total, forma_pagamento, status, data_pedido,
-                endereco_cep, endereco_logradouro, endereco_numero, endereco_complemento, endereco_bairro, endereco_cidade, endereco_uf)
-             VALUES (?, ?, ?, ?, "aguardando", NOW(), ?, ?, ?, ?, ?, ?, ?)'
-        );
-        $stmtPedido->bind_param(
-            'iidssssssss',
-            $idUsuario,
-            $idEndereco,
-            $totalCompra,
-            $formaPagamento,
-            $endereco['cep'],
-            $endereco['logradouro'],
-            $endereco['numero'],
-            $endereco['complemento'],
-            $endereco['bairro'],
-            $endereco['cidade'],
-            $endereco['uf']
-        );
-        $stmtPedido->execute();
-        $idPedido = (int) $conn->insert_id;
-        $stmtPedido->close();
-
-        $stmtItem = $conn->prepare(
-            'INSERT INTO pedido_item (id_pedido, id_produto, id_vendedor, quantidade, preco_unitario, subtotal, id_transportadora, valor_frete)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-        );
-        $stmtEstoque = $conn->prepare('UPDATE produtos SET estoque = estoque - ? WHERE id_produto = ?');
-        // O frete é cobrado uma vez por vendedor: para não duplicar o valor
-        // ao somar pedido_item.valor_frete, ele é lançado só no primeiro
-        // item de cada grupo de vendedor (os demais itens do mesmo grupo
-        // ficam com valor_frete = 0).
-        $vendedorJaCobrado = [];
-        foreach ($itens as $item) {
-            $idVendedorItem = $item['idVendedor'];
-            $idVendedorSql = $idVendedorItem > 0 ? $idVendedorItem : null;
-            $idTransportadoraItem = $fretes['porVendedor'][$idVendedorItem]['id_transportadora'];
-            $valorFreteItem = 0.0;
-            if (empty($vendedorJaCobrado[$idVendedorItem])) {
-                $valorFreteItem = $fretes['porVendedor'][$idVendedorItem]['valor_frete'];
-                $vendedorJaCobrado[$idVendedorItem] = true;
-            }
-
-            $stmtItem->bind_param(
-                'iiiiddid',
-                $idPedido,
-                $item['id'],
-                $idVendedorSql,
-                $item['quantidade'],
-                $item['precoUnitario'],
-                $item['subtotal'],
-                $idTransportadoraItem,
-                $valorFreteItem
-            );
-            $stmtItem->execute();
-            $stmtEstoque->bind_param('ii', $item['quantidade'], $item['id']);
-            $stmtEstoque->execute();
-        }
-        $stmtItem->close();
-        $stmtEstoque->close();
-
-        if ($cashbackUsado > 0) {
-            $descUso = 'Uso de cashback no pedido #' . $idPedido;
-            $stmtCbUso = $conn->prepare('INSERT INTO cashback (id_usuario, valor, tipo, origem, descricao, status, data_criacao) VALUES (?, ?, "debito", "uso", ?, "utilizado", NOW())');
-            $stmtCbUso->bind_param('ids', $idUsuario, $cashbackUsado, $descUso);
-            $stmtCbUso->execute();
-            $stmtCbUso->close();
-        }
-
-        if ($cashbackGanho > 0) {
-            $descGanho = 'Cashback do pedido #' . $idPedido;
-            $stmtCbGanho = $conn->prepare('INSERT INTO cashback (id_usuario, valor, tipo, origem, descricao, status, data_criacao) VALUES (?, ?, "credito", "produto", ?, "disponivel", NOW())');
-            $stmtCbGanho->bind_param('ids', $idUsuario, $cashbackGanho, $descGanho);
-            $stmtCbGanho->execute();
-            $stmtCbGanho->close();
-        }
-
-        $conn->commit();
-    } catch (\Throwable $e) {
-        $conn->rollback();
-        header('Location: carrinho.php?erro=1');
-        exit;
-    }
-
-    $_SESSION['carrinho'] = [];
-    unset($_SESSION['checkout_endereco_id']);
-    unset($_SESSION['checkout_transportadora_id']);
-    $_SESSION['ultimo_pedido'] = [
-        'id' => $idPedido,
-        'total' => $totalCompra,
-        'frete' => $fretes['total'],
-        'cashbackUsado' => $cashbackUsado,
-        'cashbackGanho' => $cashbackGanho,
-        'formaPagamento' => $formaPagamento,
-    ];
-    // Somente após o commit e a limpeza do carrinho: reenvios não geram outro aviso.
-    try {
-        require_once __DIR__ . '/../../config/notificacoes.php';
-        criarNotificacao($idUsuario, 'Pedido recebido',
-            'Seu pedido #' . $idPedido . ' foi recebido e está aguardando processamento.',
-            'compra', '/AN25/OneFit/pages/dashboard/dashboard.php?section=compras');
-    } catch (\Throwable $erroNotificacao) {
-        error_log('ONE FIT: falha ao notificar pedido recebido #' . $idPedido . '; código ' . $erroNotificacao->getCode());
-    }
-    header('Location: carrinho.php?sucesso=1');
+        $result=$pix->pedido($idUsuario,$_SESSION['carrinho'],$idEndereco,$ship,(string)($post['cashback_usado']??'0.00'));
+        $reference=$pix->referencia($idUsuario,$result['id_cobranca']);
+        $_SESSION['pix_pedido_referencia']=$reference;$_SESSION['pix_carrinho_hash']=$cartHash;
+        header('Location: ../pagamentos/pix.php?r='.$reference,true,303);
+    } catch (Throwable) { header('Location: carrinho.php?erro=1'); }
     exit;
 }
 
@@ -742,23 +563,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <?php if (!$enderecoSelecionado): ?>
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> Escolha um endereço de entrega antes de finalizar.</p>
                 <?php endif; ?>
-                <div class="payment-tabs">
-                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payPix" value="pix" checked>
-                    <label class="payment-tab" for="payPix"><i class="bi bi-qr-code"></i> PIX</label>
-                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payCartao" value="cartao">
-                    <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> Cartão</label>
-                </div>
-                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalComFrete); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
-                <div id="card-payment" class="card-payment">
-                    <label class="pix-label">Dados do cartão (simulação)</label>
-                    <input class="payment-input" type="text" inputmode="numeric" maxlength="19" placeholder="Número do cartão" name="cartao_numero" form="checkout-form">
-                    <input class="payment-input" type="text" placeholder="Nome impresso no cartão" name="cartao_nome" form="checkout-form">
-                    <div class="card-payment-row">
-                        <input class="payment-input" type="text" inputmode="numeric" maxlength="5" placeholder="Validade (MM/AA)" name="cartao_validade" form="checkout-form">
-                        <input class="payment-input" type="text" inputmode="numeric" maxlength="4" placeholder="CVV" name="cartao_cvv" form="checkout-form">
-                    </div>
-                </div>
-                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalComFrete); ?></strong></div></div>
+<p class="payment-error">Ambiente de teste &mdash; saldo fict&iacute;cio. Somente cadastros t&eacute;cnicos autorizados.</p><input type="hidden" name="forma_pagamento" value="pix" form="checkout-form"><div id="pix-payment"><span id="pix-value"></span><p>O QR Code ser&aacute; exibido ap&oacute;s iniciar o pagamento.</p></div>                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalComFrete); ?></strong></div></div>
 
                 <button type="submit" form="checkout-form" class="checkout-finish">Finalizar compra</button>
             </div>
@@ -865,20 +670,6 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             // Seleção de pagamento: os "botões" agora são <label for="..."> ligados a
             // <input type="radio">, então já funcionam nativamente (sem JS). O trecho
             // abaixo só atualiza o texto/painel de apoio quando o JS está disponível.
-            document.querySelectorAll('.payment-radio').forEach(radio => radio.addEventListener('change', () => {
-                const pix = radio.value === 'pix';
-                if (!radio.checked) return;
-                document.getElementById('pix-payment').style.display = pix ? 'block' : 'none';
-                document.getElementById('card-payment').classList.toggle('show', !pix);
-                document.getElementById('payment-method-name').textContent = pix ? 'PIX' : 'cartão';
-            }));
-
-            const copyPixBtn = document.getElementById('copy-pix');
-            if (copyPixBtn) {
-                copyPixBtn.addEventListener('click', async () => {
-                    try { await navigator.clipboard.writeText('onefit@pagamentos.com'); copyPixBtn.textContent = 'Chave copiada!'; } catch (e) { copyPixBtn.textContent = 'onefit@pagamentos.com'; }
-                });
-            }
         })();
     </script>
 </body>

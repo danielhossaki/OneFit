@@ -235,7 +235,7 @@
 
             <div class="footer-col">
                 <a href="" class="footer-link">Sobre nós <span class="arrow">↗</span></a>
-                <a href="<?php echo BASE_URL; ?>pages/matricula.php" class="footer-link">Matricule-se <span class="arrow">↗</span></a>
+                <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="footer-link">Matricule-se <span class="arrow">↗</span></a>
                 <a href="#planos" class="footer-link">Conheça nossos planos <span class="arrow">↗</span></a>
             </div>
 

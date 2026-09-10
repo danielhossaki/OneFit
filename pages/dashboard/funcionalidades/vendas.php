@@ -50,7 +50,7 @@ if ($acao === 'update-status') {
     $conn->begin_transaction();
     try {
         // Serializa alterações do mesmo item e obtém o comprador pelo pedido real.
-        $stmt = $conn->prepare('SELECT pi.id_pedido, pi.id_vendedor, pi.status_logistica, pe.id_usuario FROM pedido_item pi JOIN pedido pe ON pe.id_pedido = pi.id_pedido WHERE pi.id_item = ? FOR UPDATE');
+        $stmt = $conn->prepare("SELECT pi.id_pedido, pi.id_vendedor, pi.status_logistica, pe.id_usuario FROM pedido_item pi JOIN pedido pe ON pe.id_pedido = pi.id_pedido WHERE pi.id_item = ? AND pe.status IN ('pago','processando','entregue') FOR UPDATE");
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $itemAnterior = $stmt->get_result()->fetch_assoc();

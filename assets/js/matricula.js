@@ -87,11 +87,21 @@
     4: 'Falta pouco — escolha como prefere pagar.',
   };
 
+  const firstStep = 1;
+  const initialStep = Math.min(4, Math.max(1, Number(form.dataset.stepCurrent) || 1));
   let current = 1;
-  let maxReached = 1;
+  let maxReached = initialStep;
+  let draft = {};
+  try { draft = JSON.parse(form.dataset.draft || '{}'); sessionStorage.removeItem('onefit.matricula.plano'); } catch {}
+  form.querySelectorAll('input, select').forEach(input => {
+    if (input.type === 'password' || !Object.hasOwn(draft, input.name)) return;
+    if (input.type === 'radio') input.checked = input.value === draft[input.name];
+    else input.value = draft[input.name];
+  });
 
   // Exibe uma etapa e sincroniza o progresso, o subtítulo e o foco.
   function goToStep(n, { focus = true } = {}) {
+    if (n < 1 || n > maxReached) return;
     steps.forEach((step) => {
       step.classList.toggle('active', Number(step.dataset.step) === n);
     });
@@ -102,7 +112,7 @@
       const stepNum = Number(el.dataset.stepLabel);
       el.classList.toggle('active', stepNum === n);
       el.classList.toggle('done', stepNum < maxReached);
-      el.tabIndex = stepNum < maxReached ? 0 : -1;
+      el.tabIndex = stepNum >= firstStep && stepNum < maxReached ? 0 : -1;
     });
 
     progressFill.style.width = `${(n / total) * 100}%`;
@@ -153,6 +163,7 @@
     const panel = input.closest('.payment-panel');
     if (panel && !panel.classList.contains('active')) return true;
 
+    if (input.disabled) return true;
     const customMessage = customMessageFor(input);
     input.setCustomValidity(customMessage);
     const valid = input.checkValidity();
@@ -207,7 +218,7 @@
 
     if (n === 3) {
       const planWrap = step.querySelector('.plan-select');
-      const checked = step.querySelector('input[name="plano"]:checked');
+      const checked = step.querySelector('input[name="id_plano"]:checked');
       planWrap.classList.toggle('invalid', !checked);
       if (!checked) valid = false;
     }
@@ -221,16 +232,27 @@
     return valid;
   }
 
+  let advancing = false;
+  function showError(message) { const box = document.getElementById('wizard-error'); if (box) box.textContent = message; }
   form.querySelectorAll('[data-next]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      if (!validateStep(current)) return;
-      if (current < total) goToStep(current + 1);
+    btn.addEventListener('click', async () => {
+      if (advancing || !validateStep(current)) return;
+      advancing = true; btn.disabled = true;
+      try {
+        const body = new FormData(form); body.set('acao','wizard'); body.set('etapa',String(current));
+        const response = await fetch('matricula.php', {method:'POST',body,credentials:'same-origin',headers:{Accept:'application/json'}});
+        const result = await response.json();
+        if (!response.ok) { showError(result.erro || 'Confira os campos.'); return; }
+        if (result.etapa !== current + 1) throw Error();
+        maxReached = result.etapa; showError(''); goToStep(result.etapa);
+      } catch { showError('Não foi possível validar agora. Seus dados foram mantidos.'); }
+      finally { advancing = false; btn.disabled = false; }
     });
   });
 
   form.querySelectorAll('[data-prev]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      if (current > 1) goToStep(current - 1, { focus: false });
+      if (current > firstStep) goToStep(current - 1, { focus: false });
     });
   });
 
@@ -238,7 +260,7 @@
   progressSteps.forEach((el) => {
     el.addEventListener('click', () => {
       const stepNum = Number(el.dataset.stepLabel);
-      if (el.classList.contains('done') && stepNum < current) {
+      if (el.classList.contains('done') && stepNum >= firstStep && stepNum < current) {
         goToStep(stepNum, { focus: false });
       }
     });
@@ -265,28 +287,53 @@
     }
   });
 
-  form.addEventListener('submit', (e) => {
-    if (!validateStep(current)) {
+  let submitting = false;
+  window.addEventListener('pageshow', () => {
+    submitting = false;
+    const button = form.querySelector('button[type="submit"]');
+    if (button) { button.disabled = false; button.classList.remove('is-loading'); }
+  });
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (submitting) { e.preventDefault(); return; }
+    if (current !== total || !validateStep(3) || !validateStep(current)) {
       e.preventDefault();
       return;
     }
 
     const submitBtn = form.querySelector('button[type="submit"]');
-    submitBtn?.classList.add('is-loading');
+    submitting = true;
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.classList.add('is-loading'); }
+    try {
+      let body = new FormData(form);
+      if (form.dataset.authenticated === '1') {
+        const minimal = new FormData();
+        for (const key of ['id_plano','csrf_token','fluxo','acao','termos']) minimal.set(key,body.get(key)||'');
+        body = minimal;
+      }
+      const response = await fetch(form.action, {method:'POST',body,credentials:'same-origin',headers:{Accept:'application/json'}});
+      if (response.redirected && response.ok) { window.location.assign(response.url); return; }
+      const result = await response.json();
+      if (response.ok && result.redirect) { window.location.assign(result.redirect); return; }
+      if (result.etapa && result.etapa <= maxReached) { maxReached=result.etapa;goToStep(result.etapa); }
+      showError(result.erro || 'Não foi possível confirmar. Seus dados foram mantidos.');
+    } catch { showError('Não foi possível confirmar agora. Seus dados foram mantidos.'); }
+    submitting = false;
+    if (submitBtn) { submitBtn.disabled=false;submitBtn.classList.remove('is-loading'); }
   });
 
   // Mantém o destaque visual sincronizado com o plano selecionado.
   const planOptions = Array.from(form.querySelectorAll('.plan-option'));
   function refreshPlanSelection() {
-    planOptions.forEach((opt) => {
-      const input = opt.querySelector('input[type="radio"]');
-      opt.classList.toggle('is-checked', input.checked);
-    });
+    planOptions.forEach(opt => opt.classList.toggle('is-checked', opt.querySelector('input').checked));
+    const selected = planOptions.find(opt => opt.querySelector('input').checked);
+    const name = document.getElementById('wizard-plan-name');
+    const price = document.getElementById('wizard-plan-price');
+    if (name) name.textContent = selected?.querySelector('.plan-option-name')?.textContent || '';
+    if (price) price.textContent = selected?.querySelector('.plan-option-price')?.textContent || '';
     form.querySelector('.plan-select')?.classList.remove('invalid');
   }
-  planOptions.forEach((opt) => {
-    opt.querySelector('input').addEventListener('change', refreshPlanSelection);
-  });
+  planOptions.forEach(opt => opt.querySelector('input').addEventListener('change', refreshPlanSelection));
   refreshPlanSelection();
 
   // Alterna o painel de pagamento e atualiza o valor enviado ao PHP.
@@ -347,8 +394,8 @@
   const cidadeSugestoes = document.getElementById('cidade-sugestoes');
   let cidades = [];
   let buscaCidadesController;
-  let estadoPendenteDoCep = '';
-  let cidadePendenteDoCep = '';
+  let estadoPendenteDoCep = draft.estado || '';
+  let cidadePendenteDoCep = draft.cidade || '';
 
   const normalizarBusca = (value) => value
     .normalize('NFD')
@@ -535,7 +582,7 @@
       if (!event.target.closest('.city-combobox')) fecharSugestoesCidade();
     });
 
-    carregarEstados();
+    if (firstStep === 1) carregarEstados();
   }
 
   // Consulta o ViaCEP e preenche os campos de endereço disponíveis.
@@ -576,5 +623,5 @@
     });
   }
 
-  goToStep(1, { focus: false });
+  goToStep(initialStep, { focus: false });
 })();

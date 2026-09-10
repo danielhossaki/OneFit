@@ -76,6 +76,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $_SESSION['email'] = $email;
     $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
     $_SESSION['genero'] = $usuario['genero'];
+    unset($_SESSION['pagamento_matricula_sem_login']);
+
+    // Vincula o wizard iniciado antes do cadastro à conta recém-autenticada.
+    if (
+      !empty($_SESSION['matricula_retornar'])
+      && isset($_SESSION['matricula_wizard']['usuario'])
+      && (int) $_SESSION['matricula_wizard']['usuario'] === 0
+    ) {
+      $_SESSION['matricula_wizard']['usuario'] = (int) $usuario['id_usuario'];
+    }
 
     // Mantém a autenticação por 30 dias quando o usuário solicita.
     if ($lembrar) {
@@ -89,7 +99,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', false, true);
     }
 
-    header("Location: " . BASE_URL . "pages/dashboard/dashboard.php");
+    $retomarMatricula = !empty($_SESSION['matricula_retornar']);
+    unset($_SESSION['matricula_retornar']);
+    header("Location: " . BASE_URL . ($retomarMatricula ? "pages/matricula/matricula.php" : "pages/dashboard/dashboard.php"));
     exit;
   } else {
     header("Location: login.php?msg=3"); // Informa que e-mail ou senha não foram enviados.
@@ -118,8 +130,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body class="login-body"
   <?php if ($mensagemLogin): ?>
-    data-form-message="<?php echo htmlspecialchars($mensagemLogin['texto'], ENT_QUOTES, 'UTF-8'); ?>"
-    data-form-message-type="<?php echo htmlspecialchars($mensagemLogin['tipo'], ENT_QUOTES, 'UTF-8'); ?>"
+  data-form-message="<?php echo htmlspecialchars($mensagemLogin['texto'], ENT_QUOTES, 'UTF-8'); ?>"
+  data-form-message-type="<?php echo htmlspecialchars($mensagemLogin['tipo'], ENT_QUOTES, 'UTF-8'); ?>"
   <?php endif; ?>>
 
   <main class="login-page">
