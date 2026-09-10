@@ -115,6 +115,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && cart_csrf_
             }
             break;
 
+        case 'aplicar_cashback':
+            // Guardado na sessão e reaplicado a cada carregamento da página
+            // (clamp final contra o saldo/total real acontece no render,
+            // logo abaixo, e de novo em cart_gravar_compra() ao finalizar) —
+            // fluxo de ida-e-volta ao servidor, sem depender de JS.
+            $valorCashback = filter_var($_POST['cashback_usado'] ?? '0', FILTER_VALIDATE_FLOAT);
+            $_SESSION['checkout_cashback_usado'] = ($valorCashback !== false && $valorCashback > 0) ? $valorCashback : 0.0;
+            break;
+
         case 'finalizar':
             cart_finalizar_compra($conn, $idUsuarioLogado, $_POST);
             // cart_finalizar_compra sempre redireciona (sucesso ou erro) e encerra o script.
@@ -237,6 +246,13 @@ $stmtSaldoCashback->close();
 $saldoCashback = max(0.0, $saldoCashback);
 $cashbackMaximoUsavel = round(min($saldoCashback, $totalComFrete), 2);
 
+/* Cashback já aplicado nesta sessão de checkout (ação "aplicar_cashback"),
+ * sempre reclamado contra o máximo real de novo aqui — se o endereço/frete
+ * mudou depois de aplicar, o valor não pode passar do novo máximo. */
+$cashbackAplicado = round(min((float) ($_SESSION['checkout_cashback_usado'] ?? 0), $cashbackMaximoUsavel), 2);
+$restanteAposCashback = round(max(0, $totalComFrete - $cashbackAplicado), 2);
+$cashbackCobreTudo = $restanteAposCashback <= 0.01;
+
 /* ===== Mensagens vindas do redirecionamento após finalizar a compra ===== */
 $pedidoConcluido = null;
 if (isset($_GET['sucesso']) && !empty($_SESSION['ultimo_pedido'])) {
@@ -314,7 +330,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <?php if ($pedidoConcluido['cashbackGanho'] > 0): ?>
                     <p class="mb-0">Você ganhou <?php echo cart_money($pedidoConcluido['cashbackGanho']); ?> de cashback nesta compra.</p>
                 <?php endif; ?>
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=compras&amp;compra_finalizada=1" class="btn-crt-outline">Ver minhas compras</a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=compras&amp;compra_finalizada=1" class="btn-crt-gold">Ver minhas compras</a>
                 <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-outline">
                     <i class="bi bi-shop"></i> Continuar comprando
                 </a>
@@ -323,7 +339,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <div class="crt-empty">
                 <i class="bi bi-cart-x"></i>
                 <p class="mb-0">Seu carrinho está vazio.</p>
-                <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-outline">
+                <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-gold">
                     <i class="bi bi-shop"></i> Ir para o Marketplace
                 </a>
             </div>
@@ -422,6 +438,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <?php echo cart_csrf_field(); ?>
             <input type="hidden" name="acao" value="finalizar">
             <input type="hidden" name="checkout_token" value="<?php echo htmlspecialchars($_SESSION['checkout_token'], ENT_QUOTES, 'UTF-8'); ?>">
+            <input type="hidden" name="cashback_usado" value="<?php echo $cashbackAplicado; ?>">
             </form>
 
             <div class="crt-summary checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? '' : ' is-active'; ?>" id="checkout-resumo">
@@ -516,16 +533,35 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <h2 class="checkout-title">Usar meu cashback</h2>
                 <div class="cashback-disponivel"><span>Disponível</span><strong><?php echo cart_money($saldoCashback); ?></strong></div>
                 <div class="cashback-disponivel"><span>Máximo permitido nesta compra: <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
-                <input id="cashback-range" class="cashback-range" type="range" name="cashback_usado" form="checkout-form"
-                    min="0" max="<?php echo $cashbackMaximoUsavel; ?>" value="0" step="0.01"
-                    aria-label="Cashback a utilizar">
+
+                <form method="POST" action="carrinho.php" class="crt-cashback-apply">
+                    <?php echo cart_csrf_field(); ?>
+                    <input type="hidden" name="acao" value="aplicar_cashback">
+                    <input type="number" class="form-control" name="cashback_usado" min="0" max="<?php echo $cashbackMaximoUsavel; ?>" step="0.01" value="<?php echo $cashbackAplicado; ?>" aria-label="Cashback a utilizar">
+                    <button type="submit" class="btn-crt-outline">Aplicar</button>
+                </form>
                 <div class="cashback-actions">
-                    <button type="button" class="cashback-action" data-cashback="<?php echo $cashbackMaximoUsavel; ?>">Usar máximo</button>
-                    <button type="button" class="cashback-action" data-cashback="0">Não usar</button>
+                    <form method="POST" action="carrinho.php" class="bo-inline-form">
+                        <?php echo cart_csrf_field(); ?>
+                        <input type="hidden" name="acao" value="aplicar_cashback">
+                        <input type="hidden" name="cashback_usado" value="<?php echo $cashbackMaximoUsavel; ?>">
+                        <button type="submit" class="cashback-action">Usar máximo</button>
+                    </form>
+                    <form method="POST" action="carrinho.php" class="bo-inline-form">
+                        <?php echo cart_csrf_field(); ?>
+                        <input type="hidden" name="acao" value="aplicar_cashback">
+                        <input type="hidden" name="cashback_usado" value="0">
+                        <button type="submit" class="cashback-action">Não usar</button>
+                    </form>
                 </div>
-                <div class="cashback-aplicado"><span>Aplicado</span><span id="cashback-aplicado">R$ 0,00</span></div>
-                <p class="cashback-remaining">Restante para pagamento: <strong id="cashback-restante"><?php echo cart_money($totalComFrete); ?></strong></p>
-                <button type="button" class="cashback-continue" data-open-checkout="checkout-pagamento">Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
+                <div class="cashback-aplicado"><span>Aplicado</span><span><?php echo cart_money($cashbackAplicado); ?></span></div>
+                <p class="cashback-remaining">Restante para pagamento: <strong><?php echo cart_money($restanteAposCashback); ?></strong></p>
+
+                <?php if ($cashbackCobreTudo): ?>
+                    <button type="submit" form="checkout-form" class="btn-crt-gold">Concluir compra</button>
+                <?php else: ?>
+                    <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>>Continuar para pagamento <i class="bi bi-arrow-right"></i></button>
+                <?php endif; ?>
             </div>
             <div class="checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? ' is-active' : ''; ?>" id="checkout-pagamento">
                 <div class="payment-heading"><h2 class="checkout-title">Forma de pagamento</h2></div>
@@ -538,7 +574,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payCartao" value="cartao">
                     <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> Cartão</label>
                 </div>
-                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($totalComFrete); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
+                <div id="pix-payment"><label class="pix-label">Valor a pagar no PIX</label><div class="pix-key"><span id="pix-value"><?php echo cart_money($restanteAposCashback); ?></span></div><label class="pix-label">CHAVE PIX</label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key">Copiar chave PIX</button></div></div>
                 <div id="card-payment" class="card-payment">
                     <label class="pix-label">Dados do cartão (simulação)</label>
                     <input class="payment-input" type="text" inputmode="numeric" maxlength="19" placeholder="Número do cartão" name="cartao_numero" form="checkout-form">
@@ -548,7 +584,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         <input class="payment-input" type="text" inputmode="numeric" maxlength="4" placeholder="CVV" name="cartao_cvv" form="checkout-form">
                     </div>
                 </div>
-                <div class="payment-summary"><div><span>Total da compra</span><strong id="payment-total"><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong id="payment-cashback">R$ 0,00</strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong id="payment-remaining"><?php echo cart_money($totalComFrete); ?></strong></div></div>
+                <div class="payment-summary"><div><span>Total da compra</span><strong><?php echo cart_money($totalComFrete); ?></strong></div><div><span>Cashback aplicado</span><strong><?php echo cart_money($cashbackAplicado); ?></strong></div><div><span>Restante via <span id="payment-method-name">PIX</span></span><strong><?php echo cart_money($restanteAposCashback); ?></strong></div></div>
 
                 <button type="submit" form="checkout-form" class="checkout-finish">Finalizar compra</button>
             </div>
@@ -618,10 +654,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         (() => {
-            const total = <?php echo json_encode($totalComFrete); ?>;
             const pixLocalSemFrete = <?php echo json_encode($pixLocalSemFrete); ?>;
-            const money = value => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-            const range = document.getElementById('cashback-range');
             const checkoutPanel = document.getElementById('checkout-panel');
             const openCheckout = targetId => {
                 const target = document.getElementById(targetId) || document.getElementById('checkout-resumo');
@@ -656,18 +689,6 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 button.disabled = pixLocalSemFrete && !document.getElementById('payPix').checked;
                 button.textContent = 'Finalizar compra';
             });
-            if (!range) return;
-            const update = () => {
-                const used = Math.min(Number(range.value), total), due = Math.max(0, total - used);
-                document.getElementById('cashback-aplicado').textContent = money(used);
-                document.getElementById('cashback-restante').textContent = money(due);
-                document.getElementById('pix-value').textContent = money(due);
-                document.getElementById('payment-total').textContent = money(total);
-                document.getElementById('payment-cashback').textContent = money(used);
-                document.getElementById('payment-remaining').textContent = money(due);
-            };
-            range.addEventListener('input', update);
-            document.querySelectorAll('[data-cashback]').forEach(button => button.addEventListener('click', () => { range.value = button.dataset.cashback; update(); }));
 
             // Seleção de pagamento: os "botões" agora são <label for="..."> ligados a
             // <input type="radio">, então já funcionam nativamente (sem JS). O trecho

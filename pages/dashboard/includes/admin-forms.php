@@ -465,10 +465,31 @@ function bo_modal_funcao(?array $f, string $secao): void
 /* =======================================================================
  * MODALIDADES
  * ===================================================================== */
+
+/**
+ * Ícones disponíveis para uma modalidade (chave => rótulo exibido no
+ * select). As chaves batem com ICONES_MODALIDADE em index.php, que tem o
+ * SVG de cada uma — mesmos ícones que já existem na home hoje, mais um
+ * genérico para modalidades novas.
+ */
+function bo_icones_modalidade_options(): array
+{
+    return [
+        'musculacao' => 'Halteres (Musculação)',
+        'crosstraining' => 'Raio (CrossTraining)',
+        'funcional' => 'Gota (Funcional)',
+        'spinning' => 'Relógio (Spinning)',
+        'boxe' => 'Luva (Boxe)',
+        'mobilidade' => 'Folha (Mobilidade & Yoga)',
+        'generico' => 'Estrela (genérico)',
+    ];
+}
+
 function bo_modal_modalidade(?array $m, string $secao): void
 {
     $isEdit = $m !== null;
     $modalId = $isEdit ? 'modalModalidadeEditar' . $m['id'] : 'modalModalidadeNova';
+    $iconeAtual = $m['icone'] ?? 'generico';
     ?>
     <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
@@ -486,6 +507,18 @@ function bo_modal_modalidade(?array $m, string $secao): void
                         <div class="col-12">
                             <label class="form-label">Nome da modalidade</label>
                             <input type="text" class="form-control" name="nome" value="<?php echo bo_val($m['nome'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Descrição (exibida na home)</label>
+                            <textarea class="form-control" name="descricao" rows="3" maxlength="300"><?php echo bo_val($m['descricao'] ?? ''); ?></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Ícone (exibido na home)</label>
+                            <select class="form-select" name="icone">
+                                <?php foreach (bo_icones_modalidade_options() as $chave => $rotulo): ?>
+                                    <option value="<?php echo $chave; ?>" <?php echo $iconeAtual === $chave ? 'selected' : ''; ?>><?php echo $rotulo; ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">

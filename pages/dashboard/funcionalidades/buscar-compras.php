@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 $busca = $_GET['busca'] ?? '';
 $status = $_GET['status'] ?? '';
 if (!is_string($busca) || !is_string($status) || strlen($busca) > 600
-    || !in_array($status, ['', 'aguardando', 'entregue', 'cancelado', 'devolvido'], true)) {
+    || !in_array($status, ['', 'aguardando', 'preparando', 'despachado', 'entregue', 'cancelado', 'devolvido', 'extraviado'], true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Filtros inválidos.']);
     exit;

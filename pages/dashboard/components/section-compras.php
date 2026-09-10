@@ -11,9 +11,12 @@
         <select data-compras-status aria-label="Status da compra" class="form-select" style="max-width:200px">
             <option value="">Todos</option>
             <option value="aguardando">Aguardando</option>
-            <option value="entregue">Entregue</option>
+            <option value="preparando">Em preparação</option>
+            <option value="despachado">Enviado</option>
+            <option value="entregue">Finalizado</option>
             <option value="cancelado">Cancelado</option>
             <option value="devolvido">Devolvido</option>
+            <option value="extraviado">Extraviado</option>
         </select>
     </div>
 

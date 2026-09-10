@@ -266,6 +266,7 @@ if ($perfilLogado === 'admin') {
     // Tela "Vendas Marketplace" (visão agregada de todos os vendedores)
     $admVendasProdutos = bo_carregar_produtos_vendedor($conn, null);
     $admVendas = bo_carregar_vendas_vendedor($conn, null);
+    $admDevolucoes = bo_carregar_devolucoes($conn);
     $transportadoras = bo_carregar_transportadoras($conn);
 
     // Tela "Cadastro de Planos"
@@ -292,9 +293,15 @@ if ($perfilLogado === 'admin') {
 
     // Tela "Modalidades"
     $modalidadesAdm = [];
-    if ($r = $conn->query('SELECT id_modalidade, nome FROM modalidades ORDER BY nome')) {
+    if ($r = $conn->query('SELECT id_modalidade, nome, descricao, icone, status FROM modalidades ORDER BY nome')) {
         while ($row = $r->fetch_assoc()) {
-            $modalidadesAdm[] = ['id' => (int) $row['id_modalidade'], 'nome' => $row['nome']];
+            $modalidadesAdm[] = [
+                'id' => (int) $row['id_modalidade'],
+                'nome' => $row['nome'],
+                'descricao' => $row['descricao'],
+                'icone' => $row['icone'],
+                'status' => $row['status'],
+            ];
         }
     }
     $modalidadesOptions = array_map(static fn(array $m): string => $m['nome'], $modalidadesAdm);
@@ -668,6 +675,42 @@ function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
     $stmt->close();
 
     return $vendas;
+}
+
+/**
+ * Solicitações de devolução de pedidos (tabela `pedido_devolucao`), com
+ * dados do pedido e do comprador — usada na aba "Devoluções" de Vendas
+ * Marketplace (admin).
+ */
+function bo_carregar_devolucoes(mysqli $conn): array
+{
+    $sql = "SELECT d.id_devolucao, d.id_pedido, d.motivo, d.observacao, d.status,
+                   d.data_solicitacao, d.data_analise, d.data_conclusao,
+                   pe.valor_total, pe.status AS status_pedido, u.nome AS comprador_nome
+            FROM pedido_devolucao d
+            JOIN pedido pe ON pe.id_pedido = d.id_pedido
+            JOIN usuarios u ON u.id_usuario = pe.id_usuario
+            ORDER BY d.data_solicitacao DESC";
+    $res = $conn->query($sql);
+
+    $devolucoes = [];
+    while ($row = $res->fetch_assoc()) {
+        $devolucoes[] = [
+            'id' => (int) $row['id_devolucao'],
+            'idPedido' => (int) $row['id_pedido'],
+            'transacao' => 'TRX-' . str_pad((string) $row['id_pedido'], 4, '0', STR_PAD_LEFT),
+            'comprador' => $row['comprador_nome'],
+            'valor' => (float) $row['valor_total'],
+            'motivo' => $row['motivo'],
+            'observacao' => $row['observacao'],
+            'status' => $row['status'],
+            'dataSolicitacao' => date('d/m/Y H:i', strtotime($row['data_solicitacao'])),
+            'dataAnalise' => $row['data_analise'] ? date('d/m/Y H:i', strtotime($row['data_analise'])) : null,
+            'dataConclusao' => $row['data_conclusao'] ? date('d/m/Y H:i', strtotime($row['data_conclusao'])) : null,
+        ];
+    }
+
+    return $devolucoes;
 }
 
 /**

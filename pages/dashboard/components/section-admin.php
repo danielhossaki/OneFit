@@ -565,6 +565,9 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabTransportadoras" type="button" role="tab">Transportadoras</button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#admVendasTabDevolucoes" type="button" role="tab">Devoluções</button>
+        </li>
     </ul>
 
     <div class="tab-content">
@@ -681,6 +684,65 @@
                 <?php bo_modal_confirmar_exclusao('transportadoras', $t['id'], $t['nome'], 'vendas'); ?>
             <?php endforeach; ?>
         </div>
+
+        <!-- ===== Devoluções solicitadas pelos compradores ===== -->
+        <div class="tab-pane fade" id="admVendasTabDevolucoes" role="tabpanel">
+            <?php $admDevolucaoStatusLabel = bo_status_devolucao_labels(); ?>
+            <div class="bo-table-wrap mt-3">
+                <div class="table-responsive">
+                    <table class="bo-table">
+                        <thead>
+                            <tr><th>Solicitado em</th><th>Pedido</th><th>Comprador</th><th>Valor</th><th>Motivo</th><th>Status</th><th>Ação</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($admDevolucoes as $d): ?>
+                                <tr>
+                                    <td><?php echo $d['dataSolicitacao']; ?></td>
+                                    <td><?php echo $d['transacao']; ?></td>
+                                    <td><?php echo htmlspecialchars($d['comprador']); ?></td>
+                                    <td><?php echo bo_money($d['valor']); ?></td>
+                                    <td><?php echo htmlspecialchars($d['motivo']); ?></td>
+                                    <td><span class="bo-badge"><?php echo $admDevolucaoStatusLabel[$d['status']] ?? ucfirst($d['status']); ?></span></td>
+                                    <td>
+                                        <?php if ($d['status'] === 'pendente'): ?>
+                                            <form method="POST" action="<?php echo bo_form_action('devolucoes.php'); ?>" class="bo-inline-form">
+                                                <?php echo bo_csrf_field(); ?>
+                                                <?php echo bo_hidden('secao', 'vendas'); ?>
+                                                <?php echo bo_hidden('acao', 'aprovar'); ?>
+                                                <?php echo bo_hidden('id', $d['id']); ?>
+                                                <button type="submit" class="btn-bo-outline btn-sm">Aprovar</button>
+                                            </form>
+                                            <details>
+                                                <summary>Recusar</summary>
+                                                <form method="POST" action="<?php echo bo_form_action('devolucoes.php'); ?>" class="bo-inline-form">
+                                                    <?php echo bo_csrf_field(); ?>
+                                                    <?php echo bo_hidden('secao', 'vendas'); ?>
+                                                    <?php echo bo_hidden('acao', 'recusar'); ?>
+                                                    <?php echo bo_hidden('id', $d['id']); ?>
+                                                    <textarea name="resposta_admin" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Motivo da recusa" required></textarea>
+                                                    <button type="submit" class="btn-bo-outline btn-sm mt-1">Confirmar recusa</button>
+                                                </form>
+                                            </details>
+                                        <?php elseif ($d['status'] === 'aceita'): ?>
+                                            <form method="POST" action="<?php echo bo_form_action('devolucoes.php'); ?>" class="bo-inline-form">
+                                                <?php echo bo_csrf_field(); ?>
+                                                <?php echo bo_hidden('secao', 'vendas'); ?>
+                                                <?php echo bo_hidden('acao', 'concluir'); ?>
+                                                <?php echo bo_hidden('id', $d['id']); ?>
+                                                <button type="submit" class="btn-bo-gold btn-sm">Concluir devolução</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <small>—</small>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                            <tr class="bo-empty-row" <?php echo empty($admDevolucoes) ? '' : 'style="display:none"'; ?>><td colspan="7">Nenhuma devolução solicitada até o momento.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
@@ -794,7 +856,7 @@
                 <tbody>
                     <?php foreach ($profissionaisAdm as $p): ?>
                         <tr data-status="<?php echo $p['status']; ?>"
-                            data-search="<?php echo strtolower($p['nome'] . ' ' . $p['funcao'] . ' ' . $p['documento']); ?>">
+                            data-search="<?php echo strtolower($p['id'] . ' #' . str_pad((string) $p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['nome'] . ' ' . $p['funcao'] . ' ' . $p['documento']); ?>">
                             <td>
                                 <div class="bo-thumb">
                                     <?php if ($p['foto']): ?>
@@ -849,8 +911,12 @@
     <div class="bo-list">
         <?php foreach ($modalidadesAdm as $m): ?>
             <div class="bo-list-item">
-                <div class="bo-list-title"><?php echo $m['nome']; ?></div>
+                <div>
+                    <div class="bo-list-title"><?php echo $m['nome']; ?> <?php echo bo_badge($m['status'] === 'ativo', 'Ativo', 'Inativo'); ?></div>
+                    <?php if ($m['descricao']): ?><div class="bo-list-sub"><?php echo htmlspecialchars($m['descricao']); ?></div><?php endif; ?>
+                </div>
                 <div class="bo-table-actions">
+                    <?php bo_form_toggle('modalidades', $m['id'], 'modalidades', $m['status'] === 'ativo'); ?>
                     <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalModalidadeEditar<?php echo $m['id']; ?>">
                         <i class="bi bi-pencil"></i>
                     </button>

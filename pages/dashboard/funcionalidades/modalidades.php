@@ -6,11 +6,33 @@
  */
 
 require __DIR__ . '/_shared.php';
+require __DIR__ . '/../includes/admin-forms.php';
 bo_check_csrf();
 
 $acao = bo_str('acao');
 $id = (int) bo_str('id');
 $secao = bo_secao_atual();
+
+const MODALIDADE_ICONE_PADRAO = 'generico';
+
+function modalidade_icone_valido(string $icone): string
+{
+    $valido = array_key_exists($icone, bo_icones_modalidade_options());
+    return $valido ? $icone : MODALIDADE_ICONE_PADRAO;
+}
+
+if ($acao === 'toggle-status') {
+    if (!$id) {
+        bo_flash('error', 'Modalidade inválida.');
+        bo_redirect($secao);
+    }
+    $stmt = $conn->prepare("UPDATE modalidades SET status = IF(status = 'ativo', 'inativo', 'ativo') WHERE id_modalidade = ?");
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->close();
+    bo_flash('success', 'Status da modalidade atualizado.');
+    bo_redirect($secao);
+}
 
 if ($acao === 'delete') {
     if (!$id) {
@@ -26,6 +48,8 @@ if ($acao === 'delete') {
 }
 
 $nome = bo_str('nome');
+$descricao = bo_str('descricao');
+$icone = modalidade_icone_valido(bo_str('icone'));
 if (!$nome) {
     bo_flash('error', 'Informe o nome da modalidade.');
     bo_redirect($secao);
@@ -42,8 +66,8 @@ if ($acao === 'update') {
     $old = $stmtOld->get_result()->fetch_assoc();
     $stmtOld->close();
 
-    $stmt = $conn->prepare('UPDATE modalidades SET nome = ? WHERE id_modalidade = ?');
-    $stmt->bind_param('si', $nome, $id);
+    $stmt = $conn->prepare('UPDATE modalidades SET nome = ?, descricao = ?, icone = ? WHERE id_modalidade = ?');
+    $stmt->bind_param('sssi', $nome, $descricao, $icone, $id);
     try {
         $stmt->execute();
     } catch (\Throwable $e) {
@@ -80,8 +104,8 @@ if ($r = $conn->query('SELECT COALESCE(MAX(id_modalidade), 0) + 1 AS proximo FRO
     $novoId = (int) $r->fetch_assoc()['proximo'];
 }
 
-$stmt = $conn->prepare('INSERT INTO modalidades (id_modalidade, nome) VALUES (?, ?)');
-$stmt->bind_param('is', $novoId, $nome);
+$stmt = $conn->prepare('INSERT INTO modalidades (id_modalidade, nome, descricao, icone) VALUES (?, ?, ?, ?)');
+$stmt->bind_param('isss', $novoId, $nome, $descricao, $icone);
 try {
     $stmt->execute();
 } catch (\Throwable $e) {

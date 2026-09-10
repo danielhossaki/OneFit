@@ -23,12 +23,12 @@ foreach ($users as $user) {
         $trackingIds = array_map(static fn($node) => trim($node->textContent), iterator_to_array($tracking));
         $historyIds = array_map(static fn($node) => trim($node->textContent), iterator_to_array($history));
         foreach ($comprasPedidos as $order) {
-            if (!in_array($order['transacao'], $trackingIds, true) || !in_array($order['transacao'], $historyIds, true)) {
-                throw new RuntimeException('Compra em andamento não aparece nas duas tabelas');
-            }
+            if (!in_array($order['transacao'], $trackingIds, true)) throw new RuntimeException('Compra em andamento ausente do acompanhamento');
+            if (in_array($order['transacao'], $historyIds, true)) throw new RuntimeException('Compra em andamento vazou para o histórico');
         }
         foreach ($comprasHistorico as $order) {
-            if (!in_array($order['transacao'], $historyIds, true)) throw new RuntimeException('Compra finalizada ausente');
+            if (!in_array($order['transacao'], $historyIds, true)) throw new RuntimeException('Compra finalizada ausente do histórico');
+            if (in_array($order['transacao'], $trackingIds, true)) throw new RuntimeException('Compra finalizada vazou para o acompanhamento');
         }
         $checks++;
     }

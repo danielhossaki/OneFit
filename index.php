@@ -11,6 +11,37 @@ $whatsappUrl = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($wha
 $whatsappMensagemAula = 'Olá! Vim pelo site da OneFit e gostaria de agendar uma aula experimental. Poderia me passar mais informações?';
 $whatsappUrlAula = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($whatsappMensagemAula);
 
+/* Ícones das modalidades (chave = coluna `modalidades.icone`) — mesmo
+ * conjunto oferecido no select da tela admin (bo_icones_modalidade_options
+ * em pages/dashboard/includes/admin-forms.php). Mantém o SVG idêntico ao
+ * que já existia fixo nesta seção antes de ficar dinâmica. */
+function onefit_icone_modalidade(string $icone): string
+{
+    $icones = [
+        'musculacao' => '<path d="M4 12h2M18 12h2M6 9v6M18 9v6M8 12h8" stroke-linecap="round" />',
+        'crosstraining' => '<path d="M12 3l2 5-2 2-2-2 2-5zM12 21l-2-5 2-2 2 2-2 5zM3 12l5-2 2 2-2 2-5-2zM21 12l-5 2-2-2 2-2 5 2z" />',
+        'funcional' => '<path d="M12 2a5 5 0 015 5c0 3-2 4-2 7v3H9v-3c0-3-2-4-2-7a5 5 0 015-5z" />',
+        'spinning' => '<circle cx="12" cy="12" r="8" /><path d="M12 8v4l3 2" stroke-linecap="round" />',
+        'boxe' => '<circle cx="12" cy="6" r="2" /><path d="M6 21l3-7 3 2 3-2 3 7M9 14l-2-6h10l-2 6" stroke-linecap="round" stroke-linejoin="round" />',
+        'mobilidade' => '<path d="M12 3c-3 3-3 7 0 9 3-2 3-6 0-9zM7 14c0 4 2 7 5 7s5-3 5-7" stroke-linecap="round" stroke-linejoin="round" />',
+        'generico' => '<path d="M12 2l2.4 6.9H21l-5.6 4.3 2.1 7L12 16l-5.5 4.2 2.1-7L3 8.9h6.6z" stroke-linejoin="round" />',
+    ];
+    return $icones[$icone] ?? $icones['generico'];
+}
+
+/* Modalidades cadastradas no backoffice (aba Modalidades), exibidas na
+ * seção "#modalidades" logo abaixo. */
+$modalidades = [];
+if ($r = $conn->query("SELECT nome, descricao, icone FROM modalidades WHERE status = 'ativo' ORDER BY id_modalidade")) {
+    while ($row = $r->fetch_assoc()) {
+        $modalidades[] = [
+            'nome' => $row['nome'],
+            'descricao' => $row['descricao'],
+            'icone' => $row['icone'],
+        ];
+    }
+}
+
 /* Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
  * na seção "#planos" logo abaixo. */
 $planosAtivos = [];
@@ -169,59 +200,19 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <span class="tag">Modalidades</span>
           <h2>Escolha sua<br>forma de treinar</h2>
         </div>
-        <p>Seis caminhos, um mesmo objetivo: sair mais forte do que entrou. Todos com professores especialistas acompanhando cada série.</p>
+        <p>Vários caminhos, um mesmo objetivo: sair mais forte do que entrou. Todos com professores especialistas acompanhando cada série.</p>
       </div>
       <div class="mod-grid" data-aos="fade-up">
 
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="50">
+        <?php foreach ($modalidades as $i => $mod): ?>
+        <div class="mod-card" data-aos="fade-up" data-aos-delay="<?php echo 50 + $i * 50; ?>">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M4 12h2M18 12h2M6 9v6M18 9v6M8 12h8" stroke-linecap="round" />
+              <?php echo onefit_icone_modalidade($mod['icone']); ?>
             </svg></div>
-          <h3>Musculação</h3>
-          <p>Piso completo com equipamentos livres e guiados, para hipertrofia, força e ajuste postural.</p>
+          <h3><?php echo htmlspecialchars(mb_strtoupper(mb_substr($mod['nome'], 0, 1)) . mb_substr($mod['nome'], 1)); ?></h3>
+          <p><?php echo htmlspecialchars($mod['descricao']); ?></p>
         </div>
-
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="150">
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M12 3l2 5-2 2-2-2 2-5zM12 21l-2-5 2-2 2 2-2 5zM3 12l5-2 2 2-2 2-5-2zM21 12l-5 2-2-2 2-2 5 2z" />
-            </svg></div>
-          <h3>CrossTraining</h3>
-          <p>Treino funcional de alta intensidade em turmas pequenas, com WOD novo todos os dias.</p>
-        </div>
-
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="200">
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M12 2a5 5 0 015 5c0 3-2 4-2 7v3H9v-3c0-3-2-4-2-7a5 5 0 015-5z" />
-            </svg></div>
-          <h3>Funcional</h3>
-          <p>Movimentos que imitam o dia a dia: força, equilíbrio e mobilidade trabalhados juntos.</p>
-        </div>
-
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="250">
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <circle cx="12" cy="12" r="8" />
-              <path d="M12 8v4l3 2" stroke-linecap="round" />
-            </svg></div>
-          <h3>Spinning</h3>
-          <p>Aulas em ritmo guiado por música, foco em resistência cardiovascular e queima calórica.</p>
-        </div>
-
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="300">
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <circle cx="12" cy="6" r="2" />
-              <path d="M6 21l3-7 3 2 3-2 3 7M9 14l-2-6h10l-2 6" stroke-linecap="round" stroke-linejoin="round" />
-            </svg></div>
-          <h3>Boxe</h3>
-          <p>Técnica, potência e explosão em treinos de sacos e pads, com preparo físico incluso.</p>
-        </div>
-
-        <div class="mod-card" data-aos="fade-up" data-aos-delay="350">
-          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-              <path d="M12 3c-3 3-3 7 0 9 3-2 3-6 0-9zM7 14c0 4 2 7 5 7s5-3 5-7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg></div>
-          <h3>Mobilidade &amp; Yoga</h3>
-          <p>Recuperação ativa, alongamento guiado e respiração para equilibrar o treino pesado.</p>
-        </div>
+        <?php endforeach; ?>
 
       </div>
     </div>

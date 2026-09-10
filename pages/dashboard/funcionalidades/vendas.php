@@ -9,6 +9,7 @@
 
 $bo_papeis_permitidos = ['admin', 'vendedor'];
 require __DIR__ . '/_shared.php';
+require __DIR__ . '/../includes/compras.php';
 bo_check_csrf();
 
 $souVendedor = ($_SESSION['tipo_usuario'] ?? '') === 'vendedor';
@@ -63,6 +64,10 @@ if ($acao === 'update-status') {
         $stmt->bind_param('ssi', $status, $codigoRastreio, $id);
         $stmt->execute();
         $stmt->close();
+        // pedido.status é recalculado aqui, na mesma transação: é a única
+        // fonte de verdade do status que o comprador vê em "Minhas compras",
+        // então precisa refletir imediatamente qualquer mudança de item.
+        bo_recalcular_status_pedido($conn, (int) $itemAnterior['id_pedido']);
         $conn->commit();
     } catch (Throwable $erroVenda) {
         $conn->rollback();

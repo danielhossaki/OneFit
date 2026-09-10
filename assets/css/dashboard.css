@@ -1798,6 +1798,9 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 }
 
 [data-bo-compras] .bo-compra-aguardando { color: #d8b45a; background: rgba(216, 180, 90, .12); }
+[data-bo-compras] .bo-compra-preparando { color: #d8b45a; background: rgba(216, 180, 90, .12); }
+[data-bo-compras] .bo-compra-despachado { color: #6fa8dc; background: rgba(111, 168, 220, .12); }
 [data-bo-compras] .bo-compra-entregue { color: #55ba88; background: rgba(85, 186, 136, .12); }
 [data-bo-compras] .bo-compra-cancelado { color: #df8585; background: rgba(223, 133, 133, .12); }
 [data-bo-compras] .bo-compra-devolvido { color: #b19bd9; background: rgba(177, 155, 217, .12); }
+[data-bo-compras] .bo-compra-extraviado { color: #df8585; background: rgba(223, 133, 133, .12); }

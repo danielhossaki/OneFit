@@ -1,12 +1,12 @@
 <?php
-// Histórico registra todas as compras, inclusive as que ainda estão aguardando.
-// O contador continua somando os grupos disjuntos da consulta, sem duplicação.
-$comprasHistoricoExibido = array_merge($comprasPedidos, $comprasHistorico);
-usort($comprasHistoricoExibido, static function (array $a, array $b): int {
-    $dataA = DateTimeImmutable::createFromFormat('d/m/Y H:i', $a['data']);
-    $dataB = DateTimeImmutable::createFromFormat('d/m/Y H:i', $b['data']);
-    return ($dataB <=> $dataA) ?: ((int) substr($b['transacao'], 4) <=> (int) substr($a['transacao'], 4));
-});
+// Histórico mostra só pedidos finalizado/cancelado/devolvido — a consulta em
+// bo_carregar_pedidos() já vem filtrada assim, sem misturar com o que ainda
+// está em andamento.
+$comprasHistoricoExibido = $comprasHistorico;
+
+$idsPedidoVisiveis = array_column(array_merge($comprasPedidos, $comprasHistorico), 'idPedido');
+$devolucoesPorPedido = bo_carregar_devolucoes_por_pedido($conn, $idsPedidoVisiveis);
+$devolucaoStatusLabel = bo_status_devolucao_labels();
 ?>
 <?php if (!$comprasPedidos && !$comprasHistorico): ?><p class="bo-card">Nenhuma compra encontrada.</p><?php endif; ?>
     <div class="row g-3 mb-3">
@@ -31,16 +31,17 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                         <th>Valor</th>
                         <th>Status</th>
                         <th>Recebimento</th>
+                        <th>Devolução</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($comprasPedidos)): ?><tr><td colspan="7">Nenhum pedido em andamento corresponde aos filtros selecionados.</td></tr><?php endif; ?>
+                    <?php if (empty($comprasPedidos)): ?><tr><td colspan="8">Nenhum pedido em andamento corresponde aos filtros selecionados.</td></tr><?php endif; ?>
                     <?php foreach ($comprasPedidos as $ped): ?>
                         <?php
                         $vendedoresPedido = array_unique(array_column($ped['itens'], 'vendedor'));
                         $itensRecebidos = array_filter($ped['itens'], static fn(array $item): bool => $item['confirmadoRecebimento']);
                         $itensConfirmaveis = array_filter($ped['itens'], static fn(array $item): bool =>
-                            $ped['statusBanco'] === 'aguardando' && $item['statusLogisticaBanco'] === 'despachado');
+                            $item['statusLogisticaBanco'] === 'entregue' && !$item['confirmadoRecebimento']);
                         $recebimentoPedido = 'Não definido';
                         if ($itensRecebidos) {
                             $recebimentoPedido = 'Recebimento parcial (' . count($itensRecebidos) . '/' . count($ped['itens']) . ' itens)';
@@ -59,6 +60,7 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                             <td>
                                 <?php foreach ($ped['itens'] as $it): ?>
                                     <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?></div>
+                                    <?php if ($it['codigoRastreio']): ?><div><small>Rastreio: <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
                                 <?php endforeach; ?>
                             </td>
                             <td>
@@ -73,7 +75,7 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                                 <small><?php echo htmlspecialchars($recebimentoPedido); ?></small>
                                 <?php if ($itensConfirmaveis): ?>
                                     <details>
-                                        <summary>Confirmar itens recebidos</summary>
+                                        <summary>Confirmar entrega</summary>
                                         <?php foreach ($itensConfirmaveis as $it): ?>
                                         <div><small><?php echo htmlspecialchars($it['produto']); ?></small></div>
                                         <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
@@ -81,12 +83,13 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                                             <?php echo bo_hidden('secao', 'compras'); ?>
                                             <?php echo bo_hidden('acao', 'confirmar-recebimento'); ?>
                                             <?php echo bo_hidden('id_item', $it['idItem']); ?>
-                                            <button type="submit" class="btn-bo-outline btn-sm">Confirmar recebimento</button>
+                                            <button type="submit" class="btn-bo-gold btn-sm">Confirmar entrega</button>
                                         </form>
                                         <?php endforeach; ?>
                                     </details>
                                 <?php endif; ?>
                             </td>
+                            <td><?php require __DIR__ . '/compras-devolucao-celula.php'; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -104,10 +107,11 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                         <th>Data/hora</th>
                         <th>Produto</th>
                         <th>Status</th>
+                        <th>Devolução</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($comprasHistoricoExibido)): ?><tr><td colspan="4">Nenhuma compra no histórico corresponde aos filtros selecionados.</td></tr><?php endif; ?>
+                    <?php if (empty($comprasHistoricoExibido)): ?><tr><td colspan="5">Nenhuma compra no histórico corresponde aos filtros selecionados.</td></tr><?php endif; ?>
                     <?php foreach ($comprasHistoricoExibido as $ped): ?>
                         <tr>
                             <td><?php echo $ped['transacao']; ?></td>
@@ -115,9 +119,11 @@ usort($comprasHistoricoExibido, static function (array $a, array $b): int {
                             <td>
                                 <?php foreach ($ped['itens'] as $it): ?>
                                     <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?></div>
+                                    <?php if ($it['codigoRastreio']): ?><div><small>Rastreio: <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
                                 <?php endforeach; ?>
                             </td>
                             <td><span class="bo-badge bo-compra-<?php echo $ped['statusBanco']; ?>"><?php echo $ped['status']; ?></span></td>
+                            <td><?php require __DIR__ . '/compras-devolucao-celula.php'; ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
