@@ -1,36 +1,11 @@
 <head>
     <style>
         :root {
-            --bg: #14110E;
-            --bg2: #14110e83;
-            --surface: #1E1A15;
-            --surface-2: #241F18;
-            --text: #F3EDE2;
-            --text-muted: #B0A896;
-            --gold: #D4AF37;
-            --gold-bright: #F4C430;
-            --gold-dim: #8A6B21;
-            --bronze: #A8763F;
-            --border: rgba(243, 237, 226, 0.12);
             --shadow: rgba(0, 0, 0, 0.45);
-            --overlay: rgba(20, 17, 14, 0.72);
         }
 
         html[data-theme="light"] {
-            --bg: #F7F4EE;
-            --bg2: #F7F4EE83;
-            --surface: #FFFFFF;
-            --surface-1: #f4e2b40d;
-            --surface-2: #d4cab5;
-            --text: #1A1613;
-            --text-muted: #6B6255;
-            --gold: #B8892B;
-            --gold-bright: #8A6414;
-            --gold-dim: #D8BE72;
-            --bronze: #7A4E2D;
-            --border: rgba(26, 22, 19, 0.12);
             --shadow: rgba(26, 22, 19, 0.12);
-            --overlay: rgba(247, 244, 238, 0.82);
         }
 
         * {

@@ -243,4 +243,4 @@ require __DIR__ . '/section-compras.php'; ?>
     <?php endforeach; ?>
 </section>
 
-<script src="<?php echo BASE_URL; ?>assets/js/agenda.js" defer></script>F
+<script src="<?php echo BASE_URL; ?>assets/js/agenda.js" defer></script>

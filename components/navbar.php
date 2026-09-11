@@ -1,36 +1,11 @@
 <head>
     <style>
         :root {
-            --bg: #14110E;
-            --bg2: #14110e83;
-            --surface: #1E1A15;
-            --surface-2: #241F18;
-            --text: #F3EDE2;
-            --text-muted: #B0A896;
-            --gold: #D4AF37;
-            --gold-bright: #F4C430;
-            --gold-dim: #8A6B21;
-            --bronze: #A8763F;
-            --border: rgba(243, 237, 226, 0.12);
             --shadow: rgba(0, 0, 0, 0.45);
-            --overlay: rgba(20, 17, 14, 0.72);
         }
 
         html[data-theme="light"] {
-            --bg: #F7F4EE;
-            --bg2: rgba(255, 255, 255, 0.77) !important;
-            --surface: #FFFFFF;
-            --surface-1: #f4e2b40d;
-            --surface-2: #d4cab5;
-            --text: #1A1613;
-            --text-muted: #6B6255;
-            --gold: #B8892B;
-            --gold-bright: #8A6414;
-            --gold-dim: #D8BE72;
-            --bronze: #7A4E2D;
-            --border: rgba(26, 22, 19, 0.12);
             --shadow: rgba(26, 22, 19, 0.12);
-            --overlay: rgba(247, 244, 238, 0.82);
         }
 
         * {
@@ -282,7 +257,8 @@
 <nav class="nav" >
 
     <div class="logo">
-        <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit" class="logo-mark">
+        <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>" class="logo-mark">
+        <span data-brand-name><?php echo onefitNomeMarca(); ?></span>
     </div>
 
     <div class="nav-links" id="navLinks">
@@ -303,7 +279,7 @@
 
         <button class="theme-toggle" id="themeToggle">
             <span class="knob">
-                <svg id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="#1A1613" stroke-width="2.5" stroke-linecap="round">
+                <svg id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="var(--accent-ink)" stroke-width="2.5" stroke-linecap="round">
                     <path d="M12 3v1M12 20v1M4.2 4.2l.7.7M19.1 19.1l.7.7M3 12h1M20 12h1M4.2 19.8l.7-.7M19.1 4.9l.7-.7" />
                     <circle cx="12" cy="12" r="4.5" />
                 </svg>

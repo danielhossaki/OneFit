@@ -416,7 +416,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <!-- Biblioteca de animações de entrada. -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- Ícone exibido na aba do navegador. -->
-  <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+  <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
 </head>
 

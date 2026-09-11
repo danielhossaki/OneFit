@@ -1,31 +1,9 @@
 :root {
-    --bg: #14110E;
-    --surface: #1E1A15;
-    --surface-2: #241F18;
-    --text: #F3EDE2;
-    --text-muted: #B0A896;
-    --gold: var(--accent, #D4AF37);
-    --gold-bright: var(--accent-bright, #F4C430);
-    --gold-dim: var(--accent-dim, #8A6B21);
-    --bronze: var(--accent-dim, #A8763F);
-    --border: rgba(243, 237, 226, 0.12);
     --shadow: rgba(0, 0, 0, 0.45);
-    --overlay: rgba(20, 17, 14, 0.72);
 }
 
 html[data-theme="light"] {
-    --bg: #F7F4EE;
-    --surface: #FFFFFF;
-    --surface-2: #F0EBE0;
-    --text: #1A1613;
-    --text-muted: #6B6255;
-    --gold: var(--accent, #B8892B);
-    --gold-bright: var(--accent-bright, #8A6414);
-    --gold-dim: var(--accent-dim, #D8BE72);
-    --bronze: var(--accent-dim, #7A4E2D);
-    --border: rgba(26, 22, 19, 0.12);
     --shadow: rgba(26, 22, 19, 0.12);
-    --overlay: rgba(247, 244, 238, 0.82);
 }
 
 * {
@@ -112,14 +90,14 @@ a {
     text-align: center;
     overflow: hidden;
     background-image:
-        linear-gradient(180deg, rgba(10, 8, 6, 0.88) 0%, rgba(10, 8, 6, 0.80) 55%, #14110E 96%),
+        linear-gradient(180deg, hsl(var(--theme-hue) 22% 6% / 0.88) 0%, hsl(var(--theme-hue) 22% 6% / 0.80) 55%, var(--theme-bg) 96%),
         url('https://images.unsplash.com/photo-1689877020200-403d8542d95d?q=80&w=1800&auto=format&fit=crop');
     background-size: cover;
     background-position: center 30%;
 }
 
 html[data-theme="light"] .hero {
-    background-image: linear-gradient(180deg, rgba(20, 16, 12, 0.82) 0%, rgba(30, 24, 18, 0.78) 55%, rgb(5 4 3 / 92%) 96%), url(https://images.unsplash.com/photo-1689877020200-403d8542d95d?q=80&w=1800&auto=format&fit=crop) !important;
+    background-image: linear-gradient(180deg, hsl(var(--theme-hue) 22% 6% / 0.82) 0%, hsl(var(--theme-hue) 22% 6% / 0.78) 55%, rgb(5 4 3 / 92%) 96%), url(https://images.unsplash.com/photo-1689877020200-403d8542d95d?q=80&w=1800&auto=format&fit=crop) !important;
 }
 
 .hero::before {
@@ -133,7 +111,7 @@ html[data-theme="light"] .hero {
 
 .btn-gold {
     background: var(--gold);
-    color: #1A1613;
+    color: var(--accent-ink);
     border-radius: 1rem !important;
 }
 
@@ -153,11 +131,11 @@ html[data-theme="light"] .hero {
 .hero,
 .hero .eyebrow,
 .hero .lead {
-    color: #F3EDE2;
+    color: var(--theme-text);
 }
 
 .hero .lead {
-    color: #C9C0B2;
+    color: var(--theme-muted);
 }
 
 .eyebrow {
@@ -383,7 +361,7 @@ section.block {
     top: -13px;
     left: 32px;
     background: var(--gold);
-    color: #1A1613;
+    color: var(--accent-ink);
     font-size: 11px;
     font-weight: 800;
     text-transform: uppercase;
@@ -687,7 +665,7 @@ footer {
 .equip-item .shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(180deg, transparent 35%, rgba(10, 8, 6, 0.92) 100%);
+    background: linear-gradient(180deg, transparent 35%, hsl(var(--theme-hue) 22% 6% / 0.92) 100%);
 }
 
 .equip-item .caption {
@@ -708,7 +686,7 @@ footer {
 .equip-item .caption p {
     font-size: 12.5px;
     line-height: 1.5;
-    color: #C9C0B2;
+    color: var(--theme-muted);
 }
 
 .equip-item .tagdot {
@@ -760,7 +738,7 @@ footer {
     border: 1px solid var(--border);
     border-radius: 12px;
     background: #25D366;
-    color: #14110E;
+    color: var(--theme-bg);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
     font-size: 14px;
     font-weight: 600;

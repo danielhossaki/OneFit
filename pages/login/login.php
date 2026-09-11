@@ -114,7 +114,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <!-- Biblioteca de animações de entrada. -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- Ícone exibido na aba do navegador. -->
-  <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+  <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
 </head>
 
@@ -135,7 +135,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">ONE<span>FIT</span></a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
 
         <div class="login-visual-text">
           <span class="eyebrow"><?php echo of_t('Treino de alta performance'); ?></span>
@@ -148,7 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-form-panel">
       <div class="login-form-wrap" data-aos="fade-right" data-aos-delay="250">
 
-        <a href="<?php echo BASE_URL; ?>pages/index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
 
         <span class="tag"><?php echo of_t('Bem-vindo de volta'); ?></span>
         <h1><?php echo of_t('Entrar'); ?></h1>

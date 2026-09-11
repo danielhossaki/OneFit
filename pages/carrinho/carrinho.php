@@ -292,7 +292,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+    <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/carrinho.css">
     <style>
         /* Os inputs de forma de pagamento agora são radios reais (funcionam sem JS);
@@ -308,7 +308,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 
     <header class="crt-header">
         <div class="crt-logo">
-            <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit">
+            <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
             <span><?php echo of_t('One Fit · Carrinho'); ?></span>
         </div>
 

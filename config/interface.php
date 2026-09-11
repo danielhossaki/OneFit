@@ -1,7 +1,26 @@
 <?php
 /** Shared presentation settings. No writes or schema changes during requests. */
 function onefitIdiomas(): array { return ['pt-BR', 'en', 'es']; }
-function onefitTemas(): array { return ['dourado', 'azul', 'verde', 'vermelho', 'roxo']; }
+function onefitIdentidades(): array {
+    return [
+        'dourado' => ['name' => 'One Fit', 'logo' => 'logo_onefit.webp'],
+        'azul' => ['name' => 'Sky Fit', 'logo' => 'logo_skyfit.webp'],
+        'verde' => ['name' => 'Nature Fit', 'logo' => 'logo_naturefit.webp'],
+        'vermelho' => ['name' => 'Blood Fit', 'logo' => 'logo_bloodfit.webp'],
+        'roxo' => ['name' => 'Purple Fit', 'logo' => 'logo_purplefit.webp'],
+    ];
+}
+function onefitTemas(): array { return array_keys(onefitIdentidades()); }
+function onefitMarca(?string $theme = null): array {
+    $brands = onefitIdentidades();
+    $brand = $brands[$theme ?? ($GLOBALS['onefitTemaGlobal'] ?? 'dourado')] ?? $brands['dourado'];
+    if (!is_file(__DIR__ . '/../assets/img/logo/' . $brand['logo'])) $brand['logo'] = $brands['dourado']['logo'];
+    return $brand;
+}
+function onefitLogo(): string {
+    return htmlspecialchars(BASE_URL . 'assets/img/logo/' . onefitMarca()['logo'], ENT_QUOTES, 'UTF-8');
+}
+function onefitNomeMarca(): string { return htmlspecialchars(onefitMarca()['name'], ENT_QUOTES, 'UTF-8'); }
 function onefitIdioma(): string {
     $value = $_SESSION['idioma'] ?? 'pt-BR';
     return in_array($value, onefitIdiomas(), true) ? $value : 'pt-BR';
@@ -46,7 +65,9 @@ function onefitInterfaceHead(): void {
     echo '<link rel="stylesheet" href="' . $base . 'assets/css/interface.css?v=' . $version . '">';
     $locale = onefitIdioma();
     $catalog = require __DIR__ . '/locales/' . $locale . '.php';
-    $data = ['locale' => $locale, 'messages' => $catalog, 'base' => BASE_URL];
+    $data = ['locale' => $locale, 'messages' => $catalog, 'base' => BASE_URL,
+        'brands' => array_combine(onefitTemas(), array_map('onefitMarca', onefitTemas())),
+        'brandFallback' => onefitMarca('dourado')];
     echo '<script id="onefit-interface-data" type="application/json">' . json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) . '</script>';
     echo '<script src="' . $base . 'assets/js/i18n.js?v=' . filemtime(__DIR__ . '/../assets/js/i18n.js') . '"></script>';
     echo '<script defer src="' . $base . 'assets/js/interface.js?v=' . filemtime(__DIR__ . '/../assets/js/interface.js') . '"></script>';

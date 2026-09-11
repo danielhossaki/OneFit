@@ -57,7 +57,7 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
     <script>
         (() => { let p = 'dark'; try { p = localStorage.getItem('onefit-theme') || p; } catch (e) {} const t = p === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); })();
     </script>
-    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/webp">
+    <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/webp">
 <?php onefitInterfaceHead(); ?>
 </head>
 

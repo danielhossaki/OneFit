@@ -1,36 +1,18 @@
 :root {
-    --bo-bg: #0e0c0a;
-    --bo-surface: #1e1a15;
-    --bo-surface-2: #241f18;
-    --bo-border: rgba(243, 237, 226, 0.12);
-    --bo-text: #f3ede2;
-    --bo-text-muted: #b0a896;
-    --bo-gold: var(--accent, #d4af37);
-    --bo-gold-bright: var(--accent-bright, #f4c430);
-    --bo-gold-dim: var(--accent-dim, #8a6b21);
     --bo-danger: #e42e2e;
     --bo-success: #4caf50;
     --bo-header-h: 76px;
-    --bo-header-glow: rgba(14, 11, 8, 0.9);
-    --bo-fav-btn-bg: rgba(14, 11, 8, 0.75);
+    --bo-header-glow: hsl(var(--theme-hue) 22% 6% / 0.9);
+    --bo-fav-btn-bg: hsl(var(--theme-hue) 22% 6% / 0.75);
 }
 
 /* Tema claro: mesma identidade dourada, ajustada para fundo claro (mesmos
    valores usados em assets/css/dashboard.css). */
 html[data-theme="light"] {
-    --bo-bg: #f8f5f0;
-    --bo-surface: #fffdfa;
-    --bo-surface-2: #f5f0e8;
-    --bo-border: #e8dfd3;
-    --bo-text: #29251f;
-    --bo-text-muted: #766e63;
-    --bo-gold: var(--accent, #b98618);
-    --bo-gold-bright: var(--accent-bright, #a87308);
-    --bo-gold-dim: var(--accent-dim, #e4c98d);
     --bo-danger: #c11d1d;
     --bo-success: #2f8132;
-    --bo-header-glow: rgba(255, 253, 250, 0.92);
-    --bo-fav-btn-bg: rgba(255, 253, 250, 0.85);
+    --bo-header-glow: hsl(var(--theme-hue) 22% 6% / 0.92);
+    --bo-fav-btn-bg: hsl(var(--theme-hue) 22% 6% / 0.85);
 }
 
 * {
@@ -115,7 +97,7 @@ body {
     padding: 0 4px;
     border-radius: 999px;
     background: var(--bo-gold-bright);
-    color: #14110e;
+    color: var(--theme-bg);
     font-size: 11px;
     font-weight: 800;
     display: flex;
@@ -180,7 +162,7 @@ body {
 .mkt-tab.active {
     background: linear-gradient(120deg, var(--bo-gold-dim), var(--bo-gold) 60%, var(--bo-gold-bright));
     border-color: transparent;
-    color: #14110e;
+    color: var(--theme-bg);
 }
 
 .mkt-card {
@@ -221,7 +203,7 @@ body {
     top: 10px;
     left: 10px;
     background: var(--bo-gold-bright);
-    color: #14110e;
+    color: var(--theme-bg);
     font-weight: 800;
     font-size: 12px;
     padding: 4px 10px;
@@ -375,14 +357,14 @@ body {
     border: none;
     background: linear-gradient(120deg, var(--bo-gold-dim), var(--bo-gold) 45%, var(--bo-gold-bright) 60%, var(--bo-gold) 75%, var(--bo-gold-dim));
     background-size: 250% 100%;
-    color: #14110e;
+    color: var(--theme-bg);
     cursor: pointer;
     transition: background-position 0.3s ease, transform 0.2s ease;
 }
 
 .btn-mkt-gold:hover {
     background-position: 100% 0;
-    color: #14110e;
+    color: var(--theme-bg);
     transform: translateY(-1px);
 }
 

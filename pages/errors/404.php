@@ -45,7 +45,7 @@ $logLine = sprintf(
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/errors.css">
 
   <!-- link do favicon -->
-  <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+  <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
 </head>
 

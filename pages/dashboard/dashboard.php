@@ -1,4 +1,5 @@
 <?php
+
 /**
  * dashboard.php
  * Página principal do backoffice. Esse arquivo só faz a "montagem":
@@ -34,7 +35,8 @@ if (!isset($_SESSION['id_usuario'])) {
 $perfilLogado = $_SESSION['tipo_usuario'] ?? 'aluno';
 // Revoked administrative access must also invalidate an existing session.
 if ($perfilLogado === 'admin' && !onefitAdminAutorizado($conn, (int) $_SESSION['id_usuario'])) {
-    header('Location: ' . BASE_URL . 'config/logout.php'); exit;
+    header('Location: ' . BASE_URL . 'config/logout.php');
+    exit;
 }
 if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno', 'vendedor'], true)) {
     $perfilLogado = 'aluno'; // valor desconhecido -> cai no perfil mais restrito
@@ -166,17 +168,19 @@ if ($perfilLogado === 'admin') {
         (() => {
             const banco = <?php echo json_encode($preferenciasPersistidas ? $preferenciasDashboard['tema'] : null); ?>;
             let escolha = banco;
-            try { escolha = localStorage.getItem('onefit-theme') || escolha; } catch (e) {}
+            try {
+                escolha = localStorage.getItem('onefit-theme') || escolha;
+            } catch (e) {}
             escolha = ['light', 'dark', 'system'].includes(escolha) ? escolha : 'dark';
-            const tema = escolha === 'system'
-                ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-                : escolha;
+            const tema = escolha === 'system' ?
+                (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') :
+                escolha;
             document.documentElement.setAttribute('data-theme', tema);
             document.documentElement.setAttribute('data-theme-preference', escolha);
         })();
     </script>
-    <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
-<?php onefitInterfaceHead(); ?>
+    <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
+    <?php onefitInterfaceHead(); ?>
 </head>
 
 <body>
@@ -186,7 +190,8 @@ if ($perfilLogado === 'admin') {
 
     <main class="bo-main">
         <?php if (!empty($_SESSION['bo_flash'])): ?>
-            <?php $boFlash = $_SESSION['bo_flash']; unset($_SESSION['bo_flash']); ?>
+            <?php $boFlash = $_SESSION['bo_flash'];
+            unset($_SESSION['bo_flash']); ?>
             <div class="bo-notice" style="<?php echo $boFlash['type'] === 'error' ? 'border-color:#dc3545;' : ''; ?>">
                 <i class="bi <?php echo $boFlash['type'] === 'error' ? 'bi-exclamation-triangle' : 'bi-check-circle'; ?>"></i>
                 <div><span><?php echo htmlspecialchars($boFlash['text'], ENT_QUOTES, 'UTF-8'); ?></span></div>
@@ -227,6 +232,23 @@ if ($perfilLogado === 'admin') {
         // A visualização passa a respeitar apenas o perfil real da sessão.
         // Não há mais alternância de perfis de demonstração no painel.
         const BO_IS_ADMIN = false;
+        const BO_CURRENT_USER = <?php echo json_encode([
+                                    'nome' => $usuarioDashboard['nome'],
+                                    'documento' => $usuarioDashboard['documento'],
+                                    'email' => $usuarioDashboard['email'],
+                                    'telefone' => $usuarioDashboard['telefone'],
+                                    'nacionalidade' => $usuarioDashboard['nacionalidade'],
+                                    'nascimento' => $usuarioDashboard['nascimento'],
+                                    'genero' => $usuarioDashboard['genero'],
+                                    'endereco' => $usuarioDashboard['endereco'],
+                                    'cidade' => $usuarioDashboard['cidade'],
+                                    'estado' => $usuarioDashboard['estado'],
+                                    'altura' => $usuarioDashboard['altura'],
+                                    'peso' => $usuarioDashboard['peso'],
+                                    'foto' => $usuarioDashboard['foto'],
+                                ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
+        const BO_PROFILE_UPDATE_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/update-profile.php'); ?>;
+        const BO_PLANOS_OPTIONS = <?php echo json_encode(array_values(array_map(static fn(array $plano): string => $plano['nome'] ?? '', $planos ?? []))); ?>;
         const BO_MARKETPLACE_URL = <?php echo json_encode(BASE_URL . 'pages/marketplace/marketplace.php'); ?>;
         const BO_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token']); ?>;
         const BO_PREFERENCES_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/preferencias.php'); ?>;

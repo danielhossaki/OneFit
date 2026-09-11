@@ -15,8 +15,8 @@
 
 <aside class="bo-sidebar" id="boSidebar">
     <a class="bo-side-brand" href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php" aria-label="ONE FIT">
-        <img src="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" alt="Logo One Fit">
-        <span>One Fit</span>
+        <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
+        <span data-brand-name><?php echo onefitNomeMarca(); ?></span>
     </a>
     <nav class="bo-nav" id="boNav"></nav>
 </aside>

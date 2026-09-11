@@ -2,6 +2,29 @@
 (() => {
     'use strict';
     const t = window.ofT || (text => text);
+    const updateBrand = () => {
+        const data = window.OneFit;
+        if (!data?.brands) return;
+        const brand = data.brands[document.documentElement.dataset.siteTheme] || data.brandFallback;
+        document.querySelectorAll('[data-brand-name]').forEach(node => { node.textContent = brand.name; });
+        document.querySelectorAll('[data-brand-logo]').forEach(node => {
+            const url = data.base + 'assets/img/logo/' + brand.logo;
+            if (node.tagName === 'IMG') {
+                node.alt = 'Logo ' + brand.name;
+                node.onerror = () => { node.onerror = null; node.src = data.base + 'assets/img/logo/' + data.brandFallback.logo; };
+                node.src = url;
+            } else node.href = url;
+        });
+    };
+    updateBrand();
+    new MutationObserver(updateBrand).observe(document.documentElement, { attributes: true, attributeFilter: ['data-site-theme'] });
+    document.querySelectorAll('input[name="configuracao"][value="tema_cores"]').forEach(setting => {
+        setting.form?.addEventListener('change', event => {
+            if (event.target.name === 'valor' && window.OneFit?.brands[event.target.value]) {
+                document.documentElement.dataset.siteTheme = event.target.value;
+            }
+        });
+    });
     const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase();
     document.querySelectorAll('select[data-flag-select]').forEach(select => {
         const wrap = document.createElement('div');
@@ -33,7 +56,13 @@
                 img.alt = ''; img.width = 28; img.height = 20; img.addEventListener('error', () => { img.remove(); }); target.append(img);
             } else if (select.dataset.flagSelect === 'country') {
                 const code = option.dataset.country || option.value;
-                if (/^[A-Z]{2}$/.test(code)) target.textContent = String.fromCodePoint(...[...code].map(c => 127397 + c.charCodeAt(0)));
+                if (/^[A-Z]{2}$/.test(code)) {
+                    const img = document.createElement('img');
+                    img.src = window.OneFit.base + 'assets/img/flags/countries/' + code.toLowerCase() + '.svg';
+                    img.alt = ''; img.width = 28; img.height = 20;
+                    img.addEventListener('error', () => { target.textContent = code; });
+                    target.append(img);
+                }
             }
         };
         const sync = () => {

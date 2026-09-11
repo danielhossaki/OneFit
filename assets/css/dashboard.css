@@ -30,84 +30,39 @@
 
 /* Tema padrão: dourado sobre fundo escuro */
 :root {
-    --bg: #0e0c0a;
-    --surface: #1e1a15;
-    --surface-2: #241f18;
-    --border: rgba(243, 237, 226, 0.12);
-    --text: #f3ede2;
-    --text-muted: #b0a896;
-    --gold: var(--accent, #d4af37);
-    --gold-bright: var(--accent-bright, #f4c430);
-    --gold-dim: var(--accent-dim, #8a6b21);
     --danger: #e42e2e;
     --success: #4caf50;
 
     --sidebar-w: 268px;
     --header-h: 76px;
-    --header-bg: rgba(14, 12, 10, 0.94);
-    --sidebar-bg: #12100e;
 }
 
 /* Tema claro: mesma identidade visual (dourado), mas em cima de fundo
    claro/branco — por isso o dourado fica mais escuro/saturado aqui
    (senão perde contraste em cima de branco), e não é só o dark invertido. */
 html[data-theme="light"] {
-    --bg: #f8f5f0;
-    --surface: #fffdfa;
-    --surface-2: #f5f0e8;
-    --border: #e8dfd3;
-    --text: #29251f;
-    --text-muted: #766e63;
-    --gold: var(--accent, #b98618);
-    --gold-bright: var(--accent-bright, #a87308);
-    --gold-dim: var(--accent-dim, #e4c98d);
     --danger: #c11d1d;
     --success: #2f8132;
-
-    --header-bg: #fffdfa;
-    --sidebar-bg: #fcf8f1;
 }
 
-/* No tema claro, o conteúdo fica leve e neutro, enquanto a navegação segue
-   em cinza-grafite para criar a mesma hierarquia visual da referência. */
-html[data-theme="light"] .bo-header { border-color: #383c43; }
-html[data-theme="light"] .bo-header-search { background: #1d2025; border-color: #40454f; color: var(--gold); }
-html[data-theme="light"] .bo-header-search input { color: #f5f6f7; }
-html[data-theme="light"] .bo-header-search input::placeholder,
-html[data-theme="light"] .bo-header-search kbd { color: #aeb4be; }
-html[data-theme="light"] .bo-header-search kbd { background: #30343b; border-color: #484d56; }
-html[data-theme="light"] .bo-sidebar { border-color: #383c43; }
-html[data-theme="light"] .bo-side-brand { border-color: #383c43; }
-html[data-theme="light"] .bo-nav-item { color: #bac0c9; }
-html[data-theme="light"] .bo-nav-item:hover { background: #30343a; color: #ffffff; }
-html[data-theme="light"] .bo-nav-item.active { color: var(--accent-bright, #f5c76e); }
-html[data-theme="light"] .bo-sidebar .bo-nav-item i { color: #b7bdc7; }
-html[data-theme="light"] .bo-sidebar .bo-nav-item.active i { color: var(--accent-bright, #f5c76e); }
-html[data-theme="light"] .bo-sidebar-toggle,
-html[data-theme="light"] .bo-user .btn-bo-outline { color: #f5f6f7; }
-html[data-theme="light"] .bo-user .btn-bo-outline { border-color: #4a4e56; }
-html[data-theme="light"] .bo-header .btn-bo-icon { background: #30343a; border-color: #4a4e56; color: #c8cdd4; }
-html[data-theme="light"] .bo-header .btn-bo-icon:hover { border-color: var(--gold); color: var(--gold-bright); }
-
-/* Ajustes visuais do tema claro: superfície quente e neutra, sem glow. */
 html[data-theme="light"] body { background: var(--bg); }
 html[data-theme="light"] .bo-header { border-color: var(--border); box-shadow: none; }
-html[data-theme="light"] .bo-sidebar { border-color: #e5d4b2; }
+html[data-theme="light"] .bo-sidebar { border-color: var(--border); }
 html[data-theme="light"] .bo-side-brand { border-color: var(--border); }
-html[data-theme="light"] .bo-header-search { background: #fffdfa; border-color: var(--border); color: var(--gold); }
+html[data-theme="light"] .bo-header-search { background: var(--surface); border-color: var(--border); color: var(--gold); }
 html[data-theme="light"] .bo-header-search input { color: var(--text); }
 html[data-theme="light"] .bo-header-search input::placeholder,
 html[data-theme="light"] .bo-header-search kbd { color: var(--text-muted); }
 html[data-theme="light"] .bo-header-search kbd { background: var(--surface-2); border-color: var(--border); }
 html[data-theme="light"] .bo-header-search:focus-within { box-shadow: none; }
-html[data-theme="light"] .bo-nav-item { color: #4b453d; }
-html[data-theme="light"] .bo-nav-item:hover { background: #f6efe3; color: var(--text); }
-html[data-theme="light"] .bo-nav-item.active { background: #fff7e7; border-color: var(--accent-bright, #edcf91); color: var(--gold-bright); }
+html[data-theme="light"] .bo-nav-item { color: var(--text-muted); }
+html[data-theme="light"] .bo-nav-item:hover { background: var(--theme-hover); color: var(--text); }
+html[data-theme="light"] .bo-nav-item.active { background: var(--theme-active); border-color: var(--accent-bright, #edcf91); color: var(--gold-bright); }
 html[data-theme="light"] .bo-sidebar .bo-nav-item i { color: var(--accent-dim, #8c6d31); }
 html[data-theme="light"] .bo-sidebar .bo-nav-item.active i { color: var(--gold-bright); }
 html[data-theme="light"] .bo-sidebar-toggle { color: var(--text); }
-html[data-theme="light"] .bo-user .btn-bo-outline { background: #fffdfa; border-color: var(--border); color: var(--text); }
-html[data-theme="light"] .bo-header .btn-bo-icon { background: #fffdfa; border-color: var(--border); color: var(--accent-dim, #75581d); }
+html[data-theme="light"] .bo-user .btn-bo-outline { background: var(--surface); border-color: var(--border); color: var(--text); }
+html[data-theme="light"] .bo-header .btn-bo-icon { background: var(--surface); border-color: var(--border); color: var(--accent-dim, #75581d); }
 html[data-theme="light"] .bo-header .btn-bo-icon:hover { border-color: var(--gold); color: var(--gold-bright); }
 html[data-theme="light"] .bo-metric-card,
 html[data-theme="light"] .bo-data-panel,
@@ -115,10 +70,10 @@ html[data-theme="light"] .bo-settings-card,
 html[data-theme="light"] .bo-card,
 html[data-theme="light"] .bo-table-wrap,
 html[data-theme="light"] .bo-profile-block { background: var(--surface); box-shadow: none; }
-html[data-theme="light"] .bo-notice { background: #fff9ed; border-color: var(--accent-pale, #efd9aa); }
-html[data-theme="light"] .bo-theme-choice { background: #fffdfa; }
+html[data-theme="light"] .bo-notice { background: var(--theme-hover); border-color: var(--accent-pale, #efd9aa); }
+html[data-theme="light"] .bo-theme-choice { background: var(--surface); }
 html[data-theme="light"] .bo-theme-choice:hover,
-html[data-theme="light"] .bo-theme-choice.active { background: #fff9ed; }
+html[data-theme="light"] .bo-theme-choice.active { background: var(--theme-hover); }
 html[data-theme="light"] .bo-toast { box-shadow: none; }
 html[data-theme="light"] .bo-filters .form-control:focus,
 html[data-theme="light"] .bo-filters .form-select:focus,
@@ -315,7 +270,7 @@ body {
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    color: #14110e;
+    color: var(--theme-bg);
     border: 0;
     cursor: pointer;
     flex-shrink: 0;
@@ -354,7 +309,7 @@ body {
     position: absolute;
     top: calc(100% + 9px);
     right: -50px;
-    width: min(360px, calc(100vw - 36px));
+    width: min(410px, calc(100vw - 36px));
     max-height: calc(100dvh - var(--header-h) - 24px);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -394,7 +349,7 @@ body {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 4px;
 }
 
 .bo-notifications-heading h2 {
@@ -891,14 +846,14 @@ body {
     border: none;
     background: linear-gradient(120deg, var(--gold-dim), var(--gold) 45%, var(--gold-bright) 60%, var(--gold) 75%, var(--gold-dim));
     background-size: 250% 100%;
-    color: #14110e;
+    color: var(--theme-bg);
     cursor: pointer;
     transition: background-position 0.3s ease, transform 0.2s ease;
 }
 
 .btn-bo-gold:hover {
     background-position: 100% 0;
-    color: #14110e;
+    color: var(--theme-bg);
     transform: translateY(-1px);
 }
 
@@ -1177,16 +1132,7 @@ html[data-theme="light"] .bo-modal .btn-close {
 /* Modal do perfil profissional: permanece escuro mesmo quando o painel usa
    o tema claro. O :has() limita estas variáveis às páginas que realmente
    carregaram section-profissional.php; outros perfis não são afetados. */
-body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal {
-    --surface: #1e1a15;
-    --surface-2: #241f18;
-    --border: rgba(243, 237, 226, 0.12);
-    --text: #f3ede2;
-    --text-muted: #b0a896;
-    --gold: var(--accent, #d4af37);
-    --gold-bright: var(--accent-bright, #f4c430);
-    --gold-dim: var(--accent-dim, #8a6b21);
-}
+
 
 body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-close {
     filter: invert(1) grayscale(1) brightness(1.6);

@@ -1,17 +1,8 @@
 :root {
-    --bo-bg: #0e0c0a;
-    --bo-surface: #1e1a15;
-    --bo-surface-2: #241f18;
-    --bo-border: rgba(243, 237, 226, 0.12);
-    --bo-text: #f3ede2;
-    --bo-text-muted: #b0a896;
-    --bo-gold: var(--accent, #d4af37);
-    --bo-gold-bright: var(--accent-bright, #f4c430);
-    --bo-gold-dim: var(--accent-dim, #8a6b21);
     --bo-danger: #e42e2e;
     --bo-success: #4caf50;
     --bo-header-h: 76px;
-    --bo-header-glow: rgba(14, 11, 8, 0.9);
+    --bo-header-glow: hsl(var(--theme-hue) 22% 6% / 0.9);
 }
 
 /* Tema claro: mesma identidade dourada usada em marketplace.css/dashboard.css.
@@ -19,18 +10,9 @@
    pagamento (etapas, inputs, badges) ainda usam cores fixas específicas do
    checkout e não fazem parte deste ajuste. */
 html[data-theme="light"] {
-    --bo-bg: #f8f5f0;
-    --bo-surface: #fffdfa;
-    --bo-surface-2: #f5f0e8;
-    --bo-border: #e8dfd3;
-    --bo-text: #29251f;
-    --bo-text-muted: #766e63;
-    --bo-gold: var(--accent, #b98618);
-    --bo-gold-bright: var(--accent-bright, #a87308);
-    --bo-gold-dim: var(--accent-dim, #e4c98d);
     --bo-danger: #c11d1d;
     --bo-success: #2f8132;
-    --bo-header-glow: rgba(255, 253, 250, 0.92);
+    --bo-header-glow: hsl(var(--theme-hue) 22% 6% / 0.92);
 }
 
 * {
@@ -647,7 +629,7 @@ body {
     border-radius: 8px;
     border: none;
     background: var(--bo-gold);
-    color: #14110e;
+    color: var(--theme-bg);
     cursor: pointer;
     transition: transform 0.2s ease;
 }

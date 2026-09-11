@@ -1,3 +1,3 @@
 .env
 /vendor/
-/storage/logs/*.log
+/storage/logs/404.log
