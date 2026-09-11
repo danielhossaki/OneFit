@@ -234,25 +234,25 @@
         <div class="footer-grid">
 
             <div class="footer-col">
-                <a href="" class="footer-link">Sobre nós <span class="arrow">↗</span></a>
-                <a href="<?php echo BASE_URL; ?>pages/matricula.php" class="footer-link">Matricule-se <span class="arrow">↗</span></a>
-                <a href="#planos" class="footer-link">Conheça nossos planos <span class="arrow">↗</span></a>
+                <a href="" class="footer-link"><?php echo of_t('Sobre nós'); ?> <span class="arrow">↗</span></a>
+                <a href="<?php echo BASE_URL; ?>pages/matricula.php" class="footer-link"><?php echo of_t('Matricule-se'); ?> <span class="arrow">↗</span></a>
+                <a href="#planos" class="footer-link"><?php echo of_t('Conheça nossos planos'); ?> <span class="arrow">↗</span></a>
             </div>
 
             <div class="footer-col">
-                <a href="#" class="footer-link">Encontre nossa unidade <span class="arrow">↗</span></a>
-                <a href="#" class="footer-link">Conheça nosso espaço <span class="arrow">↗</span></a>
-                <a href="#" class="footer-link">Nossos profissionais <span class="arrow">↗</span></a>
+                <a href="#" class="footer-link"><?php echo of_t('Encontre nossa unidade'); ?> <span class="arrow">↗</span></a>
+                <a href="#" class="footer-link"><?php echo of_t('Conheça nosso espaço'); ?> <span class="arrow">↗</span></a>
+                <a href="#" class="footer-link"><?php echo of_t('Nossos profissionais'); ?> <span class="arrow">↗</span></a>
             </div>
 
             <div class="footer-col">
-                <a href="" class="footer-link">Termos de uso <span class="arrow">↗</span></a>
-                <a href="" class="footer-link">Políticas de privacidade <span class="arrow">↗</span></a>
-                <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="footer-link">Ajuda e suporte <span class="arrow">↗</span></a>
+                <a href="" class="footer-link"><?php echo of_t('Termos de uso'); ?> <span class="arrow">↗</span></a>
+                <a href="" class="footer-link"><?php echo of_t('Políticas de privacidade'); ?> <span class="arrow">↗</span></a>
+                <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="footer-link"><?php echo of_t('Ajuda e suporte'); ?> <span class="arrow">↗</span></a>
             </div>
 
             <div class="footer-col contact">
-                <h4>Entre em contato</h4>
+                <h4><?php echo of_t('Entre em contato'); ?></h4>
                 <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="contact-btn">
                     Converse com a One... <span class="arrow">↗</span>
                 </a>
@@ -261,7 +261,7 @@
         </div>
 
         <div class="social-block">
-            <div class="social-title">Visite nossas redes sociais</div>
+            <div class="social-title"><?php echo of_t('Visite nossas redes sociais'); ?></div>
             <div class="social-icons">
                 <a href="#" aria-label="Facebook">
                     <svg viewBox="0 0 24 24"><path d="M22 12.06C22 6.5 17.52 2 12 2S2 6.5 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.51 1.49-3.9 3.77-3.9 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.78-1.63 1.57v1.88h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z"/></svg>

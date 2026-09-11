@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../config/interface.php';
 if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
@@ -10,7 +11,7 @@ if (empty($_SESSION['id_usuario']) || ($_SESSION['tipo_usuario'] ?? '') !== 'alu
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     header('Allow: POST');
-    echo json_encode(['error' => 'Método não permitido.']);
+    echo json_encode(['error' => onefitTraduzir('Método não permitido.')]);
     exit;
 }
 $token = $_POST['csrf_token'] ?? '';

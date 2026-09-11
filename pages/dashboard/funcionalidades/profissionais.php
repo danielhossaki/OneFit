@@ -54,11 +54,11 @@ if (!$nome || !$email || !$celular) {
     bo_redirect($secao);
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    bo_flash('error', 'Informe um e-mail válido.');
+    bo_flash('error', onefitTraduzir('Informe um e-mail válido.'));
     bo_redirect($secao);
 }
 if (!bo_valida_celular($celular)) {
-    bo_flash('error', 'Informe um celular/telefone válido, com DDD (10 ou 11 números).');
+    bo_flash('error', onefitTraduzir('Informe um celular/telefone válido, com DDD (10 ou 11 números).'));
     bo_redirect($secao);
 }
 

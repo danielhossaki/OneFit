@@ -32,6 +32,10 @@ if (!isset($_SESSION['id_usuario'])) {
 // usuarios.tipo_usuario, gravada na sessão no momento do login.
 // Ajuste os 3 valores abaixo se os nomes do ENUM no banco forem diferentes.
 $perfilLogado = $_SESSION['tipo_usuario'] ?? 'aluno';
+// Revoked administrative access must also invalidate an existing session.
+if ($perfilLogado === 'admin' && !onefitAdminAutorizado($conn, (int) $_SESSION['id_usuario'])) {
+    header('Location: ' . BASE_URL . 'config/logout.php'); exit;
+}
 if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno', 'vendedor'], true)) {
     $perfilLogado = 'aluno'; // valor desconhecido -> cai no perfil mais restrito
 }
@@ -147,12 +151,12 @@ if ($perfilLogado === 'admin') {
 
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel · ONE FIT</title>
+    <title><?php echo of_t('Painel · ONE FIT'); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -172,6 +176,7 @@ if ($perfilLogado === 'admin') {
         })();
     </script>
     <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body>

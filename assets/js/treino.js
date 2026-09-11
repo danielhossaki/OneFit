@@ -1,3 +1,4 @@
+var ofT = globalThis.ofT || (text => text);
 document.addEventListener('DOMContentLoaded', () => {
     const section = document.getElementById('boTreino');
     if (!section) return;
@@ -27,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const actions = document.createElement('div');
             actions.className = 'bo-table-actions';
-            [['editar', 'Editar', 'bi-pencil'], ['excluir', 'Excluir', 'bi-trash']].forEach(([action, title, icon]) => {
+            [['editar', ofT('Editar'), 'bi-pencil'], ['excluir', 'Excluir', 'bi-trash']].forEach(([action, title, icon]) => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'btn-bo-icon' + (action === 'excluir' ? ' danger' : '');
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!visible.length) {
             const cell = body.insertRow().insertCell();
             cell.colSpan = 6;
-            cell.textContent = filter.value ? 'Sem exercícios cadastrados neste dia.' : 'Nenhum exercício cadastrado.';
+            cell.textContent = filter.value ? 'Sem exercícios cadastrados neste dia.' : ofT('Nenhum exercício cadastrado.');
         }
     }
 
@@ -86,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.elements.token.value = Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('');
         form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (filter.value || 'segunda');
         if (exercise) ['nome', 'series', 'repeticoes', 'carga'].forEach(key => { form.elements[key].value = exercise[key]; });
-        document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : 'Adicionar exercício';
+        document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : ofT('Adicionar exercício');
         modal.show();
     }
     form.addEventListener('submit', event => {
@@ -106,10 +107,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!remove && !clear) return;
         pending = { acao: clear ? 'limpar' : 'excluir', id: clear ? '0' : remove.dataset.treinoExcluir };
         confirmError.hidden = true;
-        document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? 'Limpar treino' : 'Excluir exercício';
+        document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? ofT('Limpar treino') : 'Excluir exercício';
         confirmElement.querySelector('[data-treino-pergunta]').textContent = clear
             ? 'Tem certeza que deseja limpar todo o treino de todos os dias?' : 'Tem certeza que deseja excluir este exercício?';
-        confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? 'Limpar treino' : 'Excluir';
+        confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? ofT('Limpar treino') : 'Excluir';
         confirmModal.show();
     });
     confirmElement.querySelector('[data-treino-confirmar]').addEventListener('click', () => {

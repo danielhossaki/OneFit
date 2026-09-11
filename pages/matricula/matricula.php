@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/localidades.php';
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/email-auth.php');
@@ -13,7 +14,7 @@ $dataNascimentoMinima = $hojeMatricula->modify('-120 years');
 $mensagensMatricula = [
   '2' => 'Não foi possível concluir o cadastro. Confira os campos obrigatórios e tente novamente.',
   '3' => 'As senhas não coincidem. Digite a mesma senha nos dois campos.',
-  '4' => 'Digite um endereço de e-mail válido.',
+  '4' => onefitTraduzir('Digite um endereço de e-mail válido.'),
   '5' => 'Este CPF ou e-mail já está cadastrado. Tente entrar na sua conta.',
   '6' => 'O plano selecionado não está disponível. Escolha outro plano.',
   '7' => 'A senha precisa ter pelo menos 8 caracteres.',
@@ -27,6 +28,7 @@ $mensagensMatricula = [
 ];
 
 $mensagemMatricula = $mensagensMatricula[(string) ($_GET['msg'] ?? '')] ?? null;
+if ($mensagemMatricula !== null) $mensagemMatricula = onefitTraduzir($mensagemMatricula);
 
 // Planos ativos cadastrados no backoffice (Cadastro de Planos), exibidos
 // na Etapa 3 do formulário logo abaixo.
@@ -398,12 +400,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Matrícula · ONE FIT</title>
+  <title><?php echo of_t('Matrícula · ONE FIT'); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -415,6 +417,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- Ícone exibido na aba do navegador. -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body class="login-body"
@@ -429,7 +432,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
         <source src="<?php echo BASE_URL; ?>assets/img/videos/video-cadastro.mp4" type="video/mp4">
-        Seu navegador não suporta vídeos.
+        <?php echo of_t('Seu navegador não suporta vídeos.'); ?>
       </video>
       <div class="login-visual-overlay"></div>
 
@@ -439,8 +442,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </a>
 
         <div class="login-visual-text">
-          <span class="eyebrow">Comece agora</span>
-          <h2>SUA PRIMEIRA<br>AULA É GRÁTIS</h2>
+          <span class="eyebrow"><?php echo of_t('Comece agora'); ?></span>
+          <h2><?php echo of_t('SUA PRIMEIRA'); ?><br><?php echo of_t('AULA É GRÁTIS'); ?></h2>
         </div>
       </div>
     </section>
@@ -453,25 +456,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           ONE<span>FIT</span>
         </a>
 
-        <span class="tag">Junte-se à ONE FIT</span>
-        <h1>Matrícula</h1>
-        <p class="login-subtitle" id="step-subtitle">Preencha seus dados para começar a treinar com a gente.</p>
+        <span class="tag"><?php echo of_t('Junte-se à ONE FIT'); ?></span>
+        <h1><?php echo of_t('Matrícula'); ?></h1>
+        <p class="login-subtitle" id="step-subtitle"><?php echo of_t('Preencha seus dados para começar a treinar com a gente.'); ?></p>
 
         <!-- Indica a etapa atual e as etapas já concluídas. -->
         <div class="matricula-progress">
           <div class="progress-bar"><span id="progress-fill"></span></div>
           <div class="progress-steps">
             <span class="progress-step active" data-step-label="1" role="button" tabindex="-1">
-              <i>01</i>Dados
+              <i>01</i><?php echo of_t('Dados'); ?>
             </span>
             <span class="progress-step" data-step-label="2" role="button" tabindex="-1">
-              <i>02</i>Endereço
+              <i>02</i><?php echo of_t('Endereço'); ?>
             </span>
             <span class="progress-step" data-step-label="3" role="button" tabindex="-1">
-              <i>03</i>Plano
+              <i>03</i><?php echo of_t('Plano'); ?>
             </span>
             <span class="progress-step" data-step-label="4" role="button" tabindex="-1">
-              <i>04</i>Pagamento
+              <i>04</i><?php echo of_t('Pagamento'); ?>
             </span>
           </div>
         </div>
@@ -482,7 +485,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <fieldset class="form-step active" data-step="1">
 
             <div class="field">
-              <label for="nome">Nome completo</label>
+              <label for="nome"><?php echo of_t('Nome completo'); ?></label>
               <input type="text" id="nome" name="nome" placeholder="Seu nome" required>
             </div>
 
@@ -492,7 +495,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <input type="text" id="cpf" name="cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" required>
               </div>
               <div class="field">
-                <label for="nascimento">Data de nascimento</label>
+                <label for="nascimento"><?php echo of_t('Data de nascimento'); ?></label>
                 <input type="date" id="nascimento" name="nascimento"
                   min="<?php echo $dataNascimentoMinima->format('Y-m-d'); ?>"
                   max="<?php echo $hojeMatricula->format('Y-m-d'); ?>" required>
@@ -500,29 +503,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
 
             <div class="field">
-              <label for="genero">Gênero</label>
+              <label for="genero"><?php echo of_t('Gênero'); ?></label>
               <select id="genero" name="genero" required>
-                <option value="" selected disabled hidden>Selecione</option>
-                <option value="masculino">Masculino</option>
-                <option value="feminino">Feminino</option>
-                <option value="outro">Outro</option>
+                <option value="" selected disabled hidden><?php echo of_t('Selecione'); ?></option>
+                <option value="masculino"><?php echo of_t('Masculino'); ?></option>
+                <option value="feminino"><?php echo of_t('Feminino'); ?></option>
+                <option value="outro"><?php echo of_t('Outro'); ?></option>
               </select>
             </div>
 
             <div class="field-row">
               <div class="field">
-                <label for="telefone">Telefone</label>
+                <label for="telefone"><?php echo of_t('Telefone'); ?></label>
                 <input type="text" id="telefone" name="telefone" placeholder="(00) 00000-0000" inputmode="numeric" maxlength="15" required>
               </div>
               <div class="field">
-                <label for="email">E-mail</label>
+                <label for="email"><?php echo of_t('E-mail'); ?></label>
                 <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
               </div>
             </div>
 
             <div class="field-row">
               <div class="field">
-                <label for="password">Senha</label>
+                <label for="password"><?php echo of_t('Senha'); ?></label>
                 <div class="password-wrap">
                   <input type="password" id="password" name="password" placeholder="Mínimo de 8 caracteres" minlength="8" required>
                   <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
@@ -539,7 +542,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
               </div>
               <div class="field">
-                <label for="confirmar-senha">Confirmar senha</label>
+                <label for="confirmar-senha"><?php echo of_t('Confirmar senha'); ?></label>
                 <div class="password-wrap">
                   <input type="password" id="confirmar-senha" name="confirmar_senha" placeholder="Repita sua senha" minlength="8" required>
                   <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="confirmar-senha">
@@ -559,7 +562,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="step-actions">
               <span></span>
-              <button type="button" class="btn btn-gold" data-next>Continuar</button>
+              <button type="button" class="btn btn-gold" data-next><?php echo of_t('Continuar'); ?></button>
             </div>
           </fieldset>
 
@@ -568,36 +571,36 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="field-row cep-row">
               <div class="field">
-                <label for="cep">CEP</label>
+                <label for="cep"><?php echo of_t('CEP'); ?></label>
                 <input type="text" id="cep" name="cep" placeholder="00000-000" inputmode="numeric" maxlength="9" required>
               </div>
-              <button type="button" class="btn btn-outline btn-cep" id="buscar-cep">Buscar</button>
+              <button type="button" class="btn btn-outline btn-cep" id="buscar-cep"><?php echo of_t('Buscar'); ?></button>
             </div>
 
             <div class="field">
-              <label for="endereco">Endereço</label>
+              <label for="endereco"><?php echo of_t('Endereço'); ?></label>
               <input type="text" id="endereco" name="endereco" placeholder="Rua, avenida..." required>
             </div>
 
             <div class="field-row">
               <div class="field">
-                <label for="numero">Número</label>
+                <label for="numero"><?php echo of_t('Número'); ?></label>
                 <input type="text" id="numero" name="numero" placeholder="Nº" required>
               </div>
               <div class="field">
-                <label for="complemento">Complemento</label>
+                <label for="complemento"><?php echo of_t('Complemento'); ?></label>
                 <input type="text" id="complemento" name="complemento" placeholder="Apto, bloco... (opcional)">
               </div>
             </div>
 
             <div class="field">
-              <label for="bairro">Bairro</label>
+              <label for="bairro"><?php echo of_t('Bairro'); ?></label>
               <input type="text" id="bairro" name="bairro" required>
             </div>
 
             <div class="field-row">
               <div class="field">
-                <label for="cidade">Cidade</label>
+                <label for="cidade"><?php echo of_t('Cidade'); ?></label>
                 <div class="city-combobox">
                   <input type="text" id="cidade" name="cidade" placeholder="Selecione primeiro um estado"
                     autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
@@ -606,18 +609,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 </div>
               </div>
               <div class="field">
-                <label for="estado">Estado</label>
-                <select id="estado" name="estado" disabled required>
-                  <option value="">Carregando estados...</option>
-                </select>
+                <label for="estado"><?php echo of_t('Estado'); ?></label>
+                <?php onefitSelectLocalidade('estado', 'estado', '', 'state'); ?>
               </div>
             </div>
 
             <div class="step-actions">
               <button type="button" class="btn btn-outline btn-icon-left" data-prev>
-                Voltar
+                <?php echo of_t('Voltar'); ?>
               </button>
-              <button type="button" class="btn btn-gold" data-next>Continuar</button>
+              <button type="button" class="btn btn-gold" data-next><?php echo of_t('Continuar'); ?></button>
             </div>
           </fieldset>
 
@@ -629,11 +630,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <?php foreach ($planosAtivos as $i => $p): ?>
                 <label class="plan-option<?php echo $i === 1 ? ' featured' : ''; ?>">
                   <input type="radio" name="plano" value="<?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?>" <?php echo $i === 1 ? 'checked' : ''; ?> required>
-                  <?php if ($i === 1): ?><span class="badge">Mais escolhido</span><?php endif; ?>
+                  <?php if ($i === 1): ?><span class="badge"><?php echo of_t('Mais escolhido'); ?></span><?php endif; ?>
                   <span class="plan-option-body">
                     <span class="plan-option-head">
                       <span class="plan-option-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
-                      <span class="plan-option-price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><i>/mês</i></span>
+                      <span class="plan-option-price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><i><?php echo of_t('/mês'); ?></i></span>
                     </span>
                     <span class="plan-option-desc"><?php echo htmlspecialchars($p['beneficios'] ? implode(' · ', $p['beneficios']) : $p['descricao'], ENT_QUOTES, 'UTF-8'); ?></span>
                   </span>
@@ -644,9 +645,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="step-actions">
               <button type="button" class="btn btn-outline btn-icon-left" data-prev>
-                Voltar
+                <?php echo of_t('Voltar'); ?>
               </button>
-              <button type="button" class="btn btn-gold" data-next>Continuar</button>
+              <button type="button" class="btn btn-gold" data-next><?php echo of_t('Continuar'); ?></button>
             </div>
           </fieldset>
 
@@ -654,7 +655,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <fieldset class="form-step" data-step="4">
 
             <div class="payment-tabs" role="tablist">
-              <button type="button" class="payment-tab active" data-payment="cartao">Cartão de crédito</button>
+              <button type="button" class="payment-tab active" data-payment="cartao"><?php echo of_t('Cartão de crédito'); ?></button>
               <button type="button" class="payment-tab" data-payment="pix">Pix</button>
             </div>
 
@@ -663,18 +664,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="payment-panel active" data-payment-panel="cartao">
 
               <div class="field">
-                <label for="cartao-numero">Número do cartão</label>
+                <label for="cartao-numero"><?php echo of_t('Número do cartão'); ?></label>
                 <input type="text" id="cartao-numero" name="cartao_numero" placeholder="0000 0000 0000 0000" inputmode="numeric" maxlength="19">
               </div>
 
               <div class="field">
-                <label for="cartao-nome">Nome impresso no cartão</label>
+                <label for="cartao-nome"><?php echo of_t('Nome impresso no cartão'); ?></label>
                 <input type="text" id="cartao-nome" name="cartao_nome" placeholder="Como está no cartão">
               </div>
 
               <div class="field-row">
                 <div class="field">
-                  <label for="cartao-validade">Validade</label>
+                  <label for="cartao-validade"><?php echo of_t('Validade'); ?></label>
                   <input type="text" id="cartao-validade" name="cartao_validade" placeholder="MM/AA" inputmode="numeric" maxlength="5">
                 </div>
                 <div class="field">
@@ -685,25 +686,25 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
 
             <div class="payment-panel" data-payment-panel="pix">
-              <p class="payment-note">O código Pix é gerado após a confirmação da matrícula e enviado para o seu e-mail, com validade de 30 minutos.</p>
+              <p class="payment-note"><?php echo of_t('O código Pix é gerado após a confirmação da matrícula e enviado para o seu e-mail, com validade de 30 minutos.'); ?></p>
             </div>
 
             <label class="checkbox checkbox-terms">
               <input type="checkbox" name="termos" required>
-              <span>Li e aceito os <a href="#">termos de uso</a> e a <a href="#">política de privacidade</a></span>
+              <span><?php echo of_t('Li e aceito os'); ?> <a href="#"><?php echo of_t('termos de uso'); ?></a> <?php echo of_t('e a'); ?> <a href="#"><?php echo of_t('política de privacidade'); ?></a></span>
             </label>
 
             <div class="step-actions">
               <button type="button" class="btn btn-outline btn-icon-left" data-prev>
-                Voltar
+                <?php echo of_t('Voltar'); ?>
               </button>
-              <button type="submit" class="btn btn-gold">Confirmar matrícula</button>
+              <button type="submit" class="btn btn-gold"><?php echo of_t('Confirmar matrícula'); ?></button>
             </div>
           </fieldset>
 
         </form>
 
-        <p class="login-footer-text">Já tem uma conta? <a href="<?php echo BASE_URL; ?>pages/login/login.php">Entrar</a></p>
+        <p class="login-footer-text"><?php echo of_t('Já tem uma conta?'); ?> <a href="<?php echo BASE_URL; ?>pages/login/login.php"><?php echo of_t('Entrar'); ?></a></p>
 
       </div>
     </section>

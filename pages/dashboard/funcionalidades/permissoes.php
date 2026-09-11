@@ -97,7 +97,7 @@ if ($acao === 'update') {
 }
 
 if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    bo_flash('error', 'Informe um e-mail válido.');
+    bo_flash('error', onefitTraduzir('Informe um e-mail válido.'));
     bo_redirect($secao);
 }
 

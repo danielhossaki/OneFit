@@ -89,16 +89,17 @@ if ($tokenValido && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Redefinir senha · ONE FIT</title>
+  <title><?php echo of_t('Redefinir senha · ONE FIT'); ?></title>
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
+<?php onefitInterfaceHead(); ?>
 </head>
 <body class="login-body"
   <?php if ($erro || $sucesso): ?>
@@ -108,20 +109,20 @@ if ($tokenValido && $_SERVER['REQUEST_METHOD'] === 'POST') {
   <main class="login-page login-page-centered">
     <section class="login-form-panel login-form-panel-centered">
       <div class="login-form-wrap">
-        <span class="tag">Recuperar acesso</span>
-        <h1>Redefinir senha</h1>
+        <span class="tag"><?php echo of_t('Recuperar acesso'); ?></span>
+        <h1><?php echo of_t('Redefinir senha'); ?></h1>
         <?php if ($sucesso): ?>
-          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/login/login.php">Entrar</a>
+          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/login/login.php"><?php echo of_t('Entrar'); ?></a>
         <?php elseif ($tokenValido): ?>
-          <p class="login-subtitle">Defina uma nova senha para sua conta.</p>
+          <p class="login-subtitle"><?php echo of_t('Defina uma nova senha para sua conta.'); ?></p>
           <form class="login-form" method="POST" action="<?php echo BASE_URL; ?>pages/auth/senha/redefinir-senha.php">
             <input type="hidden" name="token" value="<?php echo htmlspecialchars($token, ENT_QUOTES, 'UTF-8'); ?>">
-            <div class="field"><label for="nova_senha">Nova senha</label><input type="password" id="nova_senha" name="nova_senha" minlength="8" required></div>
-            <div class="field"><label for="confirmar_senha">Confirmar nova senha</label><input type="password" id="confirmar_senha" name="confirmar_senha" minlength="8" required></div>
-            <button type="submit" class="btn btn-gold btn-block">Salvar nova senha</button>
+            <div class="field"><label for="nova_senha"><?php echo of_t('Nova senha'); ?></label><input type="password" id="nova_senha" name="nova_senha" minlength="8" required></div>
+            <div class="field"><label for="confirmar_senha"><?php echo of_t('Confirmar nova senha'); ?></label><input type="password" id="confirmar_senha" name="confirmar_senha" minlength="8" required></div>
+            <button type="submit" class="btn btn-gold btn-block"><?php echo of_t('Salvar nova senha'); ?></button>
           </form>
         <?php else: ?>
-          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php">Solicitar novo link</a>
+          <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php"><?php echo of_t('Solicitar novo link'); ?></a>
         <?php endif; ?>
       </div>
     </section>

@@ -5,9 +5,9 @@
     --bo-border: rgba(243, 237, 226, 0.12);
     --bo-text: #f3ede2;
     --bo-text-muted: #b0a896;
-    --bo-gold: #d4af37;
-    --bo-gold-bright: #f4c430;
-    --bo-gold-dim: #8a6b21;
+    --bo-gold: var(--accent, #d4af37);
+    --bo-gold-bright: var(--accent-bright, #f4c430);
+    --bo-gold-dim: var(--accent-dim, #8a6b21);
     --bo-danger: #e42e2e;
     --bo-success: #4caf50;
     --bo-header-h: 76px;
@@ -25,9 +25,9 @@ html[data-theme="light"] {
     --bo-border: #e8dfd3;
     --bo-text: #29251f;
     --bo-text-muted: #766e63;
-    --bo-gold: #b98618;
-    --bo-gold-bright: #a87308;
-    --bo-gold-dim: #e4c98d;
+    --bo-gold: var(--accent, #b98618);
+    --bo-gold-bright: var(--accent-bright, #a87308);
+    --bo-gold-dim: var(--accent-dim, #e4c98d);
     --bo-danger: #c11d1d;
     --bo-success: #2f8132;
     --bo-header-glow: rgba(255, 253, 250, 0.92);
@@ -183,7 +183,7 @@ body {
 }
 
 .crt-endereco-card.is-selected {
-    border-color: #ffc400;
+    border-color: var(--accent-bright, #ffc400);
 }
 
 .crt-endereco-info p {
@@ -202,7 +202,7 @@ body {
 .crt-endereco-badge {
     display: inline-block;
     background: rgba(255, 196, 0, 0.15);
-    color: #ffc400;
+    color: var(--accent-bright, #ffc400);
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
@@ -364,7 +364,7 @@ body {
 }
 
 .checkout-total {
-    border: 1px solid #8a6d09;
+    border: 1px solid var(--accent-dim, #8a6d09);
     background: #302807;
     padding: 11px 9px;
     border-radius: 7px;
@@ -378,7 +378,7 @@ body {
 }
 
 .checkout-total strong {
-    color: #ffc400;
+    color: var(--accent-bright, #ffc400);
     font-size: 17px;
 }
 
@@ -467,7 +467,7 @@ body {
 }
 
 .payment-tab.active {
-    background: #ffc400;
+    background: var(--accent-bright, #ffc400);
     color: #17130b;
 }
 
@@ -555,7 +555,7 @@ body {
     border-radius: 9px;
     margin-top: 8px;
     padding: 13px 12px;
-    background: #ffc400;
+    background: var(--accent-bright, #ffc400);
     color: #171208;
     font-size: 11px;
     font-weight: 800;
@@ -891,7 +891,7 @@ body {
 }
 
 .crt-frete-opcao.is-selected {
-    border-color: #ffc400;
+    border-color: var(--accent-bright, #ffc400);
     background: rgba(255, 196, 0, .08);
 }
 
@@ -911,7 +911,7 @@ body {
 
 .crt-frete-opcao-valor {
     font-weight: 800;
-    color: #ffc400;
+    color: var(--accent-bright, #ffc400);
 }
 
 .checkout-finish {

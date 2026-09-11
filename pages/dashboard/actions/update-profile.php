@@ -9,6 +9,14 @@
 
 require __DIR__ . '/_shared.php';
 bo_check_csrf();
+require_once __DIR__ . '/../../../config/localidades.php';
+$idConta = (int) $_SESSION['id_usuario'];
+$consultaConta = $conn->prepare('SELECT nome, cpf, nacionalidade, foto FROM usuarios WHERE id_usuario = ?');
+$consultaConta->bind_param('i', $idConta);
+$consultaConta->execute();
+$contaPersistida = $consultaConta->get_result()->fetch_assoc();
+$consultaConta->close();
+if (!$contaPersistida) { bo_flash('error', onefitTraduzir('Conta não encontrada.')); bo_redirect_perfil(); }
 
 $isAluno = ($_SESSION['tipo_usuario'] ?? '') === 'aluno';
 if ($isAluno) {
@@ -19,25 +27,25 @@ if ($isAluno) {
     $consultaFoto->execute();
     $perfilAtual = $consultaFoto->get_result()->fetch_assoc();
     $consultaFoto->close();
-    if (!$perfilAtual) { bo_flash('error', 'Conta não encontrada.'); bo_redirect_perfil(); }
+    if (!$perfilAtual) { bo_flash('error', onefitTraduzir('Conta não encontrada.')); bo_redirect_perfil(); }
     if (bo_str('acao') === 'foto') {
         try {
             $novaFoto = bo_aluno_upload();
-            if ($novaFoto === null) throw new RuntimeException('Selecione uma foto.');
+            if ($novaFoto === null) throw new RuntimeException(onefitTraduzir('Selecione uma foto.'));
             $salvarFoto = $conn->prepare('UPDATE usuarios SET foto = ? WHERE id_usuario = ?');
             $salvarFoto->bind_param('si', $novaFoto, $idAluno);
             $salvarFoto->execute();
             $salvarFoto->close();
-            bo_flash('success', 'Foto atualizada com sucesso!');
+            bo_flash('success', onefitTraduzir('Foto atualizada com sucesso!'));
         } catch (RuntimeException $erro) {
-            bo_flash('error', $erro instanceof mysqli_sql_exception ? 'Não foi possível salvar a foto.' : $erro->getMessage());
+            bo_flash('error', $erro instanceof mysqli_sql_exception ? onefitTraduzir('Não foi possível salvar a foto.') : $erro->getMessage());
         }
         bo_redirect_perfil();
     }
 }
 
-$nome = bo_str('nome');
-$cpf = preg_replace('/\D/', '', bo_str('documento'));
+$nome = $contaPersistida['nome'];
+$cpf = $contaPersistida['cpf'];
 $email = bo_str('email');
 $celular = preg_replace('/\D/', '', bo_str('telefone'));
 $nacionalidade = bo_str('nacionalidade');
@@ -48,7 +56,7 @@ $cidade = bo_str('cidade');
 $estado = strtoupper(bo_str('estado'));
 $alturaStr = bo_str('altura');
 $pesoStr = bo_str('peso');
-$fotoAtual = bo_str('foto_atual');
+$fotoAtual = $contaPersistida['foto'];
 
 $altura = $alturaStr === '' ? null : filter_var($alturaStr, FILTER_VALIDATE_FLOAT);
 $peso = $pesoStr === '' ? null : filter_var($pesoStr, FILTER_VALIDATE_FLOAT);
@@ -58,40 +66,40 @@ if ($isAluno) {
     $fotoAtual = $perfilAtual['foto']; // Nunca confiar no caminho enviado pelo navegador.
 }
 
-if (!$nome || !$cpf || !$email || !$celular || !$nacionalidade || !$nascimento || !$genero || !$endereco || !$cidade || !$estado) {
-    bo_flash('error', 'Preencha todos os campos obrigatórios.');
+if (!$email || !$celular || !$nacionalidade || !$nascimento || !$genero || !$endereco || !$cidade || !$estado) {
+    bo_flash('error', onefitTraduzir('Preencha todos os campos obrigatórios.'));
     bo_redirect_perfil();
 }
-if (strlen($cpf) !== 11) {
-    bo_flash('error', 'Informe um CPF com 11 números.');
+if (!onefitNacionalidadeValida($nacionalidade, (string) $contaPersistida['nacionalidade'])) {
+    bo_flash('error', onefitTraduzir('Selecione uma nacionalidade válida.'));
     bo_redirect_perfil();
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    bo_flash('error', 'Informe um e-mail válido.');
+    bo_flash('error', onefitTraduzir('Informe um e-mail válido.'));
     bo_redirect_perfil();
 }
 if (!bo_valida_celular($celular)) {
-    bo_flash('error', 'Informe um celular/telefone válido, com DDD (10 ou 11 números).');
+    bo_flash('error', onefitTraduzir('Informe um celular/telefone válido, com DDD (10 ou 11 números).'));
     bo_redirect_perfil();
 }
 if (!in_array($genero, ['masculino', 'feminino', 'outro'], true)) {
-    bo_flash('error', 'Selecione um gênero válido.');
+    bo_flash('error', onefitTraduzir('Selecione um gênero válido.'));
     bo_redirect_perfil();
 }
-if (!preg_match('/^[A-Z]{2}$/', $estado)) {
-    bo_flash('error', 'Informe o estado usando uma UF válida.');
+if (!array_key_exists($estado, onefitEstados())) {
+    bo_flash('error', onefitTraduzir('Informe o estado usando uma UF válida.'));
     bo_redirect_perfil();
 }
 
 $dataNascimento = DateTime::createFromFormat('!Y-m-d', $nascimento);
 $dataMinima = (new DateTime('today'))->modify('-12 years');
 if (!$dataNascimento || $dataNascimento->format('Y-m-d') !== $nascimento || $dataNascimento > $dataMinima) {
-    bo_flash('error', 'Para manter seu perfil na ONE FIT, você precisa ter pelo menos 12 anos.');
+    bo_flash('error', onefitTraduzir('Para manter seu perfil na ONE FIT, você precisa ter pelo menos 12 anos.'));
     bo_redirect_perfil();
 }
 if (($altura !== null && ($altura === false || $altura <= 0 || $altura > 3)) ||
     ($peso !== null && ($peso === false || $peso <= 0 || $peso > 500))) {
-    bo_flash('error', 'Confira os valores de altura e peso.');
+    bo_flash('error', onefitTraduzir('Confira os valores de altura e peso.'));
     bo_redirect_perfil();
 }
 
@@ -104,7 +112,7 @@ $check->bind_param('ssi', $cpf, $email, $idUsuario);
 $check->execute();
 if ($check->get_result()->fetch_assoc()) {
     $check->close();
-    bo_flash('error', 'O CPF ou e-mail informado já pertence a outra conta.');
+    bo_flash('error', onefitTraduzir('O CPF ou e-mail informado já pertence a outra conta.'));
     bo_redirect_perfil();
 }
 $check->close();
@@ -119,17 +127,15 @@ $foto = $fotoUpload ?? $fotoAtual;
 if ($isAluno) $imcCalculado = bo_aluno_imc($altura, $peso); // Derivado, não persistido.
 
 $stmt = $conn->prepare(
-    'UPDATE usuarios SET nome = ?, nacionalidade = ?, data_nascimento = ?, genero = ?, cpf = ?,
+    'UPDATE usuarios SET nacionalidade = ?, data_nascimento = ?, genero = ?,
      endereco = ?, cidade_estado = ?, email = ?, celular = ?, altura = ?, peso = ?, foto = ?
      WHERE id_usuario = ?'
 );
 $stmt->bind_param(
-    'sssssssssddsi',
-    $nome,
+    'sssssssddsi',
     $nacionalidade,
     $nascimento,
     $genero,
-    $cpf,
     $endereco,
     $cidadeEstado,
     $email,
@@ -143,7 +149,7 @@ try {
     $stmt->execute();
 } catch (mysqli_sql_exception $erro) {
     if (!$isAluno) throw $erro;
-    bo_flash('error', 'Não foi possível atualizar o perfil. Confira os dados e tente novamente.');
+    bo_flash('error', onefitTraduzir('Não foi possível atualizar o perfil. Confira os dados e tente novamente.'));
     bo_redirect_perfil();
 }
 $stmt->close();
@@ -152,5 +158,5 @@ $_SESSION['nome'] = $nome;
 $_SESSION['email'] = $email;
 $_SESSION['genero'] = $genero;
 
-bo_flash('success', 'Perfil atualizado com sucesso!');
+bo_flash('success', onefitTraduzir('Perfil atualizado com sucesso!'));
 bo_redirect_perfil();

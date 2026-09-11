@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../config/interface.php';
 /**
  * helpers.php
  * Funções utilitárias usadas nas telas do backoffice (dashboard.php e
@@ -17,7 +18,7 @@
 function bo_badge($isActive, $onLabel = 'Ativo', $offLabel = 'Inativo')
 {
     $cls = $isActive ? 'bo-badge-active' : 'bo-badge-inactive';
-    $label = $isActive ? $onLabel : $offLabel;
+    $label = of_t($isActive ? $onLabel : $offLabel);
     return '<span class="bo-badge ' . $cls . '">' . $label . '</span>';
 }
 

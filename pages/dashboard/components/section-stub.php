@@ -17,7 +17,7 @@
     </div>
     <div class="bo-stub">
         <i class="bi" id="boStubIcon"></i>
-        <h2>Em construção</h2>
+        <h2><?php echo of_t('Em construção'); ?></h2>
         <p>Esta seção está no roteiro do backoffice e será implementada em uma próxima etapa.</p>
     </div>
 </section>

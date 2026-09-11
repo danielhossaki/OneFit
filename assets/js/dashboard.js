@@ -1,3 +1,4 @@
+var ofT = globalThis.ofT || (text => text);
 /* =========================================================================
    backoffice.js
    Toda a interatividade do painel: troca de perfil (admin/profissional/
@@ -21,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = document.getElementById('boNotificationsList');
     const empty = document.getElementById('boNotificationsEmpty');
     const readAll = document.getElementById('boNotificationsReadAll');
+    const deleteAll = document.getElementById('boNotificationsDeleteAll');
     const status = document.getElementById('boNotificationsStatus');
     const feedback = document.getElementById('boNotificationsFeedback');
     let busy = false;
@@ -29,9 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
         unread = data.nao_lidas;
         count.textContent = unread > 99 ? '99+' : String(unread);
         count.hidden = unread === 0;
-        toggle.setAttribute('aria-label', `Notificações: ${unread} não lidas`);
+        toggle.setAttribute('aria-label', ofT('Notificações: {n} não lidas', { '{n}': unread }));
         readAll.disabled = unread === 0;
         empty.hidden = data.notificacoes.length > 0;
+        deleteAll.disabled = data.notificacoes.length === 0;
         list.replaceChildren();
         data.notificacoes.forEach(item => {
             const row = document.createElement('li');
@@ -44,14 +47,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!item.lida_em) {
                 const label = document.createElement('span');
                 label.className = 'visually-hidden';
-                label.textContent = 'Não lida. ';
+                label.textContent = ofT('Não lida. ');
                 text.prepend(label);
             }
             const time = document.createElement('time');
             const date = new Date(item.criada_em.replace(' ', 'T') + 'Z');
             time.dateTime = date.toISOString();
-            time.textContent = date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+            time.textContent = date.toLocaleString(globalThis.OneFit?.locale || 'pt-BR', { dateStyle: 'short', timeStyle: 'short' });
             row.append(title, text, time);
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'bo-notifications-delete';
+            remove.setAttribute('aria-label', ofT('Apagar notificação'));
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-trash';
+            icon.setAttribute('aria-hidden', 'true');
+            remove.append(icon);
+            remove.addEventListener('click', () => refresh('apagar', item.id));
+            row.append(remove);
             // Defesa adicional para links eventualmente inseridos por outros serviços.
             if (typeof item.link === 'string' && /^\/(?!\/)/.test(item.link) && !/[\\\s\u0000-\u001f]/.test(item.link)) {
                 const url = new URL(item.link, location.origin);
@@ -59,39 +72,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     const link = document.createElement('a');
                     link.href = url.href;
                     link.className = 'bo-notifications-item-link';
-                    link.textContent = 'Ver detalhes';
+                    link.textContent = ofT('Ver detalhes');
                     row.append(link);
                 }
             }
             list.append(row);
         });
     };
-    const refresh = async (markRead = false) => {
+    const refresh = async (action = '', id = '') => {
         if (busy) return;
         busy = true;
         readAll.disabled = true;
+        deleteAll.disabled = true;
+        list.querySelectorAll('button').forEach(button => { button.disabled = true; });
         panel.setAttribute('aria-busy', 'true');
         try {
             const options = { credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } };
-            if (markRead) {
+            if (action) {
                 options.method = 'POST';
-                options.body = new URLSearchParams({ csrf_token: BO_CSRF_TOKEN });
+                options.body = new URLSearchParams({ csrf_token: BO_CSRF_TOKEN, acao: action, id: String(id) });
             }
             const response = await fetch(wrap.dataset.url, options);
             const data = await response.json();
             if (!response.ok || !data.ok) throw new Error(data.message || 'Não foi possível carregar as notificações.');
             render(data);
             feedback.hidden = true;
-            if (markRead) {
+            if (action) {
                 panel.focus();
-                status.textContent = 'Todas as notificações foram marcadas como lidas.';
+                feedback.textContent = ofT(action === 'apagar' ? 'Notificação apagada.' : action === 'apagar_todas' ? 'Todas as notificações foram apagadas.' : 'Todas as notificações foram marcadas como lidas.');
+                feedback.hidden = false;
             }
         } catch (error) {
-            feedback.textContent = error.message || 'Não foi possível atualizar. Reabra as notificações para tentar novamente.';
+            feedback.textContent = ofT('Não foi possível atualizar as notificações. Tente novamente.');
             feedback.hidden = false;
         } finally {
             busy = false;
             readAll.disabled = unread === 0;
+            deleteAll.disabled = list.children.length === 0;
+            list.querySelectorAll('button').forEach(button => { button.disabled = false; });
             panel.setAttribute('aria-busy', 'false');
         }
     };
@@ -106,7 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         panel.focus();
         refresh();
     });
-    readAll.addEventListener('click', () => refresh(true));
+    readAll.addEventListener('click', () => refresh('marcar_lidas'));
+    deleteAll.addEventListener('click', () => {
+        if (!busy && window.confirm(ofT('Apagar todas as notificações? Esta ação não pode ser desfeita.'))) refresh('apagar_todas');
+    });
     document.addEventListener('click', event => {
         if (!wrap.contains(event.target)) close();
     });
@@ -180,53 +201,53 @@ const BO_PERFIS = {
     admin: {
         label: 'Administrador',
         menus: [
-            { key: 'dashboard', label: 'Visão Geral', icon: 'bi-speedometer2' },
-            { key: 'usuarios', label: 'Usuários', icon: 'bi-people' },
-            { key: 'permissoes', label: 'Permissões', icon: 'bi-shield-lock' },
-            { key: 'funcoes', label: 'Funções', icon: 'bi-diagram-3' },
-            { key: 'pagamentos', label: 'Pagamentos', icon: 'bi-credit-card' },
+            { key: 'dashboard', label: ofT('Visão Geral'), icon: 'bi-speedometer2' },
+            { key: 'usuarios', label: ofT('Usuários'), icon: 'bi-people' },
+            { key: 'permissoes', label: ofT('Permissões'), icon: 'bi-shield-lock' },
+            { key: 'funcoes', label: ofT('Funções'), icon: 'bi-diagram-3' },
+            { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
             { key: 'cashbacks', label: 'Cashbacks', icon: 'bi-wallet2' },
-            { key: 'categorias', label: 'Categorias', icon: 'bi-tags' },
-            { key: 'produtos', label: 'Produtos', icon: 'bi-box-seam' },
-            { key: 'vendas', label: 'Vendas Marketplace', icon: 'bi-truck' },
-            { key: 'planos', label: 'Cadastro de Planos', icon: 'bi-clipboard-check' },
-            { key: 'profissionais', label: 'Profissionais', icon: 'bi-person-badge' },
-            { key: 'modalidades', label: 'Modalidades', icon: 'bi-activity' },
-            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
+            { key: 'categorias', label: ofT('Categorias'), icon: 'bi-tags' },
+            { key: 'produtos', label: ofT('Produtos'), icon: 'bi-box-seam' },
+            { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck' },
+            { key: 'planos', label: ofT('Cadastro de Planos'), icon: 'bi-clipboard-check' },
+            { key: 'profissionais', label: ofT('Profissionais'), icon: 'bi-person-badge' },
+            { key: 'modalidades', label: ofT('Modalidades'), icon: 'bi-activity' },
+            { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
     vendedor: {
-        label: 'Vendedor',
+        label: ofT('Vendedor'),
         menus: [
-            { key: 'vendas', label: 'Vendas Marketplace', icon: 'bi-truck' },
+            { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck' },
             { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
-            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
+            { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
     profissional: {
-        label: 'Profissional',
+        label: ofT('Profissional'),
         menus: [
-            { key: 'dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
-            { key: 'historico', label: 'Histórico', icon: 'bi-clock-history' },
-            { key: 'alunos', label: 'Alunos', icon: 'bi-people' },
-            { key: 'agenda', label: 'Agenda', icon: 'bi-calendar3' },
-            { key: 'cashback', label: 'Meu cashback', icon: 'bi-wallet2' },
-            { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
+            { key: 'dashboard', label: ofT('Dashboard'), icon: 'bi-speedometer2' },
+            { key: 'historico', label: ofT('Histórico'), icon: 'bi-clock-history' },
+            { key: 'alunos', label: ofT('Alunos'), icon: 'bi-people' },
+            { key: 'agenda', label: ofT('Agenda'), icon: 'bi-calendar3' },
+            { key: 'cashback', label: ofT('Meu cashback'), icon: 'bi-wallet2' },
+            { key: 'compras', label: ofT('Minhas compras'), icon: 'bi-bag-check' },
             { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
-            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
+            { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
     aluno: {
-        label: 'Aluno',
+        label: ofT('Aluno'),
         menus: [
-            { key: 'perfil', label: 'Perfil', icon: 'bi-person-circle' },
-            { key: 'historico', label: 'Histórico', icon: 'bi-clock-history' },
+            { key: 'perfil', label: ofT('Perfil'), icon: 'bi-person-circle' },
+            { key: 'historico', label: ofT('Histórico'), icon: 'bi-clock-history' },
             { key: 'cashback', label: 'Cashback', icon: 'bi-wallet2' },
-            { key: 'compras', label: 'Minhas compras', icon: 'bi-bag-check' },
-            { key: 'treino', label: 'Treino', icon: 'bi-lightning-charge' },
-            { key: 'agenda', label: 'Minha agenda', icon: 'bi-calendar3' },
+            { key: 'compras', label: ofT('Minhas compras'), icon: 'bi-bag-check' },
+            { key: 'treino', label: ofT('Treino'), icon: 'bi-lightning-charge' },
+            { key: 'agenda', label: ofT('Minha agenda'), icon: 'bi-calendar3' },
             { key: 'marketplace', label: 'Marketplace', icon: 'bi-shop', href: BO_MARKETPLACE_URL },
-            { key: 'configuracoes', label: 'Configurações', icon: 'bi-gear' },
+            { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
 };
@@ -256,22 +277,22 @@ const BO_NATIONALITY_OPTIONS = BO_COUNTRY_CODES
    #boFormModal, sem precisar de um modal HTML diferente para cada tela. */
 const BO_FORM_SCHEMAS = {
     alunoDoProfissionalForm: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 12 },
-        { key: 'contato', label: 'Contato', type: 'text', col: 6 },
-        { key: 'plano', label: 'Plano', type: 'text', col: 6 },
-        { key: 'status', label: 'Status', type: 'select', options: ['ativo', 'inativo'], optionLabels: ['Ativo', 'Inativo'], col: 6 },
-        { key: 'valor', label: 'Valor', type: 'number', col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
+        { key: 'nome', label: ofT('Nome'), type: 'text', col: 12 },
+        { key: 'contato', label: ofT('Contato'), type: 'text', col: 6 },
+        { key: 'plano', label: ofT('Plano'), type: 'text', col: 6 },
+        { key: 'status', label: ofT('Status'), type: 'select', options: ['ativo', 'inativo'], optionLabels: [ofT('Ativo'), ofT('Inativo')], col: 6 },
+        { key: 'valor', label: ofT('Valor'), type: 'number', col: 6 },
+        { key: 'observacao', label: ofT('Observação'), type: 'textarea', col: 12 },
     ],
     agendaDisponivel: [
-        { key: 'data', label: 'Data/hora', type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
-        { key: 'modalidade', label: 'Modalidade', type: 'text', col: 6 },
+        { key: 'data', label: ofT('Data/hora'), type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
+        { key: 'modalidade', label: ofT('Modalidade'), type: 'text', col: 6 },
     ],
     agendaAgendar: [
-        { key: 'aluno', label: 'Aluno', type: 'text', col: 12 },
-        { key: 'data', label: 'Data/hora', type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
-        { key: 'modalidade', label: 'Modalidade', type: 'text', col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
+        { key: 'aluno', label: ofT('Aluno'), type: 'text', col: 12 },
+        { key: 'data', label: ofT('Data/hora'), type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
+        { key: 'modalidade', label: ofT('Modalidade'), type: 'text', col: 6 },
+        { key: 'observacao', label: ofT('Observação'), type: 'textarea', col: 12 },
     ],
     utilizarCashback: [
         { key: 'valor', label: 'Valor a utilizar', type: 'number', col: 12 },
@@ -280,24 +301,24 @@ const BO_FORM_SCHEMAS = {
         { key: 'plano', label: 'Novo plano', type: 'select', options: BO_PLANOS_OPTIONS, col: 12 },
     ],
     perfilEdit: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 6, required: true },
-        { key: 'documento', label: 'Documento', type: 'text', col: 6, required: true },
-        { key: 'email', label: 'E-mail', type: 'email', col: 6, required: true },
-        { key: 'telefone', label: 'Telefone', type: 'text', col: 6, required: true },
-        { key: 'nacionalidade', label: 'Nacionalidade', type: 'select', options: BO_NATIONALITY_OPTIONS, col: 6, required: true },
-        { key: 'nascimento', label: 'Data de nascimento', type: 'date', col: 6, required: true },
-        { key: 'genero', label: 'Gênero', type: 'select', options: ['masculino', 'feminino', 'outro'], optionLabels: ['Masculino', 'Feminino', 'Outro'], col: 6, required: true },
-        { key: 'endereco', label: 'Endereço', type: 'text', col: 12, required: true },
-        { key: 'cidade', label: 'Cidade', type: 'text', col: 6, required: true },
-        { key: 'estado', label: 'Estado (UF)', type: 'text', col: 6, required: true },
-        { key: 'altura', label: 'Altura (m)', type: 'number', col: 6, min: 0.5, max: 3, step: 0.01 },
-        { key: 'peso', label: 'Peso (kg)', type: 'number', col: 6, min: 1, max: 500, step: 0.1 },
+        { key: 'nome', label: ofT('Nome'), type: 'text', col: 6, required: true },
+        { key: 'documento', label: ofT('Documento'), type: 'text', col: 6, required: true },
+        { key: 'email', label: ofT('E-mail'), type: 'email', col: 6, required: true },
+        { key: 'telefone', label: ofT('Telefone'), type: 'text', col: 6, required: true },
+        { key: 'nacionalidade', label: ofT('Nacionalidade'), type: 'select', options: BO_NATIONALITY_OPTIONS, col: 6, required: true },
+        { key: 'nascimento', label: ofT('Data de nascimento'), type: 'date', col: 6, required: true },
+        { key: 'genero', label: ofT('Gênero'), type: 'select', options: ['masculino', 'feminino', 'outro'], optionLabels: [ofT('Masculino'), ofT('Feminino'), ofT('Outro')], col: 6, required: true },
+        { key: 'endereco', label: ofT('Endereço'), type: 'text', col: 12, required: true },
+        { key: 'cidade', label: ofT('Cidade'), type: 'text', col: 6, required: true },
+        { key: 'estado', label: ofT('Estado (UF)'), type: 'text', col: 6, required: true },
+        { key: 'altura', label: ofT('Altura (m)'), type: 'number', col: 6, min: 0.5, max: 3, step: 0.01 },
+        { key: 'peso', label: ofT('Peso (kg)'), type: 'number', col: 6, min: 1, max: 500, step: 0.1 },
         { key: 'foto', label: 'URL da foto', type: 'url', col: 12 },
     ],
     treinoExercicio: [
-        { key: 'nome', label: 'Exercício', type: 'text', col: 12 },
-        { key: 'series', label: 'Séries', type: 'number', col: 4 },
-        { key: 'repeticoes', label: 'Repetições', type: 'number', col: 4 },
+        { key: 'nome', label: ofT('Exercício'), type: 'text', col: 12 },
+        { key: 'series', label: ofT('Séries'), type: 'number', col: 4 },
+        { key: 'repeticoes', label: ofT('Repetições'), type: 'number', col: 4 },
         { key: 'carga', label: 'Carga (kg)', type: 'number', col: 4 },
     ],
 };
@@ -458,7 +479,7 @@ function boOpenForm(schemaKey, title, values, options) {
     const oldSaveBtn = document.getElementById('boFormModalSave');
     const saveBtn = oldSaveBtn.cloneNode(true);
     oldSaveBtn.parentNode.replaceChild(saveBtn, oldSaveBtn);
-    saveBtn.textContent = 'Salvar';
+    saveBtn.textContent = ofT('Salvar');
 
     let confirmStep = 0;
     saveBtn.addEventListener('click', async () => {
@@ -502,7 +523,7 @@ function boOpenForm(schemaKey, title, values, options) {
                 boToast(error.message);
             } finally {
                 saveBtn.disabled = false;
-                saveBtn.textContent = 'Salvar';
+                saveBtn.textContent = ofT('Salvar');
             }
             return;
         }
@@ -620,7 +641,7 @@ function boGetSearchPages() {
 
     if (!pages.some((page) => page.key === 'perfil')) {
         pages.unshift({
-            type: 'page', key: 'perfil', title: 'Meu perfil', subtitle: 'Dados da sua conta', icon: 'bi-person-circle',
+            type: 'page', key: 'perfil', title: ofT('Meu perfil'), subtitle: 'Dados da sua conta', icon: 'bi-person-circle',
             terms: ['perfil', ...(BO_SEARCH_ALIASES.perfil || [])],
         });
     }
@@ -674,7 +695,7 @@ function boRenderSearch(query) {
     };
 
     if (boSearchItems.length) {
-        appendGroup('Profissionais', professionals, 0);
+        appendGroup(ofT('Profissionais'), professionals, 0);
         appendGroup('Páginas', pages, professionals.length);
     } else {
         const empty = document.createElement('span');
@@ -700,7 +721,7 @@ function boOpenSearchResult(result) {
 }
 
 function boOpenProfileEdit() {
-    boOpenForm('perfilEdit', 'Editar perfil', typeof BO_CURRENT_USER !== 'undefined' ? BO_CURRENT_USER : {});
+    boOpenForm('perfilEdit', ofT('Editar perfil'), typeof BO_CURRENT_USER !== 'undefined' ? BO_CURRENT_USER : {});
 }
 
 function boShowProfessional(id, updateRoute = true) {
@@ -1004,8 +1025,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = toggleBtn.closest('tr');
             const badge = row.querySelector('.bo-badge');
             const active = badge.classList.contains('bo-badge-active');
-            const onLabel = toggleBtn.getAttribute('data-on') || 'Ativo';
-            const offLabel = toggleBtn.getAttribute('data-off') || 'Inativo';
+            const onLabel = toggleBtn.getAttribute('data-on') || ofT('Ativo');
+            const offLabel = toggleBtn.getAttribute('data-off') || ofT('Inativo');
 
             badge.classList.toggle('bo-badge-active', !active);
             badge.classList.toggle('bo-badge-inactive', active);
@@ -1069,8 +1090,8 @@ function boCalcularIMC() {
 
     const imc = peso / (altura * altura);
     let status = 'Normal';
-    if (imc < 18.5) status = 'Abaixo do peso';
-    else if (imc >= 25 && imc < 30) status = 'Sobrepeso';
+    if (imc < 18.5) status = ofT('Abaixo do peso');
+    else if (imc >= 25 && imc < 30) status = ofT('Sobrepeso');
     else if (imc >= 30) status = 'Obesidade';
 
     resultado.textContent = imc.toFixed(1) + ' · ' + status;

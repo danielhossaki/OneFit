@@ -47,7 +47,7 @@ $email = bo_str('email');
 $cpf = preg_replace('/\D/', '', bo_str('cpf'));
 $statusForm = bo_str('status');
 $acesso = bo_str('acesso');
-$status = $acesso === 'Bloqueado' ? 'bloqueado' : ($statusForm === 'inativo' ? 'inativo' : 'ativo');
+$status = $acesso === onefitTraduzir('Bloqueado') ? 'bloqueado' : ($statusForm === 'inativo' ? 'inativo' : 'ativo');
 $dataInicial = bo_str('dataInicial');
 $dataFinal = bo_str('dataFinal');
 
@@ -56,7 +56,7 @@ if (!$nome || !$email || strlen($cpf) !== 11) {
     bo_redirect($secao);
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    bo_flash('error', 'Informe um e-mail válido.');
+    bo_flash('error', onefitTraduzir('Informe um e-mail válido.'));
     bo_redirect($secao);
 }
 
@@ -158,11 +158,11 @@ if (!$nascimento || !$genero || !$celular || !$nacionalidade || !$endereco || !$
     bo_redirect($secao);
 }
 if (!bo_valida_celular($celular)) {
-    bo_flash('error', 'Informe um celular/telefone válido, com DDD (10 ou 11 números).');
+    bo_flash('error', onefitTraduzir('Informe um celular/telefone válido, com DDD (10 ou 11 números).'));
     bo_redirect($secao);
 }
 if (!in_array($genero, ['masculino', 'feminino', 'outro'], true)) {
-    bo_flash('error', 'Selecione um gênero válido.');
+    bo_flash('error', onefitTraduzir('Selecione um gênero válido.'));
     bo_redirect($secao);
 }
 

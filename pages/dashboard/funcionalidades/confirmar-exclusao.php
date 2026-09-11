@@ -43,12 +43,12 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmar exclusão · ONE FIT</title>
+    <title><?php echo of_t('Confirmar exclusão · ONE FIT'); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -58,6 +58,7 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
         (() => { let p = 'dark'; try { p = localStorage.getItem('onefit-theme') || p; } catch (e) {} const t = p === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); })();
     </script>
     <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/webp">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body>
@@ -65,9 +66,9 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
         <div class="bo-data-panel" style="padding:32px;">
             <div class="bo-page-title">
                 <div>
-                    <span class="bo-eyebrow"><i class="bi bi-exclamation-triangle"></i> Ação irreversível</span>
+                    <span class="bo-eyebrow"><i class="bi bi-exclamation-triangle"></i> <?php echo of_t('Ação irreversível'); ?></span>
                     <h1>Excluir <?php echo htmlspecialchars($nome, ENT_QUOTES, 'UTF-8'); ?>?</h1>
-                    <p>Essa exclusão remove o registro definitivamente do banco de dados e não pode ser desfeita.</p>
+                    <p><?php echo of_t('Essa exclusão remove o registro definitivamente do banco de dados e não pode ser desfeita.'); ?></p>
                 </div>
             </div>
 
@@ -76,9 +77,9 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                 <input type="hidden" name="secao" value="<?php echo htmlspecialchars($secao, ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
-                <a class="btn-bo-outline" style="flex:1; text-align:center;" href="<?php echo BASE_URL . 'pages/dashboard/dashboard.php?section=' . urlencode($secao); ?>">Cancelar</a>
+                <a class="btn-bo-outline" style="flex:1; text-align:center;" href="<?php echo BASE_URL . 'pages/dashboard/dashboard.php?section=' . urlencode($secao); ?>"><?php echo of_t('Cancelar'); ?></a>
                 <button type="submit" class="btn-bo-gold" style="flex:1; background:#dc3545; border-color:#dc3545; color:#fff;">
-                    <i class="bi bi-trash"></i> Sim, excluir
+                    <i class="bi bi-trash"></i> <?php echo of_t('Sim, excluir'); ?>
                 </button>
             </form>
         </div>

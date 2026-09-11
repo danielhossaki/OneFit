@@ -11,14 +11,14 @@ if ($devolucao) {
 } elseif (bo_status_permite_devolucao($ped['statusBanco'])) {
     ?>
     <details>
-        <summary>Solicitar devolução</summary>
+        <summary><?php echo of_t('Solicitar devolução'); ?></summary>
         <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
             <?php echo bo_csrf_field(); ?>
             <?php echo bo_hidden('secao', 'compras'); ?>
             <?php echo bo_hidden('acao', 'solicitar-devolucao'); ?>
             <?php echo bo_hidden('id_pedido', $ped['idPedido']); ?>
             <textarea name="motivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="Motivo da devolução" required></textarea>
-            <button type="submit" class="btn-bo-outline btn-sm mt-1">Solicitar devolução</button>
+            <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Solicitar devolução'); ?></button>
         </form>
     </details>
     <?php

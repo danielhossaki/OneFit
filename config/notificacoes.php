@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/interface.php';
 /** Helpers internos: carregar após config/conn.php. Não são endpoints públicos. */
 
 function notificacaoLinkSeguro(?string $link): ?string
@@ -75,6 +76,12 @@ function buscarNotificacoes(int $usuarioId): array
     $stmt->bind_param('i', $usuarioId);
     $stmt->execute();
     $itens = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    foreach ($itens as &$item) {
+        $item['id'] = (int) $item['id'];
+        try { $item['link'] = notificacaoLinkSeguro($item['link']); }
+        catch (InvalidArgumentException $erro) { $item['link'] = null; }
+    }
+    unset($item);
     $stmt->close();
     $stmt = $conn->prepare('SELECT COUNT(*) FROM notificacoes WHERE usuario_id = ? AND lida_em IS NULL');
     $stmt->bind_param('i', $usuarioId);
@@ -91,4 +98,59 @@ function marcarNotificacoesComoLidas(int $usuarioId): void
     $stmt->bind_param('i', $usuarioId);
     $stmt->execute();
     $stmt->close();
+}
+
+/** Call only after the checkout COMMIT. Deduplication and delivery are atomic. */
+function notificarCompraBackoffice(mysqli $db, int $pedidoId): int
+{
+    require_once __DIR__ . '/interface.php';
+    $stmt = $db->prepare("SELECT p.id_pedido, p.valor_total, p.data_pedido, u.tipo_usuario
+        FROM pedido p JOIN usuarios u ON u.id_usuario = p.id_usuario
+        WHERE p.id_pedido = ? AND u.tipo_usuario IN ('aluno', 'profissional')");
+    $stmt->bind_param('i', $pedidoId);
+    $stmt->execute();
+    $pedido = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$pedido) return 0;
+    $ids = $db->query("SELECT id_usuario FROM usuarios WHERE tipo_usuario = 'admin' AND status = 'ativo'")->fetch_all(MYSQLI_ASSOC);
+    $count = 0;
+    foreach ($ids as $admin) {
+        $id = (int) $admin['id_usuario'];
+        $db->begin_transaction();
+        try {
+            // Lock and recheck permission; never trust a role supplied by the buyer/session.
+            $check = $db->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario = 'admin' AND status = 'ativo' FOR UPDATE");
+            $check->bind_param('i', $id);
+            $check->execute();
+            $allowed = (bool) $check->get_result()->fetch_assoc();
+            $check->close();
+            if (!$allowed) { $db->rollback(); continue; }
+            $evento = 'marketplace.pedido.' . $pedidoId;
+            $claim = $db->prepare('INSERT INTO notificacoes_eventos (evento, usuario_id) VALUES (?, ?)');
+            $claim->bind_param('si', $evento, $id);
+            try { $claim->execute(); }
+            catch (mysqli_sql_exception $e) {
+                if ($e->getCode() !== 1062) throw $e;
+                $claim->close(); $db->rollback(); continue;
+            }
+            $claim->close();
+            $lang = $db->prepare('SELECT idioma FROM preferencias_usuario WHERE id_usuario = ?');
+            $lang->bind_param('i', $id); $lang->execute();
+            $locale = $lang->get_result()->fetch_assoc()['idioma'] ?? 'pt-BR'; $lang->close();
+            $title = onefitTraduzir('Novo pedido no marketplace', [], $locale);
+            $type = onefitTraduzir($pedido['tipo_usuario'] === 'profissional' ? 'Profissional' : 'Aluno', [], $locale);
+            $message = onefitTraduzir('{tipo} · Pedido #{pedido} · R$ {valor} · {data}', [
+                '{tipo}' => $type, '{pedido}' => (string) $pedidoId,
+                '{valor}' => number_format((float) $pedido['valor_total'], 2, ',', '.'),
+                '{data}' => date('d/m/Y H:i', strtotime($pedido['data_pedido'])),
+            ], $locale);
+            $path = rtrim((string) parse_url(defined('BASE_URL') ? BASE_URL : onefitEnv('APP_URL'), PHP_URL_PATH), '/');
+            $link = notificacaoLinkSeguro($path . '/pages/dashboard/dashboard.php?section=vendas&pedido=' . $pedidoId);
+            $insert = $db->prepare("INSERT INTO notificacoes (usuario_id,titulo,mensagem,tipo,link,criada_em) VALUES (?,?,?,'info',?,UTC_TIMESTAMP())");
+            $insert->bind_param('isss', $id, $title, $message, $link);
+            $insert->execute(); $insert->close();
+            $db->commit(); $count++;
+        } catch (Throwable $e) { $db->rollback(); throw $e; }
+    }
+    return $count;
 }

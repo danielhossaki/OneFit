@@ -23,7 +23,7 @@ if ($perfilLogado === 'aluno') {
         <div class="bo-header-search-wrap" id="boHeaderSearchWrap">
             <label class="bo-header-search" for="boHeaderSearch">
                 <i class="bi bi-search"></i>
-                <input id="boHeaderSearch" type="search" placeholder="Pesquisar no painel" aria-label="Pesquisar no painel" autocomplete="off" aria-autocomplete="list" aria-controls="boSearchResults" aria-expanded="false">
+                <input id="boHeaderSearch" type="search" placeholder="<?php echo of_t('Pesquisar no painel'); ?>" aria-label="<?php echo of_t('Pesquisar no painel'); ?>" autocomplete="off" aria-autocomplete="list" aria-controls="boSearchResults" aria-expanded="false">
                 <kbd>Ctrl K</kbd>
             </label>
             <div class="bo-search-results" id="boSearchResults" role="listbox" aria-label="Resultados da pesquisa" hidden></div>
@@ -38,12 +38,13 @@ if ($perfilLogado === 'aluno') {
             </button>
             <section class="bo-notifications-panel" id="boNotificationsPanel" aria-labelledby="boNotificationsTitle" tabindex="-1" hidden>
                 <div class="bo-notifications-heading">
-                    <h2 id="boNotificationsTitle">Notificações</h2>
-                    <button type="button" id="boNotificationsReadAll" disabled>Marcar todas como lidas</button>
+                    <h2 id="boNotificationsTitle"><?php echo of_t('Notificações'); ?></h2>
+                    <button type="button" id="boNotificationsReadAll" disabled><?php echo of_t('Marcar todas como lidas'); ?></button>
+                    <button type="button" id="boNotificationsDeleteAll" disabled><?php echo of_t('Apagar todas'); ?></button>
                 </div>
                 <ul class="bo-notifications-list" id="boNotificationsList"></ul>
-                <p class="bo-notifications-empty" id="boNotificationsEmpty" hidden>Nenhuma notificação por enquanto</p>
-                <p class="bo-notifications-feedback" id="boNotificationsFeedback" role="status">Carregando notificações…</p>
+                <p class="bo-notifications-empty" id="boNotificationsEmpty" hidden><?php echo of_t('Nenhuma notificação por enquanto'); ?></p>
+                <p class="bo-notifications-feedback" id="boNotificationsFeedback" role="status"><?php echo of_t('Carregando notificações…'); ?></p>
                 <span class="visually-hidden" id="boNotificationsStatus" role="status"></span>
             </section>
         </div>
@@ -55,10 +56,10 @@ if ($perfilLogado === 'aluno') {
                 <?php endif; ?>
             </button>
             <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=perfil" role="menuitem"><i class="bi bi-person"></i> Editar perfil</a>
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/alterar-senha.php" role="menuitem"><i class="bi bi-key"></i> Alterar senha</a>
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=configuracoes" role="menuitem"><i class="bi bi-gear"></i> Configurações</a>
-                <a href="<?php echo BASE_URL; ?>config/logout.php" role="menuitem" class="bo-user-menu-logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=perfil" role="menuitem"><i class="bi bi-person"></i> <?php echo of_t('Editar perfil'); ?></a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/alterar-senha.php" role="menuitem"><i class="bi bi-key"></i> <?php echo of_t('Alterar senha'); ?></a>
+                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=configuracoes" role="menuitem"><i class="bi bi-gear"></i> <?php echo of_t('Configurações'); ?></a>
+                <a href="<?php echo BASE_URL; ?>config/logout.php" role="menuitem" class="bo-user-menu-logout"><i class="bi bi-box-arrow-right"></i> <?php echo of_t('Logout'); ?></a>
             </div>
         </div>
     </div>

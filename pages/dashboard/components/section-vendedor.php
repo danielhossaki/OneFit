@@ -10,12 +10,12 @@
  */
 
 $vendasStatusLabel = [
-    'aguardando' => 'Aguardando',
+    'aguardando' => onefitTraduzir('Aguardando'),
     'preparando' => 'Preparando',
     'despachado' => 'Despachado',
     'entregue' => 'Entregue',
-    'devolvido' => 'Devolvido',
-    'extraviado' => 'Extraviado',
+    'devolvido' => onefitTraduzir('Devolvido'),
+    'extraviado' => onefitTraduzir('Extraviado'),
 ];
 ?>
 
@@ -23,21 +23,21 @@ $vendasStatusLabel = [
 <section class="bo-content-section" data-perfil="vendedor" data-section="vendas">
     <div class="bo-page-title">
         <div>
-            <h1>Vendas Marketplace</h1>
-            <p>Seus produtos e a logística das suas vendas no marketplace.</p>
+            <h1><?php echo of_t('Vendas Marketplace'); ?></h1>
+            <p><?php echo of_t('Seus produtos e a logística das suas vendas no marketplace.'); ?></p>
         </div>
         <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalProdutoNovo">
-            <i class="bi bi-plus-lg"></i> Cadastro de Produto
+            <i class="bi bi-plus-lg"></i> <?php echo of_t('Cadastro de Produto'); ?>
         </button>
     </div>
     <?php bo_modal_produto(null, 'vendas', $categoriasAtivasOptions); ?>
 
     <ul class="nav nav-tabs bo-nav-tabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vendedorTabProdutos" type="button" role="tab">Produtos</button>
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vendedorTabProdutos" type="button" role="tab"><?php echo of_t('Produtos'); ?></button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#vendedorTabVendas" type="button" role="tab">Vendas e logística</button>
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#vendedorTabVendas" type="button" role="tab"><?php echo of_t('Vendas e logística'); ?></button>
         </li>
     </ul>
 
@@ -47,19 +47,19 @@ $vendasStatusLabel = [
             <div class="row g-3 mb-3 mt-1">
                 <div class="col-4">
                     <div class="bo-card">
-                        <div class="bo-card-label">Total cadastrados</div>
+                        <div class="bo-card-label"><?php echo of_t('Total cadastrados'); ?></div>
                         <div class="bo-card-value"><?php echo $vendedorProdutosResumo['total']; ?></div>
                     </div>
                 </div>
                 <div class="col-4">
                     <div class="bo-card">
-                        <div class="bo-card-label">Ativos</div>
+                        <div class="bo-card-label"><?php echo of_t('Ativos'); ?></div>
                         <div class="bo-card-value"><?php echo $vendedorProdutosResumo['disponiveis']; ?></div>
                     </div>
                 </div>
                 <div class="col-4">
                     <div class="bo-card">
-                        <div class="bo-card-label">Inativos / pausados</div>
+                        <div class="bo-card-label"><?php echo of_t('Inativos / pausados'); ?></div>
                         <div class="bo-card-value"><?php echo $vendedorProdutosResumo['indisponiveis']; ?></div>
                     </div>
                 </div>
@@ -69,9 +69,9 @@ $vendasStatusLabel = [
                 <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome ou ID"
                     data-bo-filter="search" data-bo-target="vendedorProdutos">
                 <select class="form-select" style="max-width:200px" data-bo-filter="status" data-bo-target="vendedorProdutos">
-                    <option value="">Todos</option>
-                    <option value="disponivel">Ativo</option>
-                    <option value="indisponivel">Inativo / pausado</option>
+                    <option value=""><?php echo of_t('Todos'); ?></option>
+                    <option value="disponivel"><?php echo of_t('Ativo'); ?></option>
+                    <option value="indisponivel"><?php echo of_t('Inativo / pausado'); ?></option>
                 </select>
             </div>
 
@@ -80,13 +80,13 @@ $vendasStatusLabel = [
                     <table class="bo-table" data-bo-table="vendedorProdutos">
                         <thead>
                             <tr>
-                                <th>Foto</th>
+                                <th><?php echo of_t('Foto'); ?></th>
                                 <th>ID</th>
-                                <th>Nome</th>
-                                <th>Preço</th>
-                                <th>Estoque</th>
-                                <th>Status</th>
-                                <th>Ações</th>
+                                <th><?php echo of_t('Nome'); ?></th>
+                                <th><?php echo of_t('Preço'); ?></th>
+                                <th><?php echo of_t('Estoque'); ?></th>
+                                <th><?php echo of_t('Status'); ?></th>
+                                <th><?php echo of_t('Ações'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -106,11 +106,11 @@ $vendasStatusLabel = [
                                     <td><?php echo $p['nome']; ?></td>
                                     <td><?php echo bo_money($p['valorFinal']); ?></td>
                                     <td><?php echo $p['estoque']; ?></td>
-                                    <td><?php echo bo_badge($p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?></td>
+                                    <td><?php echo bo_badge($p['status'] === 'disponivel', onefitTraduzir('Ativo'), onefitTraduzir('Inativo')); ?></td>
                                     <td>
                                         <div class="bo-table-actions">
-                                            <?php bo_form_toggle('produtos', $p['id'], 'vendas', $p['status'] === 'disponivel', 'Ativo', 'Inativo'); ?>
-                                            <button type="button" class="btn-bo-icon" title="Editar" data-bs-toggle="modal" data-bs-target="#modalProdutoEditar<?php echo $p['id']; ?>">
+                                            <?php bo_form_toggle('produtos', $p['id'], 'vendas', $p['status'] === 'disponivel', onefitTraduzir('Ativo'), onefitTraduzir('Inativo')); ?>
+                                            <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalProdutoEditar<?php echo $p['id']; ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                             <?php echo bo_botao_excluir('produtos', $p['id']); ?>
@@ -119,7 +119,7 @@ $vendasStatusLabel = [
                                 </tr>
                             <?php endforeach; ?>
                             <tr class="bo-empty-row" style="display:none">
-                                <td colspan="7">Nenhum produto encontrado para os filtros selecionados.</td>
+                                <td colspan="7"><?php echo of_t('Nenhum produto encontrado para os filtros selecionados.'); ?></td>
                             </tr>
                         </tbody>
                     </table>
@@ -135,7 +135,7 @@ $vendasStatusLabel = [
         <div class="tab-pane fade" id="vendedorTabVendas" role="tabpanel">
             <div class="bo-filters mt-3">
                 <select class="form-select" style="max-width:220px" data-bo-filter="status" data-bo-target="vendedorVendas">
-                    <option value="">Todos os status</option>
+                    <option value=""><?php echo of_t('Todos os status'); ?></option>
                     <?php foreach ($vendasStatusLabel as $valor => $label): ?>
                         <option value="<?php echo $valor; ?>"><?php echo $label; ?></option>
                     <?php endforeach; ?>
@@ -147,14 +147,14 @@ $vendasStatusLabel = [
                     <table class="bo-table" data-bo-table="vendedorVendas">
                         <thead>
                             <tr>
-                                <th>Data</th>
-                                <th>Produto</th>
-                                <th>Comprador</th>
-                                <th>Qtd.</th>
-                                <th>Valor</th>
-                                <th>Transportadora</th>
-                                <th>Frete</th>
-                                <th>Rastreio / Status</th>
+                                <th><?php echo of_t('Data'); ?></th>
+                                <th><?php echo of_t('Produto'); ?></th>
+                                <th><?php echo of_t('Comprador'); ?></th>
+                                <th><?php echo of_t('Qtd.'); ?></th>
+                                <th><?php echo of_t('Valor'); ?></th>
+                                <th><?php echo of_t('Transportadora'); ?></th>
+                                <th><?php echo of_t('Frete'); ?></th>
+                                <th><?php echo of_t('Rastreio / Status'); ?></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -179,13 +179,13 @@ $vendasStatusLabel = [
                                                 <?php endforeach; ?>
                                             </select>
                                             <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="Código de rastreio" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
-                                            <button type="submit" class="btn-bo-outline btn-sm mt-1">Salvar</button>
+                                            <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Salvar'); ?></button>
                                         </form>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
                             <tr class="bo-empty-row" <?php echo empty($vendedorVendas) ? '' : 'style="display:none"'; ?>>
-                                <td colspan="8">Nenhuma venda registrada ainda.</td>
+                                <td colspan="8"><?php echo of_t('Nenhuma venda registrada ainda.'); ?></td>
                             </tr>
                         </tbody>
                     </table>

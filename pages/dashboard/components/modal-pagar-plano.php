@@ -16,19 +16,19 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Pagar plano</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <h5 class="modal-title"><?php echo of_t('Pagar plano'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
             </div>
             <div class="modal-body">
 
                 <!-- Resumo do plano atual (somente leitura) -->
                 <div class="row g-3 mb-3">
                     <div class="col-6">
-                        <label class="form-label">Valor</label>
+                        <label class="form-label"><?php echo of_t('Valor'); ?></label>
                         <input type="text" class="form-control" value="<?php echo bo_money($alunoPerfil['valorContratado'] ?? 0); ?>" readonly>
                     </div>
                     <div class="col-6">
-                        <label class="form-label">Tipo do plano</label>
+                        <label class="form-label"><?php echo of_t('Tipo do plano'); ?></label>
                         <input type="text" class="form-control" value="<?php echo htmlspecialchars($alunoPerfil['plano'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" readonly>
                     </div>
                 </div>
@@ -38,20 +38,20 @@
                     <input type="radio" class="btn-check" name="metodoPagamento" id="metodoPix" checked>
                     <label class="btn-bo-outline" for="metodoPix" style="flex:1;text-align:center;">PIX</label>
                     <input type="radio" class="btn-check" name="metodoPagamento" id="metodoCredito">
-                    <label class="btn-bo-outline" for="metodoCredito" style="flex:1;text-align:center;">Crédito</label>
+                    <label class="btn-bo-outline" for="metodoCredito" style="flex:1;text-align:center;"><?php echo of_t('Crédito'); ?></label>
                     <input type="radio" class="btn-check" name="metodoPagamento" id="metodoDebito">
-                    <label class="btn-bo-outline" for="metodoDebito" style="flex:1;text-align:center;">Débito</label>
+                    <label class="btn-bo-outline" for="metodoDebito" style="flex:1;text-align:center;"><?php echo of_t('Débito'); ?></label>
                 </div>
 
                 <!-- Painel Pix: QR code simulado + código "copia e cola" -->
                 <div id="painelPix">
                     <button type="button" class="btn-bo-outline mb-3" id="btnGerarQr">
-                        <i class="bi bi-qr-code"></i> Gerar QR Code
+                        <i class="bi bi-qr-code"></i> <?php echo of_t('Gerar QR Code'); ?>
                     </button>
                     <div class="bo-pix-box" id="pixResultado" style="display:none">
                         <div class="bo-qr-placeholder"></div>
                         <input type="text" class="form-control mb-2" readonly id="pixCopiaCola" value="00020126580014BR.GOV.BCB.PIX0136onefit-pagamento-simulado5204000053039865802BR5909ONE FIT6009SAO PAULO62070503***6304ABCD">
-                        <button type="button" class="btn-bo-outline" id="btnCopiarPix"><i class="bi bi-clipboard"></i> Copiar código Pix</button>
+                        <button type="button" class="btn-bo-outline" id="btnCopiarPix"><i class="bi bi-clipboard"></i> <?php echo of_t('Copiar código Pix'); ?></button>
                     </div>
                 </div>
 
@@ -59,11 +59,11 @@
                 <div id="painelCartao" style="display:none">
                     <div class="row g-3">
                         <div class="col-12">
-                            <label class="form-label">Número do cartão</label>
+                            <label class="form-label"><?php echo of_t('Número do cartão'); ?></label>
                             <input type="text" class="form-control" placeholder="0000 0000 0000 0000">
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Validade</label>
+                            <label class="form-label"><?php echo of_t('Validade'); ?></label>
                             <input type="text" class="form-control" placeholder="MM/AA">
                         </div>
                         <div class="col-6">
@@ -74,8 +74,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn-bo-gold" id="btnPagar">Pagar</button>
+                <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                <button type="button" class="btn-bo-gold" id="btnPagar"><?php echo of_t('Pagar'); ?></button>
             </div>
         </div>
     </div>

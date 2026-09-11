@@ -16,16 +16,16 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="boFormModalTitle">Formulário</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <h5 class="modal-title" id="boFormModalTitle"><?php echo of_t('Formulário'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
             </div>
             <div class="modal-body">
                 <!-- Campos inseridos aqui via JS (boBuildField / boOpenForm) -->
                 <form id="boFormModalForm" class="row g-3" onsubmit="return false;"></form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-bo-outline" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn-bo-gold" id="boFormModalSave">Salvar</button>
+                <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                <button type="button" class="btn-bo-gold" id="boFormModalSave"><?php echo of_t('Salvar'); ?></button>
             </div>
         </div>
     </div>

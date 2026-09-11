@@ -286,16 +286,16 @@
     </div>
 
     <div class="nav-links" id="navLinks">
-        <a href="#estrutura">Estrutura</a>
-        <a href="#modalidades">Treinos</a>
-        <a href="#planos">Planos</a>
-        <a href="#depoimentos">Alunos</a>
-        <a href="#contato">Contato</a>
+        <a href="#estrutura"><?php echo of_t('Estrutura'); ?></a>
+        <a href="#modalidades"><?php echo of_t('Treinos'); ?></a>
+        <a href="#planos"><?php echo of_t('Planos'); ?></a>
+        <a href="#depoimentos"><?php echo of_t('Alunos'); ?></a>
+        <a href="#contato"><?php echo of_t('Contato'); ?></a>
 
         <!-- Ações visíveis só quando o menu mobile está aberto -->
         <div class="nav-mobile-actions">
-            <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline">Entrar</a>
-            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold">Matricule-se</a>
+            <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline"><?php echo of_t('Entrar'); ?></a>
+            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold"><?php echo of_t('Matricule-se'); ?></a>
         </div>
     </div>
 
@@ -310,9 +310,9 @@
             </span>
         </button>
 
-        <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline">Entrar</a>
+        <a href="<?php echo BASE_URL; ?>pages/login/login.php" class="btn btn-outline"><?php echo of_t('Entrar'); ?></a>
 
-        <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold">Matricule-se</a>
+        <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn btn-gold"><?php echo of_t('Matricule-se'); ?></a>
 
         <button class="menu-toggle" id="menuToggle">
             ☰

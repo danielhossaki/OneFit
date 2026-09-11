@@ -7,13 +7,13 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 if (empty($_SESSION['id_usuario'])) {
     http_response_code(401);
-    echo json_encode(['error' => 'Sua sessão expirou. Entre novamente.']);
+    echo json_encode(['error' => onefitTraduzir('Sua sessão expirou. Entre novamente.')]);
     exit;
 }
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);
     header('Allow: GET');
-    echo json_encode(['error' => 'Método não permitido.']);
+    echo json_encode(['error' => onefitTraduzir('Método não permitido.')]);
     exit;
 }
 $busca = $_GET['busca'] ?? '';

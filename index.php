@@ -3,7 +3,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
 // WhatsApp da Home: substitua pelo número real com 55 + DDD + número, somente dígitos.
-$whatsappNumero = '55XXXXXXXXXXX';
+$whatsappNumero = '5512996908833';
 $whatsappMensagem = 'Olá! Gostaria de saber mais sobre a OneFit.';
 $whatsappUrl = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($whatsappMensagem);
 
@@ -58,12 +58,12 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ONE FIT · Treino de Alta Performance</title>
+  <title><?php echo of_t('ONE FIT · Treino de Alta Performance'); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -73,6 +73,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
   <!-- link do favicon -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body>
@@ -82,36 +83,36 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
   </header>
 
   <section class="hero" data-aos="fade-up">
-    <span class="eyebrow">Treino de alta performance</span>
-    <h1>TREINE PARA<br>SER O <span class="shine">UM</span></h1>
-    <p class="lead">Não existe segundo lugar no seu treino. Na ONE FIT você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.</p>
+    <span class="eyebrow"><?php echo of_t('Treino de alta performance'); ?></span>
+    <h1><?php echo of_t('TREINE PARA'); ?><br><?php echo of_t('SER O'); ?> <span class="shine"><?php echo of_t('UM'); ?></span></h1>
+    <p class="lead"><?php echo of_t('Não existe segundo lugar no seu treino. Na ONE FIT você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.'); ?></p>
     <div class="hero-actions">
-      <a href="#planos" class="btn btn-gold">Comece hoje</a>
-      <a href="#modalidades" class="btn btn-outline">Ver modalidades</a>
+      <a href="#planos" class="btn btn-gold"><?php echo of_t('Comece hoje'); ?></a>
+      <a href="#modalidades" class="btn btn-outline"><?php echo of_t('Ver modalidades'); ?></a>
     </div>
   </section>
 
   <div class="equip-marquee" data-aos="fade-up">
     <div class="track">
       <div class="group">
-        <span>HALTERES</span><span class="sep">&#9670;</span>
-        <span>BARRAS OLÍMPICAS</span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('HALTERES'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('BARRAS OLÍMPICAS'); ?></span><span class="sep">&#9670;</span>
         <span>KETTLEBELL</span><span class="sep">&#9670;</span>
-        <span>CORDA NAVAL</span><span class="sep">&#9670;</span>
-        <span>ANILHAS</span><span class="sep">&#9670;</span>
-        <span>RACK DE AGACHAMENTO</span><span class="sep">&#9670;</span>
-        <span>PRANCHA ABDOMINAL</span><span class="sep">&#9670;</span>
-        <span>ESTEIRA</span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('CORDA NAVAL'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('ANILHAS'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('RACK DE AGACHAMENTO'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('PRANCHA ABDOMINAL'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('ESTEIRA'); ?></span><span class="sep">&#9670;</span>
       </div>
       <div class="group">
-        <span>HALTERES</span><span class="sep">&#9670;</span>
-        <span>BARRAS OLÍMPICAS</span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('HALTERES'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('BARRAS OLÍMPICAS'); ?></span><span class="sep">&#9670;</span>
         <span>KETTLEBELL</span><span class="sep">&#9670;</span>
-        <span>CORDA NAVAL</span><span class="sep">&#9670;</span>
-        <span>ANILHAS</span><span class="sep">&#9670;</span>
-        <span>RACK DE AGACHAMENTO</span><span class="sep">&#9670;</span>
-        <span>PRANCHA ABDOMINAL</span><span class="sep">&#9670;</span>
-        <span>ESTEIRA</span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('CORDA NAVAL'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('ANILHAS'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('RACK DE AGACHAMENTO'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('PRANCHA ABDOMINAL'); ?></span><span class="sep">&#9670;</span>
+        <span><?php echo of_t('ESTEIRA'); ?></span><span class="sep">&#9670;</span>
       </div>
     </div>
   </div>
@@ -119,22 +120,22 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
   <div class="stats" data-aos="fade-up">
     <div class="stat">
       <div class="num" data-target="500" data-suffix="+">0</div>
-      <div class="label">Alunos ativos</div>
+      <div class="label"><?php echo of_t('Alunos ativos'); ?></div>
     </div>
 
     <div class="stat">
       <div class="num" data-target="15">0</div>
-      <div class="label">Anos de história</div>
+      <div class="label"><?php echo of_t('Anos de história'); ?></div>
     </div>
 
     <div class="stat">
       <div class="num" data-target="20">0</div>
-      <div class="label">Modalidades</div>
+      <div class="label"><?php echo of_t('Modalidades'); ?></div>
     </div>
 
     <div class="stat">
       <div class="num">05h—23h</div>
-      <div class="label">Todos os dias</div>
+      <div class="label"><?php echo of_t('Todos os dias'); ?></div>
     </div>
   </div>
 
@@ -142,10 +143,10 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
     <div class="wrap">
       <div class="section-head">
         <div>
-          <span class="tag">Estrutura</span>
-          <h2>Equipamento<br>de verdade</h2>
+          <span class="tag"><?php echo of_t('Estrutura'); ?></span>
+          <h2><?php echo of_t('Equipamento'); ?><br><?php echo of_t('de verdade'); ?></h2>
         </div>
-        <p>Halteres até 60kg, barras olímpicas, racks de agachamento e tudo que você precisa para treinar pesado sem fila de espera.</p>
+        <p><?php echo of_t('Halteres até 60kg, barras olímpicas, racks de agachamento e tudo que você precisa para treinar pesado sem fila de espera.'); ?></p>
       </div>
       <div class="equip-grid">
 
@@ -154,8 +155,8 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
-            <h3>Sala de Musculação</h3>
-            <p>Equipamentos completos, livres e guiados.</p>
+            <h3><?php echo of_t('Sala de Musculação'); ?></h3>
+            <p><?php echo of_t('Equipamentos completos, livres e guiados.'); ?></p>
           </div>
         </div>
 
@@ -164,8 +165,8 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
-            <h3>Treino de Força</h3>
-            <p>Halteres até 60kg para todos os níveis.</p>
+            <h3><?php echo of_t('Treino de Força'); ?></h3>
+            <p><?php echo of_t('Halteres até 60kg para todos os níveis.'); ?></p>
           </div>
         </div>
 
@@ -174,8 +175,8 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
-            <h3>Área de Halteres</h3>
-            <p>Rack organizado, do leve ao pesado.</p>
+            <h3><?php echo of_t('Área de Halteres'); ?></h3>
+            <p><?php echo of_t('Rack organizado, do leve ao pesado.'); ?></p>
           </div>
         </div>
 
@@ -184,8 +185,8 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
-            <h3>Estúdio de Spinning</h3>
-            <p>Bikes profissionais e aulas guiadas.</p>
+            <h3><?php echo of_t('Estúdio de Spinning'); ?></h3>
+            <p><?php echo of_t('Bikes profissionais e aulas guiadas.'); ?></p>
           </div>
         </div>
 
@@ -197,10 +198,10 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
     <div class="wrap">
       <div class="section-head">
         <div>
-          <span class="tag">Modalidades</span>
-          <h2>Escolha sua<br>forma de treinar</h2>
+          <span class="tag"><?php echo of_t('Modalidades'); ?></span>
+          <h2><?php echo of_t('Escolha sua'); ?><br><?php echo of_t('forma de treinar'); ?></h2>
         </div>
-        <p>Vários caminhos, um mesmo objetivo: sair mais forte do que entrou. Todos com professores especialistas acompanhando cada série.</p>
+        <p><?php echo of_t('Vários caminhos, um mesmo objetivo: sair mais forte do que entrou. Todos com professores especialistas acompanhando cada série.'); ?></p>
       </div>
       <div class="mod-grid" data-aos="fade-up">
 
@@ -231,10 +232,10 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
     <div class="wrap">
       <div class="section-head">
         <div>
-          <span class="tag">Planos</span>
-          <h2>Invista no<br>seu progresso</h2>
+          <span class="tag"><?php echo of_t('Planos'); ?></span>
+          <h2><?php echo of_t('Invista no'); ?><br><?php echo of_t('seu progresso'); ?></h2>
         </div>
-        <p>Sem taxa de matrícula em nenhum plano. Cancele ou pause quando quiser, sem burocracia.</p>
+        <p><?php echo of_t('Sem taxa de matrícula em nenhum plano. Cancele ou pause quando quiser, sem burocracia.'); ?></p>
       </div>
       <div class="plans">
 
@@ -242,7 +243,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
           <div class="plan<?php echo $i === 1 ? ' featured' : ''; ?>" data-aos="fade-up" data-aos-delay="<?php echo 50 + $i * 50; ?>">
             <span class="plan-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
             <h3><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></h3>
-            <div class="price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><span>/mês</span></div>
+            <div class="price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><span><?php echo of_t('/mês'); ?></span></div>
             <div class="price-sub"><?php echo htmlspecialchars($p['descricao'], ENT_QUOTES, 'UTF-8'); ?></div>
             <ul>
               <?php foreach ($p['beneficios'] as $beneficio): ?>
@@ -251,7 +252,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
                   </svg><?php echo htmlspecialchars($beneficio, ENT_QUOTES, 'UTF-8'); ?></li>
               <?php endforeach; ?>
             </ul>
-            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn <?php echo $i === 1 ? 'btn-gold' : 'btn-outline'; ?>">Escolher plano</a>
+            <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php" class="btn <?php echo $i === 1 ? 'btn-gold' : 'btn-outline'; ?>"><?php echo of_t('Escolher plano'); ?></a>
           </div>
         <?php endforeach; ?>
 
@@ -263,8 +264,8 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
     <div class="wrap">
       <div class="section-head">
         <div>
-          <span class="tag">Alunos</span>
-          <h2>Quem treina,<br>confirma</h2>
+          <span class="tag"><?php echo of_t('Alunos'); ?></span>
+          <h2><?php echo of_t('Quem treina,'); ?><br><?php echo of_t('confirma'); ?></h2>
         </div>
       </div>
       <div class="testimonials">
@@ -275,7 +276,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
             <div class="avatar"></div>
             <div>
               <div class="name">Mariana Alvez</div>
-              <div class="role">Aluna há 8 meses</div>
+              <div class="role"><?php echo of_t('Aluna há 8 meses'); ?></div>
             </div>
           </div>
         </div>
@@ -286,7 +287,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
             <div class="avatar"></div>
             <div>
               <div class="name">Rafael Souza</div>
-              <div class="role">Aluno há 2 anos</div>
+              <div class="role"><?php echo of_t('Aluno há 2 anos'); ?></div>
             </div>
           </div>
         </div>
@@ -297,7 +298,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
             <div class="avatar"></div>
             <div>
               <div class="name">Gabriely Rocha</div>
-              <div class="role">Aluna há 1 ano</div>
+              <div class="role"><?php echo of_t('Aluna há 1 ano'); ?></div>
             </div>
           </div>
         </div>
@@ -306,10 +307,10 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
   </section>
 
   <section class="final-cta" id="contato" data-aos="fade-down">
-    <span class="eyebrow">Comece agora!</span>
-    <h2>Sua primeira<br>aula é <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, #fff8e1 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;">grátis</span></h2>
-    <p>Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.</p>
-    <a href="<?php echo htmlspecialchars($whatsappUrlAula, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-gold" target="_blank" rel="noopener noreferrer">Agendar aula experimental</a>
+    <span class="eyebrow"><?php echo of_t('Comece agora!'); ?></span>
+    <h2><?php echo of_t('Sua primeira'); ?><br><?php echo of_t('aula é'); ?> <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, var(--accent-pale, #fff8e1) 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;"><?php echo of_t('grátis'); ?></span></h2>
+    <p><?php echo of_t('Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.'); ?></p>
+    <a href="<?php echo htmlspecialchars($whatsappUrlAula, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-gold" target="_blank" rel="noopener noreferrer"><?php echo of_t('Agendar aula experimental'); ?></a>
   </section>
 
   <?php include __DIR__ . '/components/footer.php'; ?>
@@ -318,7 +319,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
      href="<?php echo htmlspecialchars($whatsappUrl, ENT_QUOTES, 'UTF-8'); ?>"
      target="_blank" rel="noopener noreferrer"
      aria-label="Converse com a OneFit pelo WhatsApp (abre em nova aba)">
-    <span class="whatsapp-float-message" aria-hidden="true">Fale conosco pelo WhatsApp!</span>
+    <span class="whatsapp-float-message" aria-hidden="true"><?php echo of_t('Fale conosco pelo WhatsApp!'); ?></span>
     <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true" focusable="false">
       <path d="M20.52 3.48A11.87 11.87 0 0 0 12.05 0C5.46 0 .1 5.36 .1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.24-1.64a11.94 11.94 0 0 0 5.8 1.48h.01C18.64 23.84 24 18.48 24 11.89c0-3.19-1.24-6.18-3.48-8.41zM12.05 21.82a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.86 9.86 0 0 1-1.51-5.25c0-5.48 4.46-9.94 9.95-9.94a9.87 9.87 0 0 1 7.03 2.92 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" />
     </svg>

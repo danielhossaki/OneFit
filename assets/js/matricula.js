@@ -1,3 +1,4 @@
+var ofT = globalThis.ofT || (text => text);
 // Controla as etapas, a validação e os campos auxiliares da matrícula.
 
 (() => {
@@ -57,7 +58,7 @@
     }
 
     if (input.id === 'nascimento' && !isValidBirthDate(input.value)) {
-      return 'Informe uma data de nascimento válida.';
+      return ofT('Informe uma data de nascimento válida.');
     }
 
     if (input.id === 'cidade' && input.dataset.citySelected !== input.value) {
@@ -81,7 +82,7 @@
   const total = steps.length;
 
   const subtitles = {
-    1: 'Preencha seus dados para começar a treinar com a gente.',
+    1: ofT('Preencha seus dados para começar a treinar com a gente.'),
     2: 'Precisamos do seu endereço para emitir sua matrícula.',
     3: 'Escolha o plano que mais combina com seu objetivo.',
     4: 'Falta pouco — escolha como prefere pagar.',
@@ -125,11 +126,11 @@
   // Traduz os estados da validação nativa em mensagens objetivas.
   function messageFor(input) {
     const v = input.validity;
-    if (v.valueMissing) return 'Preencha este campo.';
-    if (v.typeMismatch && input.type === 'email') return 'Digite um e-mail válido.';
-    if (v.tooShort) return `Mínimo de ${input.minLength} caracteres.`;
-    if (v.patternMismatch) return 'Formato inválido.';
-    return 'Verifique este campo.';
+    if (v.valueMissing) return ofT('Preencha este campo.');
+    if (v.typeMismatch && input.type === 'email') return ofT('Digite um e-mail válido.');
+    if (v.tooShort) return ofT('Mínimo de {n} caracteres.', { '{n}': input.minLength });
+    if (v.patternMismatch) return ofT('Formato inválido.');
+    return ofT('Verifique este campo.');
   }
 
   function setFieldState(input, valid, customMessage) {
@@ -418,7 +419,7 @@
     if (!cidadeInput) return;
     buscaCidadesController?.abort();
     buscaCidadesController = new AbortController();
-    limparCidade('Carregando cidades...', { disabled: true });
+    limparCidade(ofT('Carregando cidades...'), { disabled: true });
 
     try {
       const resposta = await fetch(
@@ -457,7 +458,7 @@
 
     const inicial = document.createElement('option');
     inicial.value = '';
-    inicial.textContent = 'Selecione o estado';
+    inicial.textContent = ofT('Selecione o estado');
     estadoInput.appendChild(inicial);
 
     estados.forEach((estado) => {
@@ -472,6 +473,7 @@
 
   async function carregarEstados() {
     if (!estadoInput) return;
+    if (estadoInput.options.length > 1) { estadoInput.disabled = false; return; }
 
     try {
       const resposta = await fetch(`${ibgeApi}/estados?orderBy=nome`);
@@ -515,7 +517,7 @@
       if (!event.detail?.fromCep) cidadePendenteDoCep = '';
       if (!uf) {
         buscaCidadesController?.abort();
-        limparCidade('Selecione primeiro um estado');
+        limparCidade(ofT('Selecione primeiro um estado'));
         return;
       }
       carregarCidades(uf);

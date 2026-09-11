@@ -4,10 +4,10 @@
     --surface-2: #241F18;
     --text: #F3EDE2;
     --text-muted: #B0A896;
-    --gold: #D4AF37;
-    --gold-bright: #F4C430;
-    --gold-dim: #8A6B21;
-    --bronze: #A8763F;
+    --gold: var(--accent, #D4AF37);
+    --gold-bright: var(--accent-bright, #F4C430);
+    --gold-dim: var(--accent-dim, #8A6B21);
+    --bronze: var(--accent-dim, #A8763F);
     --border: rgba(243, 237, 226, 0.12);
     --shadow: rgba(0, 0, 0, 0.45);
     --overlay: rgba(20, 17, 14, 0.72);
@@ -19,10 +19,10 @@ html[data-theme="light"] {
     --surface-2: #F0EBE0;
     --text: #1A1613;
     --text-muted: #6B6255;
-    --gold: #B8892B;
-    --gold-bright: #8A6414;
-    --gold-dim: #D8BE72;
-    --bronze: #7A4E2D;
+    --gold: var(--accent, #B8892B);
+    --gold-bright: var(--accent-bright, #8A6414);
+    --gold-dim: var(--accent-dim, #D8BE72);
+    --bronze: var(--accent-dim, #7A4E2D);
     --border: rgba(26, 22, 19, 0.12);
     --shadow: rgba(26, 22, 19, 0.12);
     --overlay: rgba(247, 244, 238, 0.82);
@@ -187,7 +187,7 @@ html[data-theme="light"] .hero {
 }
 
 .hero h1 .shine {
-    background: linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, #fff8e1 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);
+    background: linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, var(--accent-pale, #fff8e1) 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);
     background-size: 260% 100%;
     -webkit-background-clip: text;
     background-clip: text;
@@ -709,7 +709,7 @@ footer {
     height: 8px;
     border-radius: 50%;
     background: var(--gold);
-    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 0 4px rgba(var(--accent-rgb, 212,175,55), 0.2);
 }
 
 @media (max-width: 860px) {

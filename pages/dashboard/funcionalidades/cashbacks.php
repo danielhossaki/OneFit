@@ -34,7 +34,7 @@ if ($acao === 'massa') {
         bo_redirect($secao);
     }
 
-    $sqlUsuarios = $alvo === 'Ativos' ? "SELECT id_usuario FROM usuarios WHERE status = 'ativo'" : 'SELECT id_usuario FROM usuarios';
+    $sqlUsuarios = $alvo === onefitTraduzir('Ativos') ? "SELECT id_usuario FROM usuarios WHERE status = 'ativo'" : 'SELECT id_usuario FROM usuarios';
     $res = $conn->query($sqlUsuarios);
     $descricaoMassa = 'Distribuição em massa (admin)';
     $stmt = $conn->prepare('INSERT INTO cashback (id_usuario, valor, tipo, origem, descricao, status, data_criacao) VALUES (?, ?, "credito", "uso", ?, "disponivel", ?)');

@@ -56,7 +56,7 @@ function bo_check_csrf(): void
 {
     $token = (string) ($_POST['csrf_token'] ?? '');
     if (!$token || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
-        bo_flash('error', 'Sua sessão expirou. Atualize a página e tente novamente.');
+        bo_flash('error', onefitTraduzir('Sua sessão expirou. Atualize a página e tente novamente.'));
         bo_redirect((string) ($_POST['secao'] ?? 'dashboard'));
     }
 }

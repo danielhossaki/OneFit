@@ -8,34 +8,34 @@ $idsPedidoVisiveis = array_column(array_merge($comprasPedidos, $comprasHistorico
 $devolucoesPorPedido = bo_carregar_devolucoes_por_pedido($conn, $idsPedidoVisiveis);
 $devolucaoStatusLabel = bo_status_devolucao_labels();
 ?>
-<?php if (!$comprasPedidos && !$comprasHistorico): ?><p class="bo-card">Nenhuma compra encontrada.</p><?php endif; ?>
+<?php if (!$comprasPedidos && !$comprasHistorico): ?><p class="bo-card"><?php echo of_t('Nenhuma compra encontrada.'); ?></p><?php endif; ?>
     <div class="row g-3 mb-3">
         <div class="col-12 col-md-4">
             <div class="bo-card">
-                <div class="bo-card-label">Total de pedidos</div>
+                <div class="bo-card-label"><?php echo of_t('Total de pedidos'); ?></div>
                 <div class="bo-card-value"><?php echo count($comprasPedidos) + count($comprasHistorico); ?></div>
             </div>
         </div>
     </div>
 
-    <div class="bo-section-heading">Acompanhamento de pedido</div>
+    <div class="bo-section-heading"><?php echo of_t('Acompanhamento de pedido'); ?></div>
     <div class="bo-table-wrap">
         <div class="table-responsive">
             <table class="bo-table">
                 <thead>
                     <tr>
-                        <th>ID transação</th>
-                        <th>Produto</th>
-                        <th>Vendido por</th>
-                        <th>Quantidade</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                        <th>Recebimento</th>
-                        <th>Devolução</th>
+                        <th><?php echo of_t('ID transação'); ?></th>
+                        <th><?php echo of_t('Produto'); ?></th>
+                        <th><?php echo of_t('Vendido por'); ?></th>
+                        <th><?php echo of_t('Quantidade'); ?></th>
+                        <th><?php echo of_t('Valor'); ?></th>
+                        <th><?php echo of_t('Status'); ?></th>
+                        <th><?php echo of_t('Recebimento'); ?></th>
+                        <th><?php echo of_t('Devolução'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($comprasPedidos)): ?><tr><td colspan="8">Nenhum pedido em andamento corresponde aos filtros selecionados.</td></tr><?php endif; ?>
+                    <?php if (empty($comprasPedidos)): ?><tr><td colspan="8"><?php echo of_t('Nenhum pedido em andamento corresponde aos filtros selecionados.'); ?></td></tr><?php endif; ?>
                     <?php foreach ($comprasPedidos as $ped): ?>
                         <?php
                         $vendedoresPedido = array_unique(array_column($ped['itens'], 'vendedor'));
@@ -75,7 +75,7 @@ $devolucaoStatusLabel = bo_status_devolucao_labels();
                                 <small><?php echo htmlspecialchars($recebimentoPedido); ?></small>
                                 <?php if ($itensConfirmaveis): ?>
                                     <details>
-                                        <summary>Confirmar entrega</summary>
+                                        <summary><?php echo of_t('Confirmar entrega'); ?></summary>
                                         <?php foreach ($itensConfirmaveis as $it): ?>
                                         <div><small><?php echo htmlspecialchars($it['produto']); ?></small></div>
                                         <form method="POST" action="<?php echo bo_form_action('meus-pedidos.php'); ?>" class="bo-inline-form">
@@ -83,7 +83,7 @@ $devolucaoStatusLabel = bo_status_devolucao_labels();
                                             <?php echo bo_hidden('secao', 'compras'); ?>
                                             <?php echo bo_hidden('acao', 'confirmar-recebimento'); ?>
                                             <?php echo bo_hidden('id_item', $it['idItem']); ?>
-                                            <button type="submit" class="btn-bo-gold btn-sm">Confirmar entrega</button>
+                                            <button type="submit" class="btn-bo-gold btn-sm"><?php echo of_t('Confirmar entrega'); ?></button>
                                         </form>
                                         <?php endforeach; ?>
                                     </details>
@@ -97,21 +97,21 @@ $devolucaoStatusLabel = bo_status_devolucao_labels();
         </div>
     </div>
 
-    <div class="bo-section-heading">Histórico de compra</div>
+    <div class="bo-section-heading"><?php echo of_t('Histórico de compra'); ?></div>
     <div class="bo-table-wrap">
         <div class="table-responsive">
             <table class="bo-table">
                 <thead>
                     <tr>
-                        <th>ID transação</th>
-                        <th>Data/hora</th>
-                        <th>Produto</th>
-                        <th>Status</th>
-                        <th>Devolução</th>
+                        <th><?php echo of_t('ID transação'); ?></th>
+                        <th><?php echo of_t('Data/hora'); ?></th>
+                        <th><?php echo of_t('Produto'); ?></th>
+                        <th><?php echo of_t('Status'); ?></th>
+                        <th><?php echo of_t('Devolução'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (empty($comprasHistoricoExibido)): ?><tr><td colspan="5">Nenhuma compra no histórico corresponde aos filtros selecionados.</td></tr><?php endif; ?>
+                    <?php if (empty($comprasHistoricoExibido)): ?><tr><td colspan="5"><?php echo of_t('Nenhuma compra no histórico corresponde aos filtros selecionados.'); ?></td></tr><?php endif; ?>
                     <?php foreach ($comprasHistoricoExibido as $ped): ?>
                         <tr>
                             <td><?php echo $ped['transacao']; ?></td>

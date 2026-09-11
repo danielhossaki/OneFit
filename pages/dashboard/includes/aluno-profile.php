@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../config/interface.php';
 /** Medidas e IMC derivados dos campos existentes em usuarios. */
 function bo_aluno_medida($valor, float $maximo): ?float
 {
@@ -12,16 +13,16 @@ function bo_aluno_imc($altura, $peso): array
 {
     $altura = bo_aluno_medida($altura, 3);
     $peso = bo_aluno_medida($peso, 500);
-    if ($altura === null || $peso === null || $altura * $altura == 0) return ['valor' => null, 'classe' => 'Não informado'];
+    if ($altura === null || $peso === null || $altura * $altura == 0) return ['valor' => null, 'classe' => onefitTraduzir('Não informado')];
     $imc = $peso / ($altura * $altura);
-    if (!is_finite($imc)) return ['valor' => null, 'classe' => 'Não informado'];
+    if (!is_finite($imc)) return ['valor' => null, 'classe' => onefitTraduzir('Não informado')];
     $classe = match (true) {
-        $imc < 18.5 => 'Abaixo do peso',
-        $imc < 25 => 'Peso adequado',
-        $imc < 30 => 'Sobrepeso',
-        $imc < 35 => 'Obesidade grau I',
-        $imc < 40 => 'Obesidade grau II',
-        default => 'Obesidade grau III',
+        $imc < 18.5 => onefitTraduzir('Abaixo do peso'),
+        $imc < 25 => onefitTraduzir('Peso adequado'),
+        $imc < 30 => onefitTraduzir('Sobrepeso'),
+        $imc < 35 => onefitTraduzir('Obesidade grau I'),
+        $imc < 40 => onefitTraduzir('Obesidade grau II'),
+        default => onefitTraduzir('Obesidade grau III'),
     };
     return ['valor' => $imc, 'classe' => $classe];
 }
@@ -29,8 +30,22 @@ function bo_aluno_imc($altura, $peso): array
 function bo_aluno_foto_url(?string $foto): string
 {
     $foto = trim($foto ?? '');
-    if (str_starts_with($foto, BASE_URL . 'assets/img/uploads/perfil/')) return $foto;
+    if (str_starts_with($foto, BASE_URL . 'assets/img/uploads/perfil/')) return bo_aluno_foto_ampliavel($foto);
     return filter_var($foto, FILTER_VALIDATE_URL) && in_array(strtolower(parse_url($foto, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true) ? $foto : '';
+}
+
+/** Only real images within the profile upload directory may be enlarged. */
+function bo_aluno_foto_ampliavel(?string $foto): string
+{
+    $prefix = BASE_URL . 'assets/img/uploads/perfil/';
+    if (!is_string($foto) || !str_starts_with($foto, $prefix)) return '';
+    $name = substr($foto, strlen($prefix));
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.(?:jpe?g|png|webp)$/iD', $name)) return '';
+    $root = realpath(__DIR__ . '/../../../assets/img/uploads/perfil');
+    $file = $root ? realpath($root . DIRECTORY_SEPARATOR . $name) : false;
+    if (!$file || dirname($file) !== $root || !is_file($file)) return '';
+    $info = @getimagesize($file);
+    return $info && in_array($info['mime'], ['image/jpeg','image/png','image/webp'], true) ? $foto : '';
 }
 
 /** Valida conteúdo, extensão e tamanho antes de usar o upload existente. */

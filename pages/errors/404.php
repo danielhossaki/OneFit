@@ -29,7 +29,7 @@ $logLine = sprintf(
 ?>
 
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
   <meta charset="UTF-8">
@@ -46,11 +46,12 @@ $logLine = sprintf(
 
   <!-- link do favicon -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body>
   <section class="error-page" data-aos="fade-up">
-    <span class="eyebrow error-eyebrow">Série falhada</span>
+    <span class="eyebrow error-eyebrow"><?php echo of_t('Série falhada'); ?></span>
  
     <div class="error-code" aria-label="Erro 404">
       <span class="digit">4</span><span class="plate-zero">
@@ -61,20 +62,20 @@ $logLine = sprintf(
       </span><span class="digit">4</span>
     </div>
  
-    <h2>Essa página falhou o levantamento</h2>
-    <p class="lead">A página que você procura não existe, mudou de lugar ou foi removida. Sem excesso de carga — volte para o início e recomece o treino do jeito certo.</p>
+    <h2><?php echo of_t('Essa página falhou o levantamento'); ?></h2>
+    <p class="lead"><?php echo of_t('A página que você procura não existe, mudou de lugar ou foi removida. Sem excesso de carga — volte para o início e recomece o treino do jeito certo.'); ?></p>
  
     <div class="error-actions">
-      <a href="<?php echo BASE_URL; ?>" class="btn btn-gold" id="btn_voltar">Voltar para o início</a>
-      <a href="<?php echo BASE_URL; ?>index.php#planos" class="btn btn-outline">Ver planos</a>
+      <a href="<?php echo BASE_URL; ?>" class="btn btn-gold" id="btn_voltar"><?php echo of_t('Voltar para o início'); ?></a>
+      <a href="<?php echo BASE_URL; ?>index.php#planos" class="btn btn-outline"><?php echo of_t('Ver planos'); ?></a>
     </div>
  
     <div class="error-links">
-      <a href="<?php echo BASE_URL; ?>index.php#modalidades">Modalidades</a>
+      <a href="<?php echo BASE_URL; ?>index.php#modalidades"><?php echo of_t('Modalidades'); ?></a>
       <span class="sep">&#9670;</span>
-      <a href="<?php echo BASE_URL; ?>index.php#estrutura">Estrutura</a>
+      <a href="<?php echo BASE_URL; ?>index.php#estrutura"><?php echo of_t('Estrutura'); ?></a>
       <span class="sep">&#9670;</span>
-      <a href="<?php echo BASE_URL; ?>index.php#contato">Contato</a>
+      <a href="<?php echo BASE_URL; ?>index.php#contato"><?php echo of_t('Contato'); ?></a>
     </div>
   </section>
 

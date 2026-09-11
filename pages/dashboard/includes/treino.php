@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../config/interface.php';
 function bo_treino_dias(): array
 {
     return ['segunda' => 'Segunda-feira', 'terca' => 'Terça-feira', 'quarta' => 'Quarta-feira',

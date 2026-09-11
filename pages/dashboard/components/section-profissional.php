@@ -324,7 +324,7 @@ try {
             $valorTexto = str_replace(',', '.', trim((string) ($_POST['valor'] ?? '')));
             $valor = filter_var($valorTexto, FILTER_VALIDATE_FLOAT);
             if ($valor === false || $valor <= 0) {
-                throw new RuntimeException('Informe um valor de cashback válido.');
+                throw new RuntimeException(onefitTraduzir('Informe um valor de cashback válido.'));
             }
 
             $stmt = $conn->prepare(
@@ -473,26 +473,26 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <?php if ($ofFeedback): ?>
     <div class="alert alert-<?php echo $ofH($ofFeedback['type']); ?> alert-dismissible fade show" role="alert">
         <?php echo $ofH($ofFeedback['message']); ?>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php echo of_t('Fechar'); ?>"></button>
     </div>
 <?php endif; ?>
 
 <!-- ===== PROFISSIONAL · Dashboard ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="dashboard">
     <div class="bo-page-title">
-        <div><h1>Dashboard</h1><p>Resumo do seu contrato e saldo com a ONE FIT.</p></div>
+        <div><h1><?php echo of_t('Dashboard'); ?></h1><p><?php echo of_t('Resumo do seu contrato e saldo com a ONE FIT.'); ?></p></div>
     </div>
     <div class="row g-3">
         <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label">Status de contrato</div>
+            <div class="bo-card-label"><?php echo of_t('Status de contrato'); ?></div>
             <div class="bo-card-value"><?php echo $ofH($profContrato['status'] ?? '—'); ?></div>
         </div></div>
         <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label">Validade de contrato</div>
+            <div class="bo-card-label"><?php echo of_t('Validade de contrato'); ?></div>
             <div class="bo-card-value"><?php echo $ofH($profContrato['validade'] ?? '—'); ?></div>
         </div></div>
         <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label">Saldo de cashback</div>
+            <div class="bo-card-label"><?php echo of_t('Saldo de cashback'); ?></div>
             <div class="bo-card-value"><?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></div>
         </div></div>
     </div>
@@ -501,12 +501,12 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <!-- ===== PROFISSIONAL · Histórico ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="historico">
     <div class="bo-page-title">
-        <div><h1>Histórico</h1><p>Histórico de competências e valores recebidos.</p></div>
-        <button type="button" class="btn-bo-outline" data-bo-export="profHistorico"><i class="bi bi-download"></i> Exportar</button>
+        <div><h1><?php echo of_t('Histórico'); ?></h1><p><?php echo of_t('Histórico de competências e valores recebidos.'); ?></p></div>
+        <button type="button" class="btn-bo-outline" data-bo-export="profHistorico"><i class="bi bi-download"></i> <?php echo of_t('Exportar'); ?></button>
     </div>
     <div class="bo-table-wrap"><div class="table-responsive">
         <table class="bo-table" data-bo-table="profHistorico">
-            <thead><tr><th>Competência</th><th>Valor</th><th>Tipo</th><th>Cashback</th></tr></thead>
+            <thead><tr><th><?php echo of_t('Competência'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Tipo'); ?></th><th>Cashback</th></tr></thead>
             <tbody>
                 <?php foreach (($profHistorico ?? []) as $h): ?>
                     <tr>
@@ -516,7 +516,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         <td><?php echo bo_money((float) ($h['cashback'] ?? 0)); ?></td>
                     </tr>
                 <?php endforeach; ?>
-                <tr class="bo-empty-row" <?php echo empty($profHistorico) ? '' : 'style="display:none"'; ?>><td colspan="4">Nenhum registro encontrado.</td></tr>
+                <tr class="bo-empty-row" <?php echo empty($profHistorico) ? '' : 'style="display:none"'; ?>><td colspan="4"><?php echo of_t('Nenhum registro encontrado.'); ?></td></tr>
             </tbody>
         </table>
     </div></div>
@@ -525,20 +525,20 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <!-- ===== PROFISSIONAL · Alunos ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="alunos">
     <div class="bo-page-title">
-        <div><h1>Alunos</h1><p>Cadastre, edite ou remova vínculos com alunos já registrados.</p></div>
+        <div><h1><?php echo of_t('Alunos'); ?></h1><p><?php echo of_t('Cadastre, edite ou remova vínculos com alunos já registrados.'); ?></p></div>
         <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAlunoModal" data-of-new-student>
-            <i class="bi bi-plus-lg"></i> Adicionar aluno
+            <i class="bi bi-plus-lg"></i> <?php echo of_t('Adicionar aluno'); ?>
         </button>
     </div>
     <div class="bo-filters">
         <input type="search" class="form-control" style="max-width:300px" placeholder="Buscar aluno" data-bo-filter="search" data-bo-target="profAlunos">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="profAlunos">
-            <option value="">Todos os status</option><option value="ativo">Ativo</option><option value="inativo">Inativo</option>
+            <option value=""><?php echo of_t('Todos os status'); ?></option><option value="ativo"><?php echo of_t('Ativo'); ?></option><option value="inativo"><?php echo of_t('Inativo'); ?></option>
         </select>
     </div>
     <div class="bo-table-wrap"><div class="table-responsive">
         <table class="bo-table" data-bo-table="profAlunos">
-            <thead><tr><th>Nome</th><th>Plano</th><th>Status</th><th>Valor</th><th>Ações</th></tr></thead>
+            <thead><tr><th><?php echo of_t('Nome'); ?></th><th><?php echo of_t('Plano'); ?></th><th><?php echo of_t('Status'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Ações'); ?></th></tr></thead>
             <tbody>
                 <?php foreach ($profAlunos as $a): ?>
                     <tr data-search="<?php echo $ofH(strtolower(($a['nome'] ?? '') . ' ' . ($a['email'] ?? '') . ' ' . ($a['plano'] ?? ''))); ?>"
@@ -547,7 +547,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                             <?php echo $ofH($a['nome']); ?>
                             <small class="d-block text-secondary"><?php echo $ofH($a['email'] ?? ''); ?></small>
                         </td>
-                        <td><?php echo $ofH($a['plano'] ?? 'Sem plano'); ?></td>
+                        <td><?php echo $ofH($a['plano'] ?? onefitTraduzir('Sem plano')); ?></td>
                         <td><?php echo bo_badge($a['status'] === 'ativo'); ?></td>
                         <td><?php echo bo_money((float) ($a['valor'] ?? 0)); ?></td>
                         <td><div class="bo-table-actions">
@@ -568,7 +568,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         </div></td>
                     </tr>
                 <?php endforeach; ?>
-                <tr class="bo-empty-row" <?php echo empty($profAlunos) ? '' : 'style="display:none"'; ?>><td colspan="5">Nenhum aluno vinculado.</td></tr>
+                <tr class="bo-empty-row" <?php echo empty($profAlunos) ? '' : 'style="display:none"'; ?>><td colspan="5"><?php echo of_t('Nenhum aluno vinculado.'); ?></td></tr>
             </tbody>
         </table>
     </div></div>
@@ -577,18 +577,18 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <!-- ===== PROFISSIONAL · Agenda ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="agenda">
     <div class="bo-page-title">
-        <div><h1>Agenda</h1><p>Cadastre horários disponíveis e gerencie os agendamentos.</p></div>
+        <div><h1><?php echo of_t('Agenda'); ?></h1><p><?php echo of_t('Cadastre horários disponíveis e gerencie os agendamentos.'); ?></p></div>
         <div class="bo-actions">
-            <button type="button" class="btn-bo-outline" data-bs-toggle="modal" data-bs-target="#ofDisponibilidadeModal"><i class="bi bi-calendar-plus"></i> Horário disponível</button>
-            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAgendamentoModal"><i class="bi bi-plus-lg"></i> Agendar</button>
+            <button type="button" class="btn-bo-outline" data-bs-toggle="modal" data-bs-target="#ofDisponibilidadeModal"><i class="bi bi-calendar-plus"></i> <?php echo of_t('Horário disponível'); ?></button>
+            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAgendamentoModal"><i class="bi bi-plus-lg"></i> <?php echo of_t('Agendar'); ?></button>
         </div>
     </div>
     <div class="bo-filters"><div class="bo-daterange">
-        De <input type="date" class="form-control" data-of-date-from>
-        até <input type="date" class="form-control" data-of-date-to>
+        <?php echo of_t('De'); ?> <input type="date" class="form-control" data-of-date-from>
+        <?php echo of_t('até'); ?> <input type="date" class="form-control" data-of-date-to>
     </div></div>
 
-    <div class="bo-section-heading">Agendados</div>
+    <div class="bo-section-heading"><?php echo of_t('Agendados'); ?></div>
     <div data-of-agenda-list>
         <?php foreach ($profAgendados as $ag): ?>
             <div class="bo-agenda-card" data-of-agenda-card data-date="<?php echo $ofH($ag['data_evento']); ?>">
@@ -603,14 +603,14 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                     <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                     <input type="hidden" name="prof_action" value="cancelar_agendamento">
                     <input type="hidden" name="id_agendamento" value="<?php echo (int) $ag['id_agendamento']; ?>">
-                    <button type="submit" class="btn-bo-icon danger" title="Cancelar"><i class="bi bi-x-lg"></i></button>
+                    <button type="submit" class="btn-bo-icon danger" title="<?php echo of_t('Cancelar'); ?>"><i class="bi bi-x-lg"></i></button>
                 </form>
             </div>
         <?php endforeach; ?>
-        <?php if (empty($profAgendados)): ?><p class="text-secondary">Nenhum agendamento ativo.</p><?php endif; ?>
+        <?php if (empty($profAgendados)): ?><p class="text-secondary"><?php echo of_t('Nenhum agendamento ativo.'); ?></p><?php endif; ?>
     </div>
 
-    <div class="bo-section-heading">Disponíveis</div>
+    <div class="bo-section-heading"><?php echo of_t('Disponíveis'); ?></div>
     <div data-of-agenda-list>
         <?php foreach ($profDisponiveis as $d): ?>
             <div class="bo-agenda-card disponivel" data-of-agenda-card data-date="<?php echo $ofH($d['data_evento']); ?>">
@@ -628,31 +628,31 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                 </form>
             </div>
         <?php endforeach; ?>
-        <?php if (empty($profDisponiveis)): ?><p class="text-secondary">Nenhum horário disponível cadastrado.</p><?php endif; ?>
+        <?php if (empty($profDisponiveis)): ?><p class="text-secondary"><?php echo of_t('Nenhum horário disponível cadastrado.'); ?></p><?php endif; ?>
     </div>
 </section>
 
 <!-- ===== PROFISSIONAL · Cashback ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="cashback">
     <div class="bo-page-title">
-        <div><h1>Meu cashback</h1><p>Saldo disponível e histórico de créditos e débitos.</p></div>
+        <div><h1><?php echo of_t('Meu cashback'); ?></h1><p><?php echo of_t('Saldo disponível e histórico de créditos e débitos.'); ?></p></div>
         <div class="bo-actions">
-            <button type="button" class="btn-bo-outline" data-bo-export="profCashback"><i class="bi bi-download"></i> Exportar</button>
-            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofCashbackModal"><i class="bi bi-wallet2"></i> Utilizar cashback</button>
+            <button type="button" class="btn-bo-outline" data-bo-export="profCashback"><i class="bi bi-download"></i> <?php echo of_t('Exportar'); ?></button>
+            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofCashbackModal"><i class="bi bi-wallet2"></i> <?php echo of_t('Utilizar cashback'); ?></button>
         </div>
     </div>
     <div class="row g-3 mb-3"><div class="col-12 col-md-4"><div class="bo-card">
-        <div class="bo-card-label">Saldo total</div>
+        <div class="bo-card-label"><?php echo of_t('Saldo total'); ?></div>
         <div class="bo-card-value"><?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></div>
     </div></div></div>
     <div class="bo-table-wrap"><div class="table-responsive">
         <table class="bo-table" data-bo-table="profCashback">
-            <thead><tr><th>Data</th><th>Descrição</th><th>Valor</th></tr></thead>
+            <thead><tr><th><?php echo of_t('Data'); ?></th><th><?php echo of_t('Descrição'); ?></th><th><?php echo of_t('Valor'); ?></th></tr></thead>
             <tbody>
                 <?php foreach ($profCashbackHistorico as $h): ?>
                     <tr><td><?php echo $ofH($h['data']); ?></td><td><?php echo $ofH($h['descricao']); ?></td><td><?php echo bo_money((float) $h['valor']); ?></td></tr>
                 <?php endforeach; ?>
-                <tr class="bo-empty-row" <?php echo empty($profCashbackHistorico) ? '' : 'style="display:none"'; ?>><td colspan="3">Nenhum registro encontrado.</td></tr>
+                <tr class="bo-empty-row" <?php echo empty($profCashbackHistorico) ? '' : 'style="display:none"'; ?>><td colspan="3"><?php echo of_t('Nenhum registro encontrado.'); ?></td></tr>
             </tbody>
         </table>
     </div></div>
@@ -666,38 +666,38 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <form method="post" action="?section=alunos" id="ofAlunoForm">
             <div class="modal-header">
-                <h5 class="modal-title" id="ofAlunoModalTitle">Adicionar aluno</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                <h5 class="modal-title" id="ofAlunoModalTitle"><?php echo of_t('Adicionar aluno'); ?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                 <input type="hidden" name="prof_action" value="vincular_aluno" id="ofAlunoAction">
                 <input type="hidden" name="id_vinculo" value="" id="ofAlunoVinculo">
                 <div class="mb-3" id="ofAlunoSelectWrap">
-                    <label class="form-label" for="ofAlunoSelect">Aluno</label>
+                    <label class="form-label" for="ofAlunoSelect"><?php echo of_t('Aluno'); ?></label>
                     <select class="form-select" name="id_aluno" id="ofAlunoSelect">
-                        <option value="">Selecione</option>
+                        <option value=""><?php echo of_t('Selecione'); ?></option>
                         <?php foreach ($ofAlunosDisponiveis as $aluno): ?>
                             <option value="<?php echo (int) $aluno['id_usuario']; ?>"><?php echo $ofH($aluno['nome'] . ' · ' . $aluno['email']); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <?php if (empty($ofAlunosDisponiveis)): ?><small class="text-secondary">Todos os alunos ativos já estão vinculados.</small><?php endif; ?>
+                    <?php if (empty($ofAlunosDisponiveis)): ?><small class="text-secondary"><?php echo of_t('Todos os alunos ativos já estão vinculados.'); ?></small><?php endif; ?>
                 </div>
                 <div class="mb-3 d-none" id="ofAlunoNameWrap">
-                    <label class="form-label">Aluno</label><input type="text" class="form-control" id="ofAlunoName" readonly>
+                    <label class="form-label"><?php echo of_t('Aluno'); ?></label><input type="text" class="form-control" id="ofAlunoName" readonly>
                 </div>
                 <div class="mb-3 d-none" id="ofAlunoStatusWrap">
-                    <label class="form-label" for="ofAlunoStatus">Status do vínculo</label>
-                    <select class="form-select" name="status" id="ofAlunoStatus"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
+                    <label class="form-label" for="ofAlunoStatus"><?php echo of_t('Status do vínculo'); ?></label>
+                    <select class="form-select" name="status" id="ofAlunoStatus"><option value="ativo"><?php echo of_t('Ativo'); ?></option><option value="inativo"><?php echo of_t('Inativo'); ?></option></select>
                 </div>
                 <div>
-                    <label class="form-label" for="ofAlunoObservacao">Observação</label>
+                    <label class="form-label" for="ofAlunoObservacao"><?php echo of_t('Observação'); ?></label>
                     <textarea class="form-control" name="observacao" id="ofAlunoObservacao" rows="3" maxlength="255"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="submit" class="btn btn-warning">Salvar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                <button type="submit" class="btn btn-warning"><?php echo of_t('Salvar'); ?></button>
             </div>
         </form>
     </div></div>
@@ -707,17 +707,17 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <div class="modal fade" id="ofDisponibilidadeModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <form method="post" action="?section=agenda">
-            <div class="modal-header"><h5 class="modal-title">Novo horário disponível</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><?php echo of_t('Novo horário disponível'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body row g-3">
                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                 <input type="hidden" name="prof_action" value="criar_disponibilidade">
-                <div class="col-12"><label class="form-label">Modalidade</label><input class="form-control" name="modalidade" maxlength="100" required></div>
-                <div class="col-12 col-md-6"><label class="form-label">Data</label><input type="date" class="form-control" name="data_evento" min="<?php echo date('Y-m-d'); ?>" required></div>
-                <div class="col-6 col-md-3"><label class="form-label">Início</label><input type="time" class="form-control" name="hora_inicio" required></div>
-                <div class="col-6 col-md-3"><label class="form-label">Fim</label><input type="time" class="form-control" name="hora_fim" required></div>
-                <div class="col-12"><label class="form-label">Local</label><input class="form-control" name="local" maxlength="120"></div>
+                <div class="col-12"><label class="form-label"><?php echo of_t('Modalidade'); ?></label><input class="form-control" name="modalidade" maxlength="100" required></div>
+                <div class="col-12 col-md-6"><label class="form-label"><?php echo of_t('Data'); ?></label><input type="date" class="form-control" name="data_evento" min="<?php echo date('Y-m-d'); ?>" required></div>
+                <div class="col-6 col-md-3"><label class="form-label"><?php echo of_t('Início'); ?></label><input type="time" class="form-control" name="hora_inicio" required></div>
+                <div class="col-6 col-md-3"><label class="form-label"><?php echo of_t('Fim'); ?></label><input type="time" class="form-control" name="hora_fim" required></div>
+                <div class="col-12"><label class="form-label"><?php echo of_t('Local'); ?></label><input class="form-control" name="local" maxlength="120"></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Cadastrar</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Cadastrar'); ?></button></div>
         </form>
     </div></div>
 </div>
@@ -726,32 +726,32 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <div class="modal fade" id="ofAgendamentoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <form method="post" action="?section=agenda">
-            <div class="modal-header"><h5 class="modal-title">Novo agendamento</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><?php echo of_t('Novo agendamento'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body row g-3">
                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                 <input type="hidden" name="prof_action" value="agendar">
                 <input type="hidden" name="operacao_agendamento" value="<?php echo $ofH($ofOperacaoAgendamento); ?>">
                 <div class="col-12">
-                    <label class="form-label">Aluno</label>
+                    <label class="form-label"><?php echo of_t('Aluno'); ?></label>
                     <select class="form-select" name="id_aluno" required>
-                        <option value="">Selecione</option>
+                        <option value=""><?php echo of_t('Selecione'); ?></option>
                         <?php foreach ($profAlunos as $a): ?><?php if ($a['status'] === 'ativo'): ?>
                             <option value="<?php echo (int) $a['id_aluno']; ?>"><?php echo $ofH($a['nome']); ?></option>
                         <?php endif; ?><?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-12 col-md-8"><label class="form-label">Título</label><input class="form-control" name="titulo" maxlength="150" required></div>
+                <div class="col-12 col-md-8"><label class="form-label"><?php echo of_t('Título'); ?></label><input class="form-control" name="titulo" maxlength="150" required></div>
                 <div class="col-12 col-md-4">
-                    <label class="form-label">Tipo</label>
-                    <select class="form-select" name="tipo"><option value="aula">Aula</option><option value="personal">Personal</option><option value="avaliacao">Avaliação</option><option value="consulta">Consulta</option><option value="reuniao">Reunião</option><option value="outro">Outro</option></select>
+                    <label class="form-label"><?php echo of_t('Tipo'); ?></label>
+                    <select class="form-select" name="tipo"><option value="aula"><?php echo of_t('Aula'); ?></option><option value="personal">Personal</option><option value="avaliacao"><?php echo of_t('Avaliação'); ?></option><option value="consulta"><?php echo of_t('Consulta'); ?></option><option value="reuniao"><?php echo of_t('Reunião'); ?></option><option value="outro"><?php echo of_t('Outro'); ?></option></select>
                 </div>
-                <div class="col-12 col-md-6"><label class="form-label">Data</label><input type="date" class="form-control" name="data_evento" min="<?php echo date('Y-m-d'); ?>" required></div>
-                <div class="col-6 col-md-3"><label class="form-label">Início</label><input type="time" class="form-control" name="hora_inicio" required></div>
-                <div class="col-6 col-md-3"><label class="form-label">Fim</label><input type="time" class="form-control" name="hora_fim"></div>
-                <div class="col-12"><label class="form-label">Local</label><input class="form-control" name="local" maxlength="120"></div>
-                <div class="col-12"><label class="form-label">Observação</label><textarea class="form-control" name="observacao" rows="2" maxlength="255"></textarea></div>
+                <div class="col-12 col-md-6"><label class="form-label"><?php echo of_t('Data'); ?></label><input type="date" class="form-control" name="data_evento" min="<?php echo date('Y-m-d'); ?>" required></div>
+                <div class="col-6 col-md-3"><label class="form-label"><?php echo of_t('Início'); ?></label><input type="time" class="form-control" name="hora_inicio" required></div>
+                <div class="col-6 col-md-3"><label class="form-label"><?php echo of_t('Fim'); ?></label><input type="time" class="form-control" name="hora_fim"></div>
+                <div class="col-12"><label class="form-label"><?php echo of_t('Local'); ?></label><input class="form-control" name="local" maxlength="120"></div>
+                <div class="col-12"><label class="form-label"><?php echo of_t('Observação'); ?></label><textarea class="form-control" name="observacao" rows="2" maxlength="255"></textarea></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Agendar</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Agendar'); ?></button></div>
         </form>
     </div></div>
 </div>
@@ -760,16 +760,16 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <div class="modal fade" id="ofCashbackModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <form method="post" action="?section=cashback">
-            <div class="modal-header"><h5 class="modal-title">Utilizar cashback</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><?php echo of_t('Utilizar cashback'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                 <input type="hidden" name="prof_action" value="usar_cashback">
-                <label class="form-label">Valor</label>
+                <label class="form-label"><?php echo of_t('Valor'); ?></label>
                 <input type="number" class="form-control" name="valor" min="0.01" step="0.01"
                     max="<?php echo $ofH(number_format((float) ($profContrato['saldoCashback'] ?? 0), 2, '.', '')); ?>" required>
                 <small class="text-secondary">Saldo disponível: <?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></small>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-warning">Confirmar uso</button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Confirmar uso'); ?></button></div>
         </form>
     </div></div>
 </div>

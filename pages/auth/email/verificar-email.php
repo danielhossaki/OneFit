@@ -55,16 +55,17 @@ if ($token === '') {
 }
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Confirmar e-mail · ONE FIT</title>
+  <title><?php echo of_t('Confirmar e-mail · ONE FIT'); ?></title>
 <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/login.css'); ?>">
+<?php onefitInterfaceHead(); ?>
 </head>
 <body class="login-body"
   data-form-message="<?php echo htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8'); ?>"
@@ -73,9 +74,9 @@ if ($token === '') {
     <section class="login-form-panel login-form-panel-centered">
       <div class="login-form-wrap">
         <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
-        <span class="tag">Segurança da conta</span>
-        <h1>Confirmação de e-mail</h1>
-        <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/login/login.php">Entrar na minha conta</a>
+        <span class="tag"><?php echo of_t('Segurança da conta'); ?></span>
+        <h1><?php echo of_t('Confirmação de e-mail'); ?></h1>
+        <a class="btn btn-gold btn-block" href="<?php echo BASE_URL; ?>pages/login/login.php"><?php echo of_t('Entrar na minha conta'); ?></a>
       </div>
     </section>
   </main>

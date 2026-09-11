@@ -1,3 +1,4 @@
+var ofT = globalThis.ofT || (text => text);
 /* IMC derivado; o PHP repete a validação e o cálculo ao salvar. */
 (() => {
     'use strict';
@@ -15,8 +16,8 @@
         const peso = medida(form.elements.peso.value, 500);
         const imc = altura && peso ? peso / (altura * altura) : NaN;
         const valid = Number.isFinite(imc);
-        modal.querySelector('[data-student-imc]').textContent = valid ? imc.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : 'Não informado';
-        modal.querySelector('[data-student-class]').textContent = !valid ? '' : imc < 18.5 ? 'Abaixo do peso' : imc < 25 ? 'Peso adequado' : imc < 30 ? 'Sobrepeso' : imc < 35 ? 'Obesidade grau I' : imc < 40 ? 'Obesidade grau II' : 'Obesidade grau III';
+        modal.querySelector('[data-student-imc]').textContent = valid ? imc.toLocaleString(globalThis.OneFit?.locale || 'pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : ofT('Não informado');
+        modal.querySelector('[data-student-class]').textContent = !valid ? '' : imc < 18.5 ? ofT('Abaixo do peso') : imc < 25 ? ofT('Peso adequado') : imc < 30 ? ofT('Sobrepeso') : imc < 35 ? ofT('Obesidade grau I') : imc < 40 ? ofT('Obesidade grau II') : ofT('Obesidade grau III');
     };
     for (const name of ['altura', 'peso']) {
         form.elements[name].addEventListener('input', () => { form.elements[name].setCustomValidity(''); update(); });
@@ -24,14 +25,14 @@
     form.addEventListener('submit', (event) => {
         for (const [name, max] of [['altura', 3], ['peso', 500]]) {
             const input = form.elements[name];
-            input.setCustomValidity(input.value.trim() && medida(input.value, max) === null ? `Informe um valor maior que zero e até ${max}.` : '');
+            input.setCustomValidity(input.value.trim() && medida(input.value, max) === null ? ofT('Informe um valor maior que zero e até {max}.', { '{max}': max }) : '');
         }
         if (!form.reportValidity()) event.preventDefault();
     });
     const validatePhoto = (input) => {
         const file = input.files[0];
         const valid = !file || (/\.(jpe?g|png|webp)$/i.test(file.name) && ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) && file.size > 0 && file.size <= 3 * 1024 * 1024);
-        input.setCustomValidity(valid ? '' : 'Selecione uma imagem JPG, PNG ou WEBP de até 3 MB.');
+        input.setCustomValidity(valid ? '' : ofT('Selecione uma imagem JPG, PNG ou WEBP de até 3 MB.'));
         return valid;
     };
     let previewUrl;
@@ -62,7 +63,7 @@
     quick.addEventListener('change', () => {
         if (!quick.files.length) return;
         if (!validatePhoto(quick)) { status.textContent = quick.validationMessage; quick.value = ''; return; }
-        status.textContent = 'Salvando foto…';
+        status.textContent = ofT('Salvando foto…');
         document.getElementById('studentChoosePhoto').disabled = true;
         document.getElementById('studentPhotoForm').requestSubmit();
     });

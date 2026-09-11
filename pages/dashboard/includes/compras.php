@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../config/interface.php';
 /**
  * Carrega os pedidos (marketplace) de um usuário, já separados em
  * "em andamento" e "histórico" — usado pelas telas "Minhas compras"
@@ -63,7 +64,7 @@ function bo_buscar_pedidos_por_situacao(mysqli $conn, int $idUsuario, string $bu
     $res = $stmt->get_result();
 
     $statusLabel = bo_status_pedido_labels();
-    $statusLogisticaLabel = ['aguardando' => 'Aguardando', 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => 'Devolvido', 'extraviado' => 'Extraviado'];
+    $statusLogisticaLabel = ['aguardando' => onefitTraduzir('Aguardando'), 'preparando' => 'Preparando', 'despachado' => 'Despachado', 'entregue' => 'Entregue', 'devolvido' => onefitTraduzir('Devolvido'), 'extraviado' => onefitTraduzir('Extraviado')];
 
     $pedidos = [];
     while ($row = $res->fetch_assoc()) {
@@ -113,13 +114,13 @@ function bo_buscar_pedidos_por_situacao(mysqli $conn, int $idUsuario, string $bu
 function bo_status_pedido_labels(): array
 {
     return [
-        'aguardando' => 'Aguardando',
-        'preparando' => 'Em preparação',
-        'despachado' => 'Enviado',
-        'entregue' => 'Finalizado',
-        'cancelado' => 'Cancelado',
-        'devolvido' => 'Devolvido',
-        'extraviado' => 'Extraviado',
+        'aguardando' => onefitTraduzir('Aguardando'),
+        'preparando' => onefitTraduzir('Em preparação'),
+        'despachado' => onefitTraduzir('Enviado'),
+        'entregue' => onefitTraduzir('Finalizado'),
+        'cancelado' => onefitTraduzir('Cancelado'),
+        'devolvido' => onefitTraduzir('Devolvido'),
+        'extraviado' => onefitTraduzir('Extraviado'),
         // Legados: nunca gravados pelo código atual, mantidos só para não
         // quebrar caso existam pedidos antigos com esses valores.
         'pago' => 'Pago',

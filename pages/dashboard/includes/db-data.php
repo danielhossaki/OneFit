@@ -643,11 +643,14 @@ function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
             JOIN usuarios u ON u.id_usuario = pe.id_usuario
             LEFT JOIN transportadoras t ON t.id_transportadora = pi.id_transportadora
             LEFT JOIN usuarios v ON v.id_usuario = pi.id_vendedor"
-        . ($idVendedor !== null ? ' WHERE pi.id_vendedor = ?' : '')
+        . ($idVendedor !== null ? ' WHERE pi.id_vendedor = ?' : ((int) ($_GET['pedido'] ?? 0) > 0 ? ' WHERE pe.id_pedido = ?' : ''))
         . ' ORDER BY pe.data_pedido DESC';
     $stmt = $conn->prepare($sql);
     if ($idVendedor !== null) {
         $stmt->bind_param('i', $idVendedor);
+    } elseif ((int) ($_GET['pedido'] ?? 0) > 0) {
+        $pedidoFiltro = (int) $_GET['pedido'];
+        $stmt->bind_param('i', $pedidoFiltro);
     }
     $stmt->execute();
     $res = $stmt->get_result();

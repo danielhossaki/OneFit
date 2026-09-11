@@ -2,14 +2,14 @@
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
 $mensagensLogin = [
-  '1' => ['tipo' => 'erro', 'texto' => 'E-mail ou senha incorretos. Confira os dados e tente novamente.'],
-  '2' => ['tipo' => 'erro', 'texto' => 'Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT caso deseja reativar sua conta.'],
-  '3' => ['tipo' => 'erro', 'texto' => 'Preencha o e-mail e a senha para entrar.'],
-  '4' => ['tipo' => 'sucesso', 'texto' => 'Cadastro realizado com sucesso! Agora você já pode entrar.'],
-  '5' => ['tipo' => 'erro', 'texto' => 'Digite um endereço de e-mail válido.'],
+  '1' => ['tipo' => 'erro', 'texto' => onefitTraduzir('E-mail ou senha incorretos. Confira os dados e tente novamente.')],
+  '2' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT caso deseja reativar sua conta.')],
+  '3' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Preencha o e-mail e a senha para entrar.')],
+  '4' => ['tipo' => 'sucesso', 'texto' => onefitTraduzir('Cadastro realizado com sucesso! Agora você já pode entrar.')],
+  '5' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Digite um endereço de e-mail válido.')],
 ];
 
 $mensagemLogin = $mensagensLogin[(string) ($_GET['msg'] ?? '')] ?? null;
@@ -58,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if ((int) $usuario['email_verificado'] !== 1) {
       $_SESSION['email_verificacao_pendente'] = $email;
       $_SESSION['login_tipo'] = 'erro';
-      $_SESSION['login_msg'] = 'Você precisa confirmar seu e-mail antes de acessar sua conta.';
+      $_SESSION['login_msg'] = onefitTraduzir('Você precisa confirmar seu e-mail antes de acessar sua conta.');
       header("Location: login.php");
       exit;
     }
@@ -76,6 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $_SESSION['email'] = $email;
     $_SESSION['tipo_usuario'] = $usuario['tipo_usuario'];
     $_SESSION['genero'] = $usuario['genero'];
+    onefitCarregarInterface($conn);
 
     // Mantém a autenticação por 30 dias quando o usuário solicita.
     if ($lembrar) {
@@ -98,12 +99,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-<html lang="pt-BR">
+<html lang="<?php echo onefitIdioma(); ?>" data-site-theme="<?php echo htmlspecialchars($GLOBALS['onefitTemaGlobal'] ?? 'dourado', ENT_QUOTES, 'UTF-8'); ?>">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Entrar · ONE FIT</title>
+  <title><?php echo of_t('Entrar · ONE FIT'); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -114,6 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- Ícone exibido na aba do navegador. -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+<?php onefitInterfaceHead(); ?>
 </head>
 
 <body class="login-body"
@@ -128,7 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-visual" data-aos="fade-right">
       <video autoplay muted loop playsinline>
         <source src="<?php echo BASE_URL; ?>assets/img/videos/video-login.mp4" type="video/mp4">
-        Seu navegador não suporta vídeos
+        <?php echo of_t('Seu navegador não suporta vídeos'); ?>
       </video>
       <div class="login-visual-overlay"></div>
 
@@ -136,8 +138,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">ONE<span>FIT</span></a>
 
         <div class="login-visual-text">
-          <span class="eyebrow">Treino de alta performance</span>
-          <h2>NÃO EXISTE<br>SEGUNDO<br>LUGAR</h2>
+          <span class="eyebrow"><?php echo of_t('Treino de alta performance'); ?></span>
+          <h2><?php echo of_t('NÃO EXISTE'); ?><br><?php echo of_t('SEGUNDO'); ?><br><?php echo of_t('LUGAR'); ?></h2>
         </div>
       </div>
     </section>
@@ -148,22 +150,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <a href="<?php echo BASE_URL; ?>pages/index.php" class="login-logo login-logo-mobile">ONE<span>FIT</span></a>
 
-        <span class="tag">Bem-vindo de volta</span>
-        <h1>Entrar</h1>
+        <span class="tag"><?php echo of_t('Bem-vindo de volta'); ?></span>
+        <h1><?php echo of_t('Entrar'); ?></h1>
 
 
         <p class="login-subtitle">
-          Acesse sua conta para acompanhar treinos, planos e agendamentos.
+          <?php echo of_t('Acesse sua conta para acompanhar treinos, planos e agendamentos.'); ?>
         </p>
 
         <form class="login-form" action="#" method="POST" novalidate>
           <div class="field">
-            <label for="email">E-mail</label>
+            <label for="email"><?php echo of_t('E-mail'); ?></label>
             <input type="email" id="email" name="email" placeholder="seuemail@exemplo.com" required>
           </div>
 
           <div class="field">
-            <label for="password">Senha</label>
+            <label for="password"><?php echo of_t('Senha'); ?></label>
             <div class="password-wrap">
               <input type="password" id="password" name="password" placeholder="••••••••" required>
               <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
@@ -183,23 +185,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
           <div class="login-row">
             <label class="checkbox">
               <input type="checkbox" name="remember">
-              <span>Lembrar de mim</span>
+              <span><?php echo of_t('Lembrar de mim'); ?></span>
             </label>
-            <a href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php" class="forgot-link">Esqueci minha senha</a>
+            <a href="<?php echo BASE_URL; ?>pages/auth/senha/esqueci-senha.php" class="forgot-link"><?php echo of_t('Esqueci minha senha'); ?></a>
           </div>
 
-          <button type="submit" class="btn btn-gold btn-block">Entrar</button>
+          <button type="submit" class="btn btn-gold btn-block"><?php echo of_t('Entrar'); ?></button>
 
         </form>
 
         <?php if ($emailPendenteVerificacao): ?>
           <form class="login-form" action="<?php echo BASE_URL; ?>pages/auth/email/reenviar-verificacao.php" method="POST">
             <input type="hidden" name="email" value="<?php echo htmlspecialchars($emailPendenteVerificacao, ENT_QUOTES, 'UTF-8'); ?>">
-            <button type="submit" class="forgot-link">Reenviar e-mail de confirmação</button>
+            <button type="submit" class="forgot-link"><?php echo of_t('Reenviar e-mail de confirmação'); ?></button>
           </form>
         <?php endif; ?>
 
-        <p class="login-footer-text">Ainda não treina com a gente? <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php">Criar conta</a></p>
+        <p class="login-footer-text"><?php echo of_t('Ainda não treina com a gente?'); ?> <a href="<?php echo BASE_URL; ?>pages/matricula/matricula.php"><?php echo of_t('Criar conta'); ?></a></p>
 
       </div>
     </section>

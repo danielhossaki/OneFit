@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../config/interface.php';
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 require_once __DIR__ . '/../dashboard/includes/frete.php';
 require_once __DIR__ . '/../../config/env.php';
@@ -58,7 +59,7 @@ function cart_calcular_fretes(mysqli $conn, array $itensPorVendedor, string $cep
 function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $idEndereco, ?int $idTransportadoraEscolhida, array $post): array
 {
     if (empty($carrinho)) {
-        throw new DomainException('Seu carrinho está vazio.');
+        throw new DomainException(onefitTraduzir('Seu carrinho está vazio.'));
     }
 
     // Endereço de entrega: precisa ter sido escolhido/salvo antes (etapa
@@ -71,7 +72,7 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
     $endereco = $stmtEndereco->get_result()->fetch_assoc();
     $stmtEndereco->close();
     if (!$endereco) {
-        throw new DomainException('Escolha um endereço de entrega válido.');
+        throw new DomainException(onefitTraduzir('Escolha um endereço de entrega válido.'));
     }
 
     $formaPagamento = $post['forma_pagamento'] ?? 'pix';
@@ -79,11 +80,11 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
     // para este projeto. Não há consulta bancária, webhook ou API PIX aqui.
     // Persistimos forma_pagamento='pix'; o pedido logístico nasce aguardando.
     if (!in_array($formaPagamento, ['pix', 'cartao'], true)) {
-        throw new DomainException('Escolha uma forma de pagamento válida.');
+        throw new DomainException(onefitTraduzir('Escolha uma forma de pagamento válida.'));
     }
     $cashbackSolicitado = $post['cashback_usado'] ?? 0;
     if (!is_numeric($cashbackSolicitado) || !is_finite((float) $cashbackSolicitado) || (float) $cashbackSolicitado < 0) {
-        throw new DomainException('Informe um valor de cashback válido.');
+        throw new DomainException(onefitTraduzir('Informe um valor de cashback válido.'));
     }
 
     $ids = array_map('intval', array_keys($carrinho));
@@ -98,7 +99,7 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
         $usuario->execute();
         $existeUsuario = $usuario->get_result()->fetch_assoc();
         $usuario->close();
-        if (!$existeUsuario) throw new DomainException('Entre novamente para finalizar a compra.');
+        if (!$existeUsuario) throw new DomainException(onefitTraduzir('Entre novamente para finalizar a compra.'));
         // Saldo real de cashback do usuário (créditos - débitos, ignorando cancelados).
         $stmtSaldo = $conn->prepare("SELECT SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
         $stmtSaldo->bind_param('i', $idUsuario);
@@ -127,7 +128,7 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
         $itensPorVendedor = [];
         foreach ($carrinho as $produtoId => $quantidade) {
             if (!isset($produtosBanco[$produtoId]) || $produtosBanco[$produtoId]['status'] !== 'ativo') {
-                throw new DomainException('Um produto ficou indisponível. Revise o carrinho.');
+                throw new DomainException(onefitTraduzir('Um produto ficou indisponível. Revise o carrinho.'));
             }
             $p = $produtosBanco[$produtoId];
             $quantidade = filter_var($quantidade, FILTER_VALIDATE_INT);
@@ -135,10 +136,10 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
             // quantidade em silêncio, para o cliente não pagar/receber menos do
             // que via no carrinho nem finalizar um pedido maior que o estoque real.
             if ($quantidade === false || $quantidade <= 0 || $quantidade > (int) $p['estoque']) {
-                throw new DomainException('Estoque insuficiente. Revise as quantidades do carrinho.');
+                throw new DomainException(onefitTraduzir('Estoque insuficiente. Revise as quantidades do carrinho.'));
             }
             if ((float) $p['preco'] < 0 || (float) $p['desconto'] < 0 || (float) $p['desconto'] > 100) {
-                throw new DomainException('Um produto está com preço inválido. Revise o carrinho.');
+                throw new DomainException(onefitTraduzir('Um produto está com preço inválido. Revise o carrinho.'));
             }
             $valorFinal = $p['desconto'] > 0
                 ? round((float) $p['preco'] * (1 - (float) $p['desconto'] / 100), 2)
@@ -163,7 +164,7 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
         }
 
         if (empty($itens)) {
-            throw new DomainException('Nenhum produto disponível no carrinho.');
+            throw new DomainException(onefitTraduzir('Nenhum produto disponível no carrinho.'));
         }
 
         $fretes = cart_calcular_fretes($conn, $itensPorVendedor, $endereco['cep'], $idTransportadoraEscolhida);
@@ -171,7 +172,7 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
             $fretes = cart_frete_local_pendente($itensPorVendedor);
         }
         if ($fretes === null) {
-            throw new DomainException('Nenhuma entrega disponível para o CEP selecionado.');
+            throw new DomainException(onefitTraduzir('Nenhuma entrega disponível para o CEP selecionado.'));
         }
         $totalCompra = round($totalCompra + $fretes['total'], 2);
 
@@ -275,14 +276,14 @@ function cart_gravar_compra(mysqli $conn, int $idUsuario, array $carrinho, int $
 function cart_processar_checkout(mysqli $conn, array &$sessao, array $post): array
 {
     $idUsuario = (int) ($sessao['id_usuario'] ?? 0);
-    if ($idUsuario <= 0) throw new DomainException('Entre novamente para finalizar a compra.');
+    if ($idUsuario <= 0) throw new DomainException(onefitTraduzir('Entre novamente para finalizar a compra.'));
     $csrf = $post['csrf_token'] ?? '';
     if (!is_string($csrf) || $csrf === '' || !hash_equals($sessao['csrf_token'] ?? '', $csrf)) {
-        throw new DomainException('Sua sessão expirou. Atualize a página e tente novamente.');
+        throw new DomainException(onefitTraduzir('Sua sessão expirou. Atualize a página e tente novamente.'));
     }
     $token = $post['checkout_token'] ?? '';
     if (!is_string($token) || $token === '' || !hash_equals($sessao['checkout_token'] ?? '', $token)) {
-        throw new DomainException('Este checkout expirou ou já foi enviado. Revise o carrinho e tente novamente.');
+        throw new DomainException(onefitTraduzir('Este checkout expirou ou já foi enviado. Revise o carrinho e tente novamente.'));
     }
     $pedido = cart_gravar_compra($conn, $idUsuario, $sessao['carrinho'] ?? [],
         (int) ($sessao['checkout_endereco_id'] ?? 0),

@@ -1,3 +1,4 @@
+var ofT = globalThis.ofT || (text => text);
 // Alterna a visibilidade da senha e atualiza os atributos de acessibilidade.
 document.querySelectorAll('.toggle-password').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -8,7 +9,7 @@ document.querySelectorAll('.toggle-password').forEach((btn) => {
     input.type = isHidden ? 'text' : 'password';
 
     btn.setAttribute('aria-pressed', String(isHidden));
-    btn.setAttribute('aria-label', isHidden ? 'Ocultar senha' : 'Mostrar senha');
+    btn.setAttribute('aria-label', isHidden ? ofT('Ocultar senha') : ofT('Mostrar senha'));
   });
 });
 

@@ -7,7 +7,7 @@
     --border: rgba(243, 237, 226, .12);
     --text: #f3ede2;
     --text-muted: #b0a896;
-    --gold: #d4af37;
+    --gold: var(--accent, #d4af37);
     color: var(--text);
 }
 .bo-student-summary { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 36px; padding: 32px; background: var(--surface); }
