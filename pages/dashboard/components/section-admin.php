@@ -6,7 +6,7 @@
  * BO_PERFIS.admin.menus em assets/js/backoffice.js (a chave "data-section"
  * precisa bater com a "key" do menu para o JS conseguir exibir a tela certa).
  *
- * Depende das variáveis vindas de includes/mock-data.php:
+ * Depende das variáveis vindas de includes/db-data.php:
  *   $usuarios, $permissoes, $funcoes, $pagamentos, $cashbackResumo,
  *   $cashbackTransacoes, $categorias, $produtosResumo, $produtos, $planos,
  *   $profissionaisAdm

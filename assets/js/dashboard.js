@@ -1,14 +1,10 @@
 /* =========================================================================
    backoffice.js
    Toda a interatividade do painel: troca de perfil (admin/profissional/
-   aluno), montagem dinâmica do menu lateral, abertura do modal de
-   formulário genérico (cadastro/edição), filtros de tabela, cálculo de
-   IMC, simulação de pagamento (Pix/cartão) e exportação de tabela em CSV.
-
-   Depende de duas variáveis globais definidas ANTES deste arquivo, no
-   próprio dashboard.php (porque vêm de dados do PHP):
-     - BO_CATEGORIAS_OPTIONS  (nomes das categorias de produto)
-     - BO_PLANOS_OPTIONS      (nomes dos planos cadastrados)
+   aluno), montagem dinâmica do menu lateral, filtros de tabela, cálculo
+   de IMC, simulação de pagamento Pix (QR/copia-e-cola) e exportação de
+   tabela em CSV. Os CRUDs em si (cadastro/edição) são formulários PRG
+   reais — ver pages/dashboard/funcionalidades/*.php.
    ========================================================================= */
 
 /* ---------- Notificações reais do usuário autenticado ---------- */
@@ -238,273 +234,6 @@ const BO_PERFIS = {
 // — só o admin pode trocar isso depois, pelo dropdown do header.
 let boPerfilAtual = (typeof BO_PERFIL_LOGADO !== 'undefined') ? BO_PERFIL_LOGADO : 'aluno';
 let boSectionAtual = null; // definida no DOMContentLoaded, com base no 1º item do menu do perfil
-let boFormModalInstance = null; // instância do Modal do Bootstrap (definida no DOMContentLoaded)
-
-// Converte todos os códigos ISO 3166-1 em nomes de países no idioma do painel.
-// O nome selecionado é armazenado como nacionalidade no perfil do usuário.
-const BO_COUNTRY_CODES = `AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW`.split(' ');
-const boRegionNames = typeof Intl.DisplayNames === 'function'
-    ? new Intl.DisplayNames(['pt-BR'], { type: 'region' })
-    : null;
-const BO_NATIONALITY_OPTIONS = BO_COUNTRY_CODES
-    .map((code) => boRegionNames ? boRegionNames.of(code) : code)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR'));
-
-/* ---------- Esquemas do modal de formulário genérico ----------
-   Cada chave corresponde ao 1º argumento passado em boOpenForm(schemaKey, ...)
-   nos botões "onclick" do HTML. A lista de campos aqui é usada por
-   boBuildField() para montar o formulário dinamicamente dentro do modal
-   #boFormModal, sem precisar de um modal HTML diferente para cada tela. */
-const BO_FORM_SCHEMAS = {
-    alunoDoProfissionalForm: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 12 },
-        { key: 'contato', label: 'Contato', type: 'text', col: 6 },
-        { key: 'plano', label: 'Plano', type: 'text', col: 6 },
-        { key: 'status', label: 'Status', type: 'select', options: ['ativo', 'inativo'], optionLabels: ['Ativo', 'Inativo'], col: 6 },
-        { key: 'valor', label: 'Valor', type: 'number', col: 6 },
-        { key: 'observacao', label: 'Observação', type: 'textarea', col: 12 },
-    ],
-    agendaDisponivel: [
-        { key: 'data', label: 'Data/hora', type: 'text', placeholder: 'dd/mm/aaaa hh:mm', col: 6 },
-        { key: 'modalidade', label: 'Modalidade', type: 'text', col: 6 },
-    ],
-    planoAlterar: [
-        { key: 'plano', label: 'Novo plano', type: 'select', options: BO_PLANOS_OPTIONS, col: 12 },
-    ],
-    perfilEdit: [
-        { key: 'nome', label: 'Nome', type: 'text', col: 6, required: true },
-        { key: 'documento', label: 'Documento', type: 'text', col: 6, required: true },
-        { key: 'email', label: 'E-mail', type: 'email', col: 6, required: true },
-        { key: 'telefone', label: 'Telefone', type: 'text', col: 6, required: true },
-        { key: 'nacionalidade', label: 'Nacionalidade', type: 'select', options: BO_NATIONALITY_OPTIONS, col: 6, required: true },
-        { key: 'nascimento', label: 'Data de nascimento', type: 'date', col: 6, required: true },
-        { key: 'genero', label: 'Gênero', type: 'select', options: ['masculino', 'feminino', 'outro'], optionLabels: ['Masculino', 'Feminino', 'Outro'], col: 6, required: true },
-        { key: 'endereco', label: 'Endereço', type: 'text', col: 12, required: true },
-        { key: 'cidade', label: 'Cidade', type: 'text', col: 6, required: true },
-        { key: 'estado', label: 'Estado (UF)', type: 'text', col: 6, required: true },
-        { key: 'altura', label: 'Altura (m)', type: 'number', col: 6, min: 0.5, max: 3, step: 0.01 },
-        { key: 'peso', label: 'Peso (kg)', type: 'number', col: 6, min: 1, max: 500, step: 0.1 },
-        { key: 'foto', label: 'URL da foto', type: 'url', col: 12 },
-    ],
-    treinoExercicio: [
-        { key: 'nome', label: 'Exercício', type: 'text', col: 12 },
-        { key: 'series', label: 'Séries', type: 'number', col: 4 },
-        { key: 'repeticoes', label: 'Repetições', type: 'number', col: 4 },
-        { key: 'carga', label: 'Carga (kg)', type: 'number', col: 4 },
-    ],
-};
-
-/**
- * Cria o elemento de UM campo do formulário (label + input/select/textarea/
- * checklist/upload de imagem), de acordo com o "type" definido no schema
- * acima. É chamada uma vez por campo dentro de boOpenForm().
- */
-function boBuildField(field) {
-    const wrap = document.createElement('div');
-    wrap.className = 'col-' + (field.col || 12);
-
-    const label = document.createElement('label');
-    label.className = 'form-label';
-    label.textContent = field.label;
-    wrap.appendChild(label);
-
-    if (field.type === 'select') {
-        const select = document.createElement('select');
-        select.className = 'form-select';
-        select.setAttribute('data-bo-field', field.key);
-        field.options.forEach((opt, i) => {
-            const o = document.createElement('option');
-            o.value = opt;
-            o.textContent = (field.optionLabels && field.optionLabels[i]) || opt;
-            select.appendChild(o);
-        });
-        wrap.appendChild(select);
-    } else if (field.type === 'textarea') {
-        const ta = document.createElement('textarea');
-        ta.className = 'form-control';
-        ta.rows = 3;
-        ta.setAttribute('data-bo-field', field.key);
-        wrap.appendChild(ta);
-    } else if (field.type === 'checklist') {
-        // Grupo de checkboxes (ex: permissões de uma função)
-        const box = document.createElement('div');
-        box.className = 'd-flex flex-wrap gap-3';
-        field.options.forEach((opt) => {
-            const id = 'chk_' + field.key + '_' + opt.replace(/\s+/g, '');
-            const chkWrap = document.createElement('div');
-            chkWrap.className = 'form-check';
-            chkWrap.innerHTML = `<input class="form-check-input" type="checkbox" id="${id}" value="${opt}" data-bo-checklist="${field.key}"><label class="form-check-label" for="${id}">${opt}</label>`;
-            box.appendChild(chkWrap);
-        });
-        wrap.appendChild(box);
-    } else if (field.type === 'image') {
-        // Campo de imagem: aceita tanto uma URL digitada quanto upload de
-        // arquivo local (convertido para base64 e mostrado na pré-visualização)
-        const url = document.createElement('input');
-        url.type = 'text';
-        url.className = 'form-control mb-2';
-        url.placeholder = 'URL da imagem';
-        url.setAttribute('data-bo-field', field.key);
-        wrap.appendChild(url);
-
-        const file = document.createElement('input');
-        file.type = 'file';
-        file.accept = 'image/*';
-        file.className = 'form-control mb-2';
-        wrap.appendChild(file);
-
-        const preview = document.createElement('img');
-        preview.setAttribute('data-bo-preview', field.key);
-        wrap.appendChild(preview);
-
-        url.addEventListener('input', () => {
-            if (url.value) {
-                preview.src = url.value;
-                preview.style.display = 'block';
-            }
-        });
-        file.addEventListener('change', () => {
-            const f = file.files[0];
-            if (f) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    url.value = ''; // upload tem prioridade sobre a URL digitada
-                };
-                reader.readAsDataURL(f);
-            }
-        });
-    } else {
-        // text / email / date / number (padrão)
-        const input = document.createElement('input');
-        input.type = field.type;
-        input.className = 'form-control';
-        input.setAttribute('data-bo-field', field.key);
-        if (field.placeholder) input.placeholder = field.placeholder;
-        if (field.readonly) input.readOnly = true;
-        wrap.appendChild(input);
-    }
-
-    const control = wrap.querySelector(`[data-bo-field="${field.key}"]`);
-    if (control) {
-        if (field.required) control.required = true;
-        if (field.min !== undefined) control.min = field.min;
-        if (field.max !== undefined) control.max = field.max;
-        if (field.step !== undefined) control.step = field.step;
-    }
-
-    return wrap;
-}
-
-/**
- * Abre o modal genérico de formulário (#boFormModal), monta os campos
- * do schema indicado, preenche com "values" (quando for edição) e
- * prepara o botão "Salvar". Chamada pelos botões "Novo X" / "Editar" no HTML.
- *
- * @param {string} schemaKey  chave em BO_FORM_SCHEMAS (ex: 'produtoForm')
- * @param {string} title      título mostrado no cabeçalho do modal
- * @param {object} values     valores já existentes (edição) ou {} (novo)
- * @param {object} options    { doubleConfirm: true } exige clicar 2x em
- *                             "Salvar" antes de confirmar (usado em ações
- *                             sensíveis, ex: permissões)
- */
-function boOpenForm(schemaKey, title, values, options) {
-    values = values || {};
-    options = options || {};
-
-    const form = document.getElementById('boFormModalForm');
-    form.innerHTML = '';
-    document.getElementById('boFormModalTitle').textContent = title;
-
-    const fields = BO_FORM_SCHEMAS[schemaKey] || [];
-    fields.forEach((field) => form.appendChild(boBuildField(field)));
-
-    // Preenche os campos recém-criados com os valores atuais do registro
-    fields.forEach((field) => {
-        if (field.type === 'checklist') {
-            const selected = (values[field.key] || '').split(',').map((s) => s.trim());
-            form.querySelectorAll(`[data-bo-checklist="${field.key}"]`).forEach((chk) => {
-                chk.checked = selected.includes(chk.value);
-            });
-            return;
-        }
-        const el = form.querySelector(`[data-bo-field="${field.key}"]`);
-        if (el && values[field.key] !== undefined) {
-            // Preserva valores antigos que ainda não façam parte da lista atual.
-            if (field.type === 'select' && values[field.key] && !Array.from(el.options).some((option) => option.value === values[field.key])) {
-                el.add(new Option(values[field.key], values[field.key]));
-            }
-            el.value = values[field.key];
-        }
-        if (field.type === 'image' && values[field.key]) {
-            const preview = form.querySelector(`[data-bo-preview="${field.key}"]`);
-            if (preview) {
-                preview.src = values[field.key];
-                preview.style.display = 'block';
-            }
-        }
-    });
-
-    // Recria o botão "Salvar" a cada abertura para não acumular listeners antigos
-    const oldSaveBtn = document.getElementById('boFormModalSave');
-    const saveBtn = oldSaveBtn.cloneNode(true);
-    oldSaveBtn.parentNode.replaceChild(saveBtn, oldSaveBtn);
-    saveBtn.textContent = 'Salvar';
-
-    let confirmStep = 0;
-    saveBtn.addEventListener('click', async () => {
-        if (options.doubleConfirm && confirmStep === 0) {
-            confirmStep = 1;
-            saveBtn.textContent = 'Clique novamente para confirmar';
-            return;
-        }
-
-        if (!form.reportValidity()) return;
-
-        if (schemaKey === 'perfilEdit') {
-            const profileValues = {};
-            fields.forEach((field) => {
-                const input = form.querySelector(`[data-bo-field="${field.key}"]`);
-                profileValues[field.key] = input ? input.value.trim() : '';
-            });
-
-            saveBtn.disabled = true;
-            saveBtn.textContent = 'Salvando...';
-
-            try {
-                const response = await fetch(BO_PROFILE_UPDATE_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ...profileValues, csrf_token: BO_CSRF_TOKEN }),
-                });
-                const result = await response.json();
-                if (!response.ok || !result.success) throw new Error(result.message || 'Não foi possível atualizar o perfil.');
-
-                Object.assign(BO_CURRENT_USER, profileValues);
-                document.getElementById('boProfileName').textContent = profileValues.nome;
-                document.getElementById('boProfileEmail').textContent = profileValues.email;
-                const gender = document.getElementById('boProfileGender');
-                if (gender) gender.textContent = `Gênero: ${profileValues.genero.charAt(0).toUpperCase()}${profileValues.genero.slice(1)}`;
-                document.getElementById('boAvatar').textContent = profileValues.nome.charAt(0).toUpperCase();
-
-                boFormModalInstance.hide();
-                boToast(result.message);
-            } catch (error) {
-                boToast(error.message);
-            } finally {
-                saveBtn.disabled = false;
-                saveBtn.textContent = 'Salvar';
-            }
-            return;
-        }
-
-        boFormModalInstance.hide();
-        boToast('Alterações salvas.');
-    });
-
-    boFormModalInstance.show();
-}
 
 /**
  * Mostra um aviso flutuante (toast) no canto inferior direito por ~2,5s.
@@ -691,10 +420,6 @@ function boOpenSearchResult(result) {
     boCloseSearch();
 }
 
-function boOpenProfileEdit() {
-    boOpenForm('perfilEdit', 'Editar perfil', typeof BO_CURRENT_USER !== 'undefined' ? BO_CURRENT_USER : {});
-}
-
 function boShowProfessional(id, updateRoute = true) {
     const professional = (typeof BO_PROFISSIONAIS_SEARCH !== 'undefined' ? BO_PROFISSIONAIS_SEARCH : [])
         .find((item) => Number(item.id) === Number(id));
@@ -799,8 +524,6 @@ function boTrocarPerfil(perfilKey) {
 
 /* ---------- Inicialização geral (menu, sidebar mobile, filtros, ações de tabela) ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-    boFormModalInstance = new bootstrap.Modal(document.getElementById('boFormModal'));
-
     boRenderSidebar();
     boRenderPerfilMenu();
     // A primeira seção depende do perfil: admin/profissional começam em

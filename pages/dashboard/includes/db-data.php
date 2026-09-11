@@ -315,11 +315,6 @@ if ($perfilLogado === 'admin') {
             ];
         }
     }
-    $planosAtivosOptions = array_values(array_map(
-        static fn(array $p): string => $p['nome'],
-        array_filter($planos, static fn(array $p): bool => $p['status'] === 'ativo')
-    ));
-
     // Tela "Modalidades"
     $modalidadesAdm = [];
     if ($r = $conn->query('SELECT id_modalidade, nome, descricao, icone, status FROM modalidades ORDER BY nome')) {
@@ -732,17 +727,6 @@ if ($perfilLogado === 'vendedor') {
         bo_carregar_transportadoras($conn),
         static fn(array $t): bool => $t['status'] === 'ativo'
     ));
-}
-
-// Nomes de planos ativos: usados no <select> do modal "Alterar plano" do
-// aluno. Para o admin, já foi calculado no bloco acima (evita repetir a query).
-if (!isset($planosAtivosOptions)) {
-    $planosAtivosOptions = [];
-    if ($r = $conn->query("SELECT nome FROM cadastro_planos WHERE status = 'ativo' ORDER BY nome")) {
-        while ($row = $r->fetch_assoc()) {
-            $planosAtivosOptions[] = $row['nome'];
-        }
-    }
 }
 
 /**
