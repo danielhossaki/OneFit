@@ -21,6 +21,7 @@
     17. Backdrop mobile + visibilidade das seções
     18. Responsivo
     19. Calendário da agenda (aluno)
+    20. Testemunho do aluno
    ========================================================================= */
 
 /* =========================================================================
@@ -1981,4 +1982,58 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
     border-radius: 12px;
     padding: 14px 16px;
     flex-wrap: wrap;
+}
+
+/* =========================================================================
+   20. TESTEMUNHO DO ALUNO (card "Seu testemunho" na tela Perfil)
+   ========================================================================= */
+.bo-testemunho-card {
+    height: 100%;
+}
+
+.bo-testemunho-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--gold-bright);
+    margin-bottom: 6px;
+}
+
+.bo-testemunho-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+
+.bo-testemunho-card textarea {
+    resize: vertical;
+    min-height: 130px;
+}
+
+.bo-testemunho-status {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+}
+
+.bo-testemunho-status strong {
+    color: var(--text);
+}
+
+.bo-testemunho-contador {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    margin: 6px 0 14px;
+}
+
+.bo-testemunho-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 14px 0 0;
 }

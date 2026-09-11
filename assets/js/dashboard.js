@@ -186,6 +186,7 @@ const BO_PERFIS = {
             { key: 'funcoes', label: 'Funções', icon: 'bi-diagram-3' },
             { key: 'pagamentos', label: 'Pagamentos', icon: 'bi-credit-card' },
             { key: 'cashbacks', label: 'Cashbacks', icon: 'bi-wallet2' },
+            { key: 'comentarios', label: 'Comentários', icon: 'bi-chat-quote' },
             { key: 'categorias', label: 'Categorias', icon: 'bi-tags' },
             { key: 'produtos', label: 'Produtos', icon: 'bi-box-seam' },
             { key: 'vendas', label: 'Vendas Marketplace', icon: 'bi-truck' },

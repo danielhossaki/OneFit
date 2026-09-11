@@ -410,6 +410,81 @@
     <?php endforeach; ?>
 </section>
 
+<!-- ===== ADMIN · Comentários (moderação dos depoimentos enviados pelos alunos) ===== -->
+<section class="bo-content-section" data-perfil="admin" data-section="comentarios">
+    <div class="bo-page-title">
+        <div>
+            <h1>Comentários</h1>
+            <p>Aprove ou reprove os depoimentos enviados pelos alunos e controle quais aparecem na home.</p>
+        </div>
+    </div>
+
+    <?php $boTestemunhoStatusLabel = ['pendente' => 'Pendente', 'aprovado' => 'Aprovado', 'reprovado' => 'Reprovado']; ?>
+    <div class="bo-table-wrap">
+        <div class="table-responsive">
+            <table class="bo-table">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Comentário</th>
+                        <th>Data</th>
+                        <th>Status</th>
+                        <th>Visível na home</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($testemunhosAdmin as $t): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($t['nome'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td style="max-width:320px;"><?php echo htmlspecialchars($t['texto'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo date('d/m/Y', strtotime($t['data_criacao'])); ?></td>
+                            <td><?php echo bo_badge($t['aprovacao'] === 'aprovado', $boTestemunhoStatusLabel[$t['aprovacao']] ?? ucfirst($t['aprovacao']), $boTestemunhoStatusLabel[$t['aprovacao']] ?? ucfirst($t['aprovacao'])); ?></td>
+                            <td>
+                                <?php if ($t['aprovacao'] === 'aprovado'): ?>
+                                    <?php echo bo_badge($t['visibilidade'] === 'ativo', 'Visível', 'Oculto'); ?>
+                                <?php else: ?>
+                                    —
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <div class="bo-table-actions">
+                                    <?php if ($t['aprovacao'] !== 'aprovado'): ?>
+                                        <form method="POST" action="<?php echo bo_form_action('testemunhos.php'); ?>" style="display:inline;">
+                                            <?php echo bo_csrf_field(); ?>
+                                            <?php echo bo_hidden('secao', 'comentarios'); ?>
+                                            <?php echo bo_hidden('acao', 'aprovar'); ?>
+                                            <?php echo bo_hidden('id', $t['id_testemunho']); ?>
+                                            <button type="submit" class="btn-bo-icon" title="Aprovar"><i class="bi bi-check-circle"></i></button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if ($t['aprovacao'] !== 'reprovado'): ?>
+                                        <form method="POST" action="<?php echo bo_form_action('testemunhos.php'); ?>" style="display:inline;">
+                                            <?php echo bo_csrf_field(); ?>
+                                            <?php echo bo_hidden('secao', 'comentarios'); ?>
+                                            <?php echo bo_hidden('acao', 'reprovar'); ?>
+                                            <?php echo bo_hidden('id', $t['id_testemunho']); ?>
+                                            <button type="submit" class="btn-bo-icon danger" title="Reprovar"><i class="bi bi-x-circle"></i></button>
+                                        </form>
+                                    <?php endif; ?>
+                                    <?php if ($t['aprovacao'] === 'aprovado'): ?>
+                                        <?php bo_form_toggle('testemunhos', $t['id_testemunho'], 'comentarios', $t['visibilidade'] === 'ativo', 'Visível', 'Oculto'); ?>
+                                    <?php endif; ?>
+                                    <?php echo bo_botao_excluir('testemunhos', $t['id_testemunho']); ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                    <?php if (!$testemunhosAdmin): ?><tr><td colspan="6">Nenhum comentário enviado ainda.</td></tr><?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <?php foreach ($testemunhosAdmin as $t): ?>
+        <?php bo_modal_confirmar_exclusao('testemunhos', $t['id_testemunho'], 'o comentário de ' . $t['nome'], 'comentarios'); ?>
+    <?php endforeach; ?>
+</section>
+
 <!-- ===== ADMIN · Categorias (organização dos produtos da loja) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="categorias">
     <div class="bo-page-title">
