@@ -48,19 +48,31 @@
         const countryNames = typeof Intl.DisplayNames === 'function' ? new Intl.DisplayNames([window.OneFit?.locale || 'pt-BR'], { type: 'region' }) : null;
         const optionLabel = option => select.dataset.flagSelect === 'country' && /^[A-Z]{2}$/.test(option.value) && countryNames
             ? `${countryNames.of(option.value)} (${option.value})` : option.textContent;
+        // Falha de rede/asset num ambiente específico não deve virar texto cru
+        // solto ("BR"): os dois tipos (país e estado) caem no mesmo selo
+        // estilizado (.of-flag-fallback), consistente entre si.
+        const flagFallback = (target, code) => {
+            const badge = document.createElement('span');
+            badge.className = 'of-flag-fallback';
+            badge.textContent = code;
+            target.append(badge);
+        };
         const decorate = (target, option) => {
             target.replaceChildren();
             if (!option?.value) return;
             if (select.dataset.flagSelect === 'state' && /^[A-Z]{2}$/.test(option.value)) {
-                const img = document.createElement('img'); img.src = window.OneFit.base + 'assets/img/flags/states/' + option.value.toLowerCase() + '.svg';
-                img.alt = ''; img.width = 28; img.height = 20; img.addEventListener('error', () => { img.remove(); }); target.append(img);
+                const code = option.value;
+                const img = document.createElement('img'); img.src = window.OneFit.base + 'assets/img/flags/states/' + code.toLowerCase() + '.svg';
+                img.alt = ''; img.width = 28; img.height = 20;
+                img.addEventListener('error', () => { img.remove(); flagFallback(target, code); });
+                target.append(img);
             } else if (select.dataset.flagSelect === 'country') {
                 const code = option.dataset.country || option.value;
                 if (/^[A-Z]{2}$/.test(code)) {
                     const img = document.createElement('img');
                     img.src = window.OneFit.base + 'assets/img/flags/countries/' + code.toLowerCase() + '.svg';
                     img.alt = ''; img.width = 28; img.height = 20;
-                    img.addEventListener('error', () => { target.textContent = code; });
+                    img.addEventListener('error', () => { img.remove(); flagFallback(target, code); });
                     target.append(img);
                 }
             }

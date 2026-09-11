@@ -93,8 +93,9 @@
             <?php echo bo_csrf_field(); ?>
             <input type="hidden" name="configuracao" value="tema_cores">
             <div class="of-theme-options" role="group" aria-label="<?php echo of_t('Tema de cores do site'); ?>">
-                <?php foreach (['dourado'=>onefitTraduzir('Dourado'),'azul'=>onefitTraduzir('Azul'),'verde'=>onefitTraduzir('Verde'),'vermelho'=>onefitTraduzir('Vermelho'),'roxo'=>onefitTraduzir('Roxo')] as $code=>$label): ?>
-                <label><input type="radio" name="valor" value="<?php echo $code; ?>" <?php echo ($GLOBALS['onefitTemaGlobal'] ?? 'dourado') === $code ? 'checked' : ''; ?>><span class="of-swatch" data-color="<?php echo $code; ?>" aria-hidden="true"></span><?php echo of_t($label); ?></label>
+
+            <?php foreach (onefitTemas() as $code): ?>
+                <label><input type="radio" name="valor" value="<?php echo $code; ?>" <?php echo ($GLOBALS['onefitTemaGlobal'] ?? 'dourado') === $code ? 'checked' : ''; ?>><span class="of-swatch" data-color="<?php echo $code; ?>" aria-hidden="true"></span><?php echo of_t(ucfirst($code)); ?> — <?php echo htmlspecialchars(onefitMarca($code)['name'], ENT_QUOTES, 'UTF-8'); ?></label>
                 <?php endforeach; ?>
             </div>
             <button class="btn-bo-gold" type="submit"><?php echo of_t('Salvar'); ?></button>

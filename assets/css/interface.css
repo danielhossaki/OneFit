@@ -1,16 +1,22 @@
 /* Shared palette. Components use aliases below instead of local palettes. */
 html[data-site-theme] {
     --theme-hue: 43;
-    --theme-bg: hsl(var(--theme-hue) 22% 6%);
-    --theme-secondary: hsl(var(--theme-hue) 20% 8%);
-    --theme-sidebar: hsl(var(--theme-hue) 24% 7%);
-    --theme-header: hsl(var(--theme-hue) 22% 9%);
-    --theme-surface: hsl(var(--theme-hue) 19% 11%);
-    --theme-elevated: hsl(var(--theme-hue) 18% 15%);
-    --theme-border: hsl(var(--theme-hue) 14% 29%);
-    --theme-text: hsl(var(--theme-hue) 15% 94%);
-    --theme-muted: hsl(var(--theme-hue) 12% 73%);
-    --theme-overlay: hsl(var(--theme-hue) 22% 6% / .82);
+    /* Saturação moderada (bem acima de um "cinza quase preto", mas sem
+       exagerar): dá pra cada tema parecer dourado/roxo/vermelho/azul/verde
+       no fundo, sidebar, header etc. — não só no destaque (--accent) — sem
+       ficar berrante. Com saturação baixa (~20%) nesta luminosidade (6-15%)
+       a diferença de matiz entre os 5 temas ficava quase imperceptível; com
+       saturação alta (~40%) ficava intensa demais. Este é o meio-termo. */
+    --theme-bg: hsl(var(--theme-hue) 26% 7%);
+    --theme-secondary: hsl(var(--theme-hue) 24% 9%);
+    --theme-sidebar: hsl(var(--theme-hue) 30% 8%);
+    --theme-header: hsl(var(--theme-hue) 26% 11%);
+    --theme-surface: hsl(var(--theme-hue) 22% 14%);
+    --theme-elevated: hsl(var(--theme-hue) 20% 18%);
+    --theme-border: hsl(var(--theme-hue) 18% 30%);
+    --theme-text: hsl(var(--theme-hue) 10% 95%);
+    --theme-muted: hsl(var(--theme-hue) 8% 74%);
+    --theme-overlay: hsl(var(--theme-hue) 26% 7% / .82);
     --theme-hover: rgba(var(--accent-rgb), .12);
     --theme-active: rgba(var(--accent-rgb), .20);
     --theme-focus: var(--accent-bright);
@@ -34,12 +40,16 @@ html[data-site-theme] {
     --bo-gold: var(--accent);
     --bo-gold-bright: var(--accent-bright);
     --bo-gold-dim: var(--accent-dim);
-    --accent: #d4af37;
-    --accent-bright: #f4c430;
-    --accent-dim: #8a6b21;
-    --accent-rgb: 212, 175, 55;
+    /* Paleta de destaque "tom joia" fosco: saturação/luminosidade calibradas
+       por tema (mais abaixo) pra parecerem modernas e discretas em vez de
+       "estouradas", mantendo contraste AA com o texto sobre botões
+       (--accent-ink, também calibrado por tema). */
+    --accent: #c79e38;
+    --accent-bright: #d8b764;
+    --accent-dim: #957423;
+    --accent-rgb: 199, 158, 56;
     --accent-ink: #151515;
-    --accent-pale: #fff8e1;
+    --accent-pale: #f9f4e7;
     --gold: var(--accent);
     --gold-bright: var(--accent-bright);
     --gold-dim: var(--accent-dim);
@@ -48,51 +58,56 @@ html[data-site-theme] {
 
 html[data-site-theme="azul"] {
     --theme-hue: 213;
-    --accent: #2997ff;
-    --accent-bright: #60b2ff;
-    --accent-dim: #006cdb;
-    --accent-rgb: 41, 151, 255;
-    --accent-pale: #e8f3ff;
+    --accent: #346fb7;
+    --accent-bright: #548dd4;
+    --accent-dim: #1f4d84;
+    --accent-rgb: 52, 111, 183;
+    --accent-pale: #e7eff9;
+    /* Azul/vermelho/roxo médios ficam escuros demais pra texto preto (contraste
+       AA falha); branco funciona nos 3. Dourado/verde continuam com ink escuro. */
+    --accent-ink: #ffffff;
 }
 
 html[data-site-theme="verde"] {
     --theme-hue: 151;
-    --accent: #00d978;
-    --accent-bright: #35f29b;
-    --accent-dim: #009951;
-    --accent-rgb: 0, 217, 120;
-    --accent-pale: #e6fff0;
+    --accent: #38c782;
+    --accent-bright: #64d8a0;
+    --accent-dim: #23955e;
+    --accent-rgb: 56, 199, 130;
+    --accent-pale: #e7f9f0;
 }
 
 html[data-site-theme="vermelho"] {
     --theme-hue: 355;
-    --accent: #ff5858;
-    --accent-bright: #ff8080;
-    --accent-dim: #d92535;
-    --accent-rgb: 255, 88, 88;
-    --accent-pale: #fff0f0;
+    --accent: #c73844;
+    --accent-bright: #d8646e;
+    --accent-dim: #95232c;
+    --accent-rgb: 199, 56, 68;
+    --accent-pale: #f9e7e8;
+    --accent-ink: #ffffff;
 }
 
 html[data-site-theme="roxo"] {
     --theme-hue: 274;
-    --accent: #b875ff;
-    --accent-bright: #cd9aff;
-    --accent-dim: #8b30e5;
-    --accent-rgb: 184, 117, 255;
-    --accent-pale: #f4eeff;
+    --accent: #8938c7;
+    --accent-bright: #a664d8;
+    --accent-dim: #632395;
+    --accent-rgb: 137, 56, 199;
+    --accent-pale: #f1e7f9;
+    --accent-ink: #ffffff;
 }
 
 html[data-site-theme][data-theme="light"] {
-    --theme-bg: hsl(var(--theme-hue) 25% 97%);
-    --theme-secondary: hsl(var(--theme-hue) 24% 95%);
-    --theme-sidebar: hsl(var(--theme-hue) 26% 96%);
-    --theme-header: hsl(var(--theme-hue) 20% 99%);
-    --theme-surface: hsl(var(--theme-hue) 20% 99%);
-    --theme-elevated: hsl(var(--theme-hue) 22% 94%);
-    --theme-border: hsl(var(--theme-hue) 15% 78%);
+    --theme-bg: hsl(var(--theme-hue) 28% 97%);
+    --theme-secondary: hsl(var(--theme-hue) 26% 95%);
+    --theme-sidebar: hsl(var(--theme-hue) 30% 96%);
+    --theme-header: hsl(var(--theme-hue) 22% 99%);
+    --theme-surface: hsl(var(--theme-hue) 22% 99%);
+    --theme-elevated: hsl(var(--theme-hue) 24% 94%);
+    --theme-border: hsl(var(--theme-hue) 17% 78%);
     --theme-text: hsl(var(--theme-hue) 20% 14%);
     --theme-muted: hsl(var(--theme-hue) 12% 36%);
-    --theme-overlay: hsl(var(--theme-hue) 25% 97% / .88);
+    --theme-overlay: hsl(var(--theme-hue) 28% 97% / .88);
     --accent: #806010;
     --accent-bright: #694d08;
     --accent-dim: #ad8830;
@@ -171,6 +186,23 @@ html[data-site-theme] :focus-visible { outline-color: var(--theme-focus); }
     height: 20px;
     object-fit: contain;
     vertical-align: middle;
+}
+
+/* Se a imagem da bandeira falhar (asset ausente/bloqueado no ambiente),
+   mostra um selo com o código ISO em vez de texto cru solto. */
+.of-flag-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 20px;
+    border-radius: 3px;
+    border: 1px solid var(--border, #777);
+    background: var(--surface-2, #2a241b);
+    color: var(--text-muted, #b8b0a2);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .02em;
 }
 
 .of-select-list {
@@ -274,23 +306,23 @@ html[data-site-theme] :focus-visible { outline-color: var(--theme-focus); }
 }
 
 .of-swatch[data-color="dourado"] {
-    background: #d4af37;
+    background: #c79e38;
 }
 
 .of-swatch[data-color="azul"] {
-    background: #2997ff;
+    background: #346fb7;
 }
 
 .of-swatch[data-color="verde"] {
-    background: #00d978;
+    background: #38c782;
 }
 
 .of-swatch[data-color="vermelho"] {
-    background: #ff5858;
+    background: #c73844;
 }
 
 .of-swatch[data-color="roxo"] {
-    background: #b875ff;
+    background: #8938c7;
 }
 
 .of-photo-open {

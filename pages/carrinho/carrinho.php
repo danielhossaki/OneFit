@@ -298,8 +298,8 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
         /* Os inputs de forma de pagamento agora são radios reais (funcionam sem JS);
            o rótulo (label) continua com a aparência de aba já existente. */
         .payment-radio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-        .payment-radio:checked + .payment-tab { background: #ffc400; color: #17130b; }
-        .payment-radio:focus-visible + .payment-tab { outline: 2px solid #ffc400; outline-offset: -2px; }
+        .payment-radio:checked + .payment-tab { background: var(--accent-bright); color: var(--accent-ink); }
+        .payment-radio:focus-visible + .payment-tab { outline: 2px solid var(--accent-bright); outline-offset: -2px; }
     </style>
 <?php onefitInterfaceHead(); ?>
 </head>

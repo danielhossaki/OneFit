@@ -1,14 +1,16 @@
 :root {
     --bo-danger: #e42e2e;
     --bo-success: #4caf50;
+    /* Azul "informativo" do cashback: fixo em todos os temas (inclusive no
+       tema vermelho) pra não ser confundido com a cor de destaque do tema
+       nem com o vermelho de erro/perigo. */
+    --bo-blue: #2679f4;
     --bo-header-h: 76px;
     --bo-header-glow: hsl(var(--theme-hue) 22% 6% / 0.9);
 }
 
-/* Tema claro: mesma identidade dourada usada em marketplace.css/dashboard.css.
-   Cobre o cabeçalho e a base do checkout; os cartões internos do fluxo de
-   pagamento (etapas, inputs, badges) ainda usam cores fixas específicas do
-   checkout e não fazem parte deste ajuste. */
+/* Os cartões do fluxo de pagamento (etapas, inputs, badges) agora seguem as
+   variáveis de tema (var(--bo-*)/var(--accent*)) como o resto do app. */
 html[data-theme="light"] {
     --bo-danger: #c11d1d;
     --bo-success: #2f8132;
@@ -118,32 +120,32 @@ body {
 }
 
 .crt-modal .modal-content {
-    background: #17181e;
-    color: #fff;
-    border: 1px solid #30323c;
+    background: var(--bo-surface-2);
+    color: var(--bo-text);
+    border: 1px solid var(--bo-border);
     border-radius: 14px;
 }
 
 .crt-modal .modal-header,
 .crt-modal .modal-footer {
-    border-color: #30323c;
+    border-color: var(--bo-border);
 }
 
 .crt-modal .form-label {
-    color: #aeb4c3;
+    color: var(--bo-text-muted);
     font-size: 13px;
 }
 
 .crt-modal .form-control {
-    background: #121319;
-    border: 1px solid #4a4d58;
-    color: #fff;
+    background: var(--bo-bg);
+    border: 1px solid var(--bo-border);
+    color: var(--bo-text);
 }
 
 .crt-modal .form-control:focus {
-    background: #121319;
+    background: var(--bo-bg);
     border-color: #2679f4;
-    color: #fff;
+    color: var(--bo-text);
     box-shadow: none;
 }
 
@@ -161,7 +163,7 @@ body {
     gap: 12px;
     justify-content: space-between;
     align-items: flex-start;
-    color: #fff;
+    color: var(--bo-text);
 }
 
 .crt-endereco-card.is-selected {
@@ -169,7 +171,7 @@ body {
 }
 
 .crt-endereco-info p {
-    color: #aeb4c3;
+    color: var(--bo-text-muted);
     font-size: 13px;
 }
 
@@ -183,7 +185,7 @@ body {
 
 .crt-endereco-badge {
     display: inline-block;
-    background: rgba(255, 196, 0, 0.15);
+    background: rgba(var(--accent-rgb), 0.15);
     color: var(--accent-bright, #ffc400);
     font-size: 11px;
     font-weight: 700;
@@ -324,7 +326,7 @@ body {
     font-size: 13px;
     margin: 0 0 13px;
     font-weight: 800;
-    color: #fff;
+    color: var(--bo-text);
 }
 
 .checkout-line {
@@ -333,11 +335,11 @@ body {
     gap: 12px;
     padding: 6px 0;
     font-size: 11px;
-    color: #aeb4c3;
+    color: var(--bo-text-muted);
 }
 
 .checkout-line strong {
-    color: #fff;
+    color: var(--bo-text);
     font-weight: 800;
 }
 
@@ -347,7 +349,7 @@ body {
 
 .checkout-total {
     border: 1px solid var(--accent-dim, #8a6d09);
-    background: #302807;
+    background: rgba(var(--accent-rgb), .14);
     padding: 11px 9px;
     border-radius: 7px;
     margin-top: 11px;
@@ -356,7 +358,7 @@ body {
     justify-content: space-between;
     font-size: 11px;
     font-weight: 800;
-    color: #fff;
+    color: var(--bo-text);
 }
 
 .checkout-total strong {
@@ -369,7 +371,7 @@ body {
     align-items: center;
     justify-content: space-between;
     font-size: 11px;
-    color: #98a0b2;
+    color: var(--bo-text-muted);
     margin-bottom: 8px;
 }
 
@@ -407,7 +409,7 @@ body {
 }
 
 .payment-heading small {
-    color: #80889a;
+    color: var(--bo-text-muted);
     font-size: 8px;
     letter-spacing: .08em;
     font-weight: 800;
@@ -416,15 +418,15 @@ body {
 .payment-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    border: 1px solid #30323c;
+    border: 1px solid var(--bo-border);
     border-radius: 5px;
     overflow: hidden;
 }
 
 .payment-tab {
-    background: #17181e;
+    background: var(--bo-surface-2);
     border: 0;
-    color: #a5abba;
+    color: var(--bo-text-muted);
     padding: 8px 5px;
     font-size: 10px;
     font-weight: 800;
@@ -433,19 +435,19 @@ body {
 
 .payment-tab.active {
     background: var(--accent-bright, #ffc400);
-    color: #17130b;
+    color: var(--accent-ink);
 }
 
 .pix-label {
     display: block;
     font-size: 10px;
-    color: #9ca3b3;
+    color: var(--bo-text-muted);
     margin: 15px 0 5px;
 }
 
 .pix-key {
-    background: #17181e;
-    border: 1px solid #30323c;
+    background: var(--bo-surface-2);
+    border: 1px solid var(--bo-border);
     border-radius: 5px;
     padding: 8px;
     display: flex;
@@ -453,14 +455,14 @@ body {
     justify-content: space-between;
     gap: 6px;
     font-size: 10px;
-    color: #fff;
+    color: var(--bo-text);
 }
 
 .copy-key {
     flex-shrink: 0;
     border: 1px solid #4c4f5d;
     background: #252731;
-    color: #fff;
+    color: var(--bo-text);
     border-radius: 4px;
     padding: 4px 7px;
     font-size: 8px;
@@ -476,7 +478,7 @@ body {
 }
 
 .payment-feature {
-    border: 1px dashed #363946;
+    border: 1px dashed var(--bo-border);
     border-radius: 5px;
     padding: 7px 5px;
     text-align: center;
@@ -495,12 +497,12 @@ body {
     display: flex;
     justify-content: space-between;
     padding: 3px 0;
-    color: #aeb4c3;
+    color: var(--bo-text-muted);
     font-size: 9px;
 }
 
 .payment-summary strong {
-    color: #fff;
+    color: var(--bo-text);
 }
 
 .payment-error {
@@ -521,11 +523,11 @@ body {
     margin-top: 8px;
     padding: 13px 12px;
     background: var(--accent-bright, #ffc400);
-    color: #171208;
+    color: var(--accent-ink);
     font-size: 11px;
     font-weight: 800;
     cursor: pointer;
-    box-shadow: 0 5px 18px rgba(255, 196, 0, .16);
+    box-shadow: 0 5px 18px rgba(var(--accent-rgb), .16);
 }
 
 .card-payment {
@@ -546,9 +548,9 @@ body {
 
 .payment-input {
     width: 100%;
-    background: #17181e;
-    border: 1px solid #30323c;
-    color: #fff;
+    background: var(--bo-surface-2);
+    border: 1px solid var(--bo-border);
+    color: var(--bo-text);
     border-radius: 5px;
     padding: 9px;
     font-size: 10px;
@@ -798,6 +800,7 @@ body {
 .payment-tab.active {
     border-color: var(--bo-gold);
     background: var(--bo-gold);
+    color: var(--accent-ink);
 }
 
 .pix-label {
@@ -875,16 +878,16 @@ body {
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
-    border: 1px solid #30323c;
+    border: 1px solid var(--bo-border);
     border-radius: 9px;
     cursor: pointer;
     font-size: 11px;
-    color: #d7dae2;
+    color: var(--bo-text);
 }
 
 .crt-frete-opcao.is-selected {
     border-color: var(--accent-bright, #ffc400);
-    background: rgba(255, 196, 0, .08);
+    background: rgba(var(--accent-rgb), .08);
 }
 
 .crt-frete-opcao-nome {
@@ -894,11 +897,11 @@ body {
 
 .crt-frete-opcao-nome small {
     font-weight: 400;
-    color: #8a90a1;
+    color: var(--bo-text-muted);
 }
 
 .crt-frete-opcao-prazo {
-    color: #8a90a1;
+    color: var(--bo-text-muted);
 }
 
 .crt-frete-opcao-valor {
@@ -1041,7 +1044,7 @@ body {
     border: 0;
     border-radius: 10px;
     background: var(--bo-gold);
-    color: #171208;
+    color: var(--accent-ink);
     font: inherit;
     font-size: 13px;
     font-weight: 800;

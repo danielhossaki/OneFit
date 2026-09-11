@@ -437,9 +437,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo">
-          ONE<span>FIT</span>
-        </a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
 
         <div class="login-visual-text">
           <span class="eyebrow"><?php echo of_t('Comece agora'); ?></span>
@@ -452,9 +450,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-form-panel">
       <div class="login-form-wrap matricula-wrap" data-aos="fade-right" data-aos-delay="250">
 
-        <a href="<?php echo BASE_URL; ?>pages/home.php" class="login-logo login-logo-mobile">
-          ONE<span>FIT</span>
-        </a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
 
         <span class="tag"><?php echo of_t('Junte-se à ONE FIT'); ?></span>
         <h1><?php echo of_t('Matrícula'); ?></h1>

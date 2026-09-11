@@ -48,6 +48,24 @@
             display: block;
         }
 
+        /* Nome da marca: some técnicas usadas no botão dourado (mesmo
+           gradiente "shine"), pra ficar coerente com a identidade e
+           continuar acompanhando os 5 temas automaticamente via var(). */
+        .logo [data-brand-name] {
+            font-family: 'Big Shoulders Display', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            line-height: 1;
+            white-space: nowrap;
+            color: var(--gold);
+            background: linear-gradient(120deg, var(--bronze), var(--gold) 45%, var(--gold-bright) 60%, var(--gold) 75%, var(--bronze));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
         .nav-links {
             display: flex;
             gap: 36px;
@@ -194,6 +212,14 @@
 
             .menu-toggle {
                 display: block;
+            }
+
+            .logo-mark {
+                height: 56px;
+            }
+
+            .logo [data-brand-name] {
+                font-size: 17px;
             }
 
             .nav-links {

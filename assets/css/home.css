@@ -162,6 +162,7 @@ html[data-theme="light"] .hero {
     font-size: clamp(52px, 9vw, 130px);
     position: relative;
     z-index: 1;
+    color:#cfc7c0 !important;
 }
 
 .hero h1 .shine {
