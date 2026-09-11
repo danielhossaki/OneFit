@@ -2,17 +2,17 @@
 /**
  * dashboard.php
  * Página principal do backoffice. Esse arquivo só faz a "montagem":
- * carrega os dados (mock-data.php), as funções auxiliares (helpers.php)
+ * carrega os dados (db-data.php), as funções auxiliares (helpers.php)
  * e inclui, em ordem, cada pedaço de HTML (components/*.php). Toda a
  * regra de exibição/estilo/interação vive nos outros arquivos:
- 
- *   assets/js/backoffice.js     -> perfis, menu, modal, filtros, IMC, pagamento
+
+ *   assets/js/dashboard.js      -> perfis, menu, filtros, IMC, pagamento Pix
  *   includes/helpers.php        -> bo_badge(), bo_money(), bo_json()
- *   includes/mock-data.php      -> dados de exemplo (trocar por consultas ao banco)
+ *   includes/db-data.php        -> dados reais, lidos do banco
  *   components/header.php       -> barra do topo
  *   components/sidebar.php      -> menu lateral
  *   components/section-*.php    -> telas de cada perfil (admin/profissional/aluno)
- *   components/modal-*.php      -> modais (formulário genérico e pagamento)
+ *   components/modal-*.php      -> modais (pagamento, exclusão, etc.)
  */
 
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
@@ -206,7 +206,6 @@ if ($perfilLogado === 'admin') {
         ?>
     </main>
 
-    <?php require __DIR__ . '/components/modal-form.php'; ?>
     <?php if ($perfilLogado === 'aluno'): ?>
         <?php require __DIR__ . '/components/modal-pagar-plano.php'; ?>
     <?php endif; ?>
@@ -216,10 +215,6 @@ if ($perfilLogado === 'admin') {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // Planos ativos cadastrados, usados pelo BO_FORM_SCHEMAS.planoAlterar
-        // (tela "Alterar plano" do aluno) para montar o <select>.
-        const BO_PLANOS_OPTIONS = <?php echo json_encode($planosAtivosOptions ?? [], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
-
         // Perfil real do usuário logado (vindo da sessão, não escolhido por ele).
         // dashboard.js usa isso pra: (1) abrir direto na seção certa,
         // (2) só o admin conseguir usar o seletor de perfil no header.
@@ -228,9 +223,7 @@ if ($perfilLogado === 'admin') {
         // Não há mais alternância de perfis de demonstração no painel.
         const BO_IS_ADMIN = false;
         const BO_MARKETPLACE_URL = <?php echo json_encode(BASE_URL . 'pages/marketplace/marketplace.php'); ?>;
-        const BO_CURRENT_USER = <?php echo json_encode($usuarioDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_CSRF_TOKEN = <?php echo json_encode($_SESSION['csrf_token']); ?>;
-        const BO_PROFILE_UPDATE_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/update-profile.php'); ?>;
         const BO_PREFERENCES_URL = <?php echo json_encode(BASE_URL . 'pages/dashboard/actions/preferencias.php'); ?>;
         const BO_USER_PREFERENCES = <?php echo json_encode($preferenciasDashboard, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
         const BO_PREFERENCES_AVAILABLE = <?php echo $preferenciasDisponiveis ? 'true' : 'false'; ?>;

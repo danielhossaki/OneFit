@@ -1,77 +1,13 @@
 <?php
 /**
  * components/section-aluno.php
- * Telas do perfil Aluno. Depende de includes/mock-data.php:
- *   $alunoPerfil, $alunoHistorico, $alunoCashbackHistorico, $alunoPedidos,
- *   $alunoPedidosHistorico, $alunoTreino, $alunoAgendaDisponiveis
+ * Telas do perfil Aluno (exceto "Perfil" em si, que é a tela genérica
+ * compartilhada por todos os papéis em components/student-profile.php).
+ * Depende de includes/db-data.php:
+ *   $alunoHistorico, $alunoCashbackHistorico, $alunoPedidos,
+ *   $alunoPedidosHistorico, $alunoTreino, $alunoAgenda*
  */
 ?>
-
-<!-- ===== ALUNO · Perfil (dados cadastrais + avaliação física/IMC) ===== -->
-<section class="bo-content-section" data-perfil="aluno" data-section="perfil">
-    <div class="bo-page-title">
-        <div>
-            <h1>Perfil</h1>
-            <p>Seus dados cadastrais na ONE FIT.</p>
-        </div>
-        <button type="button" class="btn-bo-gold" onclick='boOpenForm("perfilEdit","Editar perfil", <?php echo bo_json($alunoPerfil); ?>)'>
-            <i class="bi bi-pencil"></i> Editar
-        </button>
-    </div>
-
-    <!-- Bloco 1: dados cadastrais -->
-    <div class="bo-profile-block">
-        <div class="bo-thumb mb-3" style="width:72px;height:72px;font-size:28px;">
-            <i class="bi bi-person"></i>
-        </div>
-        <div class="bo-profile-row"><span>E-mail</span><span><?php echo $alunoPerfil['email']; ?></span></div>
-        <div class="bo-profile-row">
-            <span>Plano</span>
-            <span>
-                <?php echo $alunoPerfil['plano']; ?>
-                <button type="button" class="btn-bo-outline ms-2" style="padding:4px 10px;font-size:12px;"
-                    onclick='boOpenForm("planoAlterar","Alterar plano", {plano: "<?php echo $alunoPerfil['plano']; ?>"})'>Alterar</button>
-            </span>
-        </div>
-        <div class="bo-profile-row"><span>Status</span><span><?php echo bo_badge($alunoPerfil['status'] === 'Ativo'); ?></span></div>
-        <div class="bo-profile-row"><span>Documento</span><span><?php echo $alunoPerfil['documento']; ?></span></div>
-        <div class="bo-profile-row"><span>Telefone</span><span><?php echo $alunoPerfil['telefone']; ?></span></div>
-        <div class="bo-profile-row"><span>Data de cadastro</span><span><?php echo $alunoPerfil['dataCadastro']; ?></span></div>
-        <div class="bo-profile-row"><span>Data de nascimento</span><span><?php echo $alunoPerfil['nascimento']; ?></span></div>
-    </div>
-
-    <!-- Bloco 2: avaliação física + cálculo de IMC (ver backoffice.js > boCalcularIMC) -->
-    <div class="bo-profile-block">
-        <div class="bo-section-heading">Avaliação física</div>
-        <div class="row g-3 mb-3">
-            <div class="col-6 col-md-3">
-                <label class="form-label">Altura (m)</label>
-                <input type="number" step="0.01" class="form-control" id="imcAltura" value="<?php echo $alunoPerfil['altura']; ?>">
-            </div>
-            <div class="col-6 col-md-3">
-                <label class="form-label">Peso (kg)</label>
-                <input type="number" step="0.1" class="form-control" id="imcPeso" value="<?php echo $alunoPerfil['peso']; ?>">
-            </div>
-            <div class="col-12 col-md-6">
-                <label class="form-label">Objetivo</label>
-                <input type="text" class="form-control" id="imcObjetivo" value="<?php echo $alunoPerfil['objetivo']; ?>">
-            </div>
-        </div>
-        <div class="bo-imc-box mb-3">
-            <button type="button" class="btn-bo-outline" onclick="boCalcularIMC()">
-                <i class="bi bi-calculator"></i> Calcular IMC
-            </button>
-            <div>
-                <div class="bo-card-label" style="margin-bottom:2px;">Status de IMC</div>
-                <div class="bo-card-value" id="imcResultado" style="font-size:18px;">—</div>
-            </div>
-        </div>
-        <div class="bo-table-actions">
-            <button type="button" class="btn-bo-outline">Cancelar</button>
-            <button type="button" class="btn-bo-gold" onclick="boToast('Alterações salvas.')">Salvar</button>
-        </div>
-    </div>
-</section>
 
 <!-- ===== ALUNO · Histórico (pagamentos de mensalidade) ===== -->
 <section class="bo-content-section" data-perfil="aluno" data-section="historico">

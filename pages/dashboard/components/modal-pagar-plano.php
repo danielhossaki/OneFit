@@ -2,10 +2,10 @@
 /**
  * components/modal-pagar-plano.php
  * Modal específico de pagamento, aberto pelo botão "Pagar Plano" na tela
- * "Histórico" do aluno (data-bs-target="#modalPagarPlano"). Diferente do
- * modal genérico (modal-form.php), este tem campos fixos porque o fluxo
- * de pagamento (Pix x Cartão) tem uma interação própria — ver
- * backoffice.js, bloco "Modal Pagar plano (Pix/Cartão)".
+ * "Histórico" do aluno (data-bs-target="#modalPagarPlano"). Tem campos
+ * fixos porque o fluxo de pagamento (Pix x Cartão) tem uma interação
+ * própria — ver dashboard.js, bloco "Modal Pagar plano (Pix/Cartão)".
+ * O <form> envia direto para funcionalidades/pagar-plano.php (PRG real).
  *
  * IMPORTANTE: os campos de cartão aqui (número, validade, CVV) são só
  * para simulação visual — nenhum dado de cartão deve ser enviado/salvo
