@@ -1811,6 +1811,20 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
    19. CALENDÁRIO DA AGENDA (aluno) — navegação de mês/dia via link (GET),
    sem JS: cada célula é um <a> para dashboard.php?section=agenda&mes=...&dia=...
    ========================================================================= */
+.bo-calendar-day.is-passado { opacity: .4; }
+.bo-agenda-fields { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.bo-agenda-fields label { flex: 1 1 220px; }
+.bo-agenda-fields select { width: 100%; margin-top: 8px; }
+.bo-agenda-booking { display: block; }
+.bo-agenda-booking fieldset { border: 0; padding: 0; margin: 16px 0; }
+.bo-agenda-booking legend { font-size: 14px; }
+.bo-agenda-times { display: flex; flex-wrap: wrap; gap: 8px; }
+.bo-agenda-time { position: relative; cursor: pointer; }
+.bo-agenda-time input { position: absolute; opacity: 0; width: 100%; height: 100%; }
+.bo-agenda-time span { display: block; padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.bo-agenda-time input:checked + span { background: var(--gold); color: #1a1509; }
+.bo-agenda-time input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 3px; }
+.bo-agenda-booking button:disabled { opacity: .45; cursor: not-allowed; }
 .bo-calendar {
     background: var(--surface);
     border: 1px solid var(--border);

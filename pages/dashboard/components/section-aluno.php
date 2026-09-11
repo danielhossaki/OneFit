@@ -147,7 +147,7 @@
                 $boTemVaga = isset($alunoAgendaDiasDisponiveis[$boDataStr]);
                 $boEventosDoDia = $alunoAgendaEventosPorDia[$boDataStr] ?? [];
                 $boSelecionado = $alunoAgendaDiaSelecionado === $boDataStr;
-                $boClasses = 'bo-calendar-day' . ($boTemVaga ? ' is-disponivel' : '') . ($boSelecionado ? ' is-selecionado' : '');
+                $boClasses = 'bo-calendar-day' . ($boDataStr < bo_agenda_now()->format('Y-m-d') ? ' is-passado' : '') . ($boTemVaga ? ' is-disponivel' : '') . ($boSelecionado ? ' is-selecionado' : '');
                 $boHref = $boAgendaLinkBase . '&mes=' . $alunoAgendaMes . ($boTemVaga ? '&dia=' . $boDataStr : '');
                 $boTag = $boTemVaga ? 'a' : 'div';
                 ?>
@@ -174,26 +174,22 @@
         <?php if (!$alunoAgendaSlots): ?>
             <p>Nenhum horário disponível nesse dia.</p>
         <?php else: ?>
-            <div class="bo-slot-list">
-                <?php foreach ($alunoAgendaSlots as $boSlot): ?>
-                    <div class="bo-slot-card">
-                        <div>
-                            <div class="bo-agenda-title"><?php echo htmlspecialchars($boSlot['modalidade'], ENT_QUOTES, 'UTF-8'); ?> com <?php echo htmlspecialchars($boSlot['profissional'], ENT_QUOTES, 'UTF-8'); ?></div>
-                            <div class="bo-agenda-sub">
-                                <?php echo substr($boSlot['hora_inicio'], 0, 5) . ' às ' . substr($boSlot['hora_fim'], 0, 5); ?>
-                                <?php if (!empty($boSlot['local'])): ?> · <?php echo htmlspecialchars($boSlot['local'], ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
-                                <?php if (!empty($boSlot['especialidade'])): ?> · <?php echo htmlspecialchars($boSlot['especialidade'], ENT_QUOTES, 'UTF-8'); ?><?php endif; ?>
-                            </div>
-                        </div>
-                        <form method="POST" action="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/funcionalidades/agenda.php', ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="secao" value="agenda">
-                            <input type="hidden" name="id_disponibilidade" value="<?php echo (int) $boSlot['id_disponibilidade']; ?>">
-                            <button type="submit" class="btn-bo-gold" style="padding:8px 16px;">Agendar</button>
-                        </form>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+            <form class="bo-calendar bo-agenda-booking bo-filters" method="POST" action="<?php echo BASE_URL; ?>pages/dashboard/funcionalidades/agenda.php">
+                <p>Horários de demonstração com profissionais cadastrados. A confirmação será salva na sua agenda.</p>
+                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
+                <input type="hidden" name="secao" value="agenda">
+                <input type="hidden" name="data_evento" value="<?php echo htmlspecialchars($alunoAgendaDiaSelecionado, ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="bo-agenda-fields">
+                    <label>Tipo de agendamento<select class="form-select" data-agenda-type required></select></label>
+                    <label>Profissional<select class="form-select" data-agenda-professional required></select></label>
+                </div>
+                <fieldset><legend>Horários disponíveis</legend><div data-agenda-times class="bo-agenda-times"></div></fieldset>
+                <p data-agenda-empty hidden>Nenhum horário disponível para esta seleção.</p>
+                <a class="btn-bo-outline" href="<?php echo htmlspecialchars($boAgendaLinkBase . '&mes=' . $alunoAgendaMes, ENT_QUOTES, 'UTF-8'); ?>">Cancelar</a>
+                <button class="btn-bo-gold" type="submit" disabled>Confirmar agendamento</button>
+                <script type="application/json" data-agenda-slots><?php echo json_encode($alunoAgendaSlots, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?></script>
+                <noscript>Ative o JavaScript para selecionar o atendimento e o horário.</noscript>
+            </form>
         <?php endif; ?>
     <?php endif; ?>
 
@@ -204,16 +200,26 @@
     <?php foreach ($alunoAgendaMeusAgendamentos as $boAg): ?>
         <div class="bo-agenda-card">
             <div>
-                <div class="bo-agenda-title"><?php echo htmlspecialchars($boTiposAgendamento[$boAg['tipo']] ?? ucfirst($boAg['tipo']), ENT_QUOTES, 'UTF-8'); ?><?php echo $boAg['profissional'] ? ' com ' . htmlspecialchars($boAg['profissional'], ENT_QUOTES, 'UTF-8') : ''; ?></div>
+                <div class="bo-agenda-title"><?php echo htmlspecialchars($boAg['titulo'] ?: ($boTiposAgendamento[$boAg['tipo']] ?? ucfirst($boAg['tipo'])), ENT_QUOTES, 'UTF-8'); ?><?php echo $boAg['profissional'] ? ' com ' . htmlspecialchars($boAg['profissional'], ENT_QUOTES, 'UTF-8') : ''; ?></div>
                 <div class="bo-agenda-sub"><?php echo date('d/m/Y', strtotime($boAg['data_evento'])) . ' às ' . substr($boAg['hora_inicio'], 0, 5); ?></div>
             </div>
-            <form method="POST" action="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/funcionalidades/agenda.php', ENT_QUOTES, 'UTF-8'); ?>">
+            <span>Status: <?php echo htmlspecialchars(['agendado' => 'Confirmado', 'confirmado' => 'Confirmado', 'cancelado' => 'Cancelado', 'concluido' => 'Concluído', 'faltou' => 'Não compareceu'][$boAg['status']] ?? $boAg['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+            <?php if (in_array($boAg['status'], ['agendado', 'confirmado'], true)): ?>
+            <form data-agenda-cancel method="POST" action="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/funcionalidades/agenda.php', ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="secao" value="agenda">
                 <input type="hidden" name="acao" value="cancelar">
                 <input type="hidden" name="id_agendamento" value="<?php echo (int) $boAg['id_agendamento']; ?>">
-                <button type="submit" class="btn-bo-outline" style="padding:8px 16px;">Cancelar</button>
+                <button type="button" data-cancel-open class="btn-bo-outline" style="padding:8px 16px;">Cancelar</button>
+                <div data-cancel-confirm hidden>
+                    <p>Tem certeza que deseja cancelar este agendamento?</p>
+                    <button type="button" data-cancel-back class="btn-bo-outline">Voltar</button>
+                    <button type="submit" class="btn-bo-gold">Confirmar cancelamento</button>
+                </div>
             </form>
+            <?php endif; ?>
         </div>
     <?php endforeach; ?>
 </section>
+
+<script src="<?php echo BASE_URL; ?>assets/js/agenda.js" defer></script>

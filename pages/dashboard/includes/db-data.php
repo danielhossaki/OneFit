@@ -630,18 +630,9 @@ if ($perfilLogado === 'aluno') {
     $inicioMes = date('Y-m-01', $alunoAgendaMesTs);
     $fimMes = date('Y-m-t', $alunoAgendaMesTs);
 
-    $alunoAgendaDiasDisponiveis = [];
-    $stmt = $conn->prepare(
-        "SELECT DISTINCT data_evento FROM disponibilidade_profissional
-         WHERE status = 'disponivel' AND data_evento BETWEEN ? AND ? AND data_evento >= CURDATE()"
-    );
-    $stmt->bind_param('ss', $inicioMes, $fimMes);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $alunoAgendaDiasDisponiveis[$row['data_evento']] = true;
-    }
-    $stmt->close();
+    require_once __DIR__ . '/agenda-service.php';
+    $agendaMonthSlots = bo_agenda_slots($conn, $inicioMes, $fimMes);
+    $alunoAgendaDiasDisponiveis = array_fill_keys(array_column($agendaMonthSlots, 'data_evento'), true);
 
     // Agendamentos do aluno dentro do mês exibido, agrupados por dia, para
     // mostrar o preview do evento direto na célula do calendário.
@@ -665,31 +656,15 @@ if ($perfilLogado === 'aluno') {
     }
     $stmt->close();
 
-    $alunoAgendaSlots = [];
-    if ($alunoAgendaDiaSelecionado) {
-        $stmt = $conn->prepare(
-            "SELECT d.id_disponibilidade, d.modalidade, d.hora_inicio, d.hora_fim, d.local,
-                    p.nome AS profissional, p.especialidade
-             FROM disponibilidade_profissional d
-             JOIN cadastro_profissional p ON p.id_profissional = d.id_profissional
-             WHERE d.status = 'disponivel' AND d.data_evento = ? AND p.status = 'ativo'
-             ORDER BY d.hora_inicio"
-        );
-        $stmt->bind_param('s', $alunoAgendaDiaSelecionado);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            $alunoAgendaSlots[] = $row;
-        }
-        $stmt->close();
-    }
+    $alunoAgendaSlots = array_values(array_filter($agendaMonthSlots,
+        static fn($slot) => $slot['data_evento'] === $alunoAgendaDiaSelecionado));
 
     $alunoAgendaMeusAgendamentos = [];
     $stmt = $conn->prepare(
         "SELECT a.id_agendamento, a.titulo, a.tipo, a.data_evento, a.hora_inicio, a.status, p.nome AS profissional
          FROM agendamento a
          LEFT JOIN cadastro_profissional p ON p.id_profissional = a.id_profissional
-         WHERE a.id_usuario = ? AND a.status IN ('agendado', 'confirmado') AND a.data_evento >= CURDATE()
+         WHERE a.id_usuario = ?
          ORDER BY a.data_evento, a.hora_inicio"
     );
     $stmt->bind_param('i', $idUsuarioLogado);
