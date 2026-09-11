@@ -20,6 +20,8 @@
     16. Cartão de configurações (troca de tema)
     17. Backdrop mobile + visibilidade das seções
     18. Responsivo
+    19. Calendário da agenda (aluno)
+    20. Testemunho do aluno
    ========================================================================= */
 
 /* =========================================================================
@@ -1804,3 +1806,248 @@ body:has(.bo-content-section[data-perfil="profissional"]) #boFormModal .btn-clos
 [data-bo-compras] .bo-compra-cancelado { color: #df8585; background: rgba(223, 133, 133, .12); }
 [data-bo-compras] .bo-compra-devolvido { color: #b19bd9; background: rgba(177, 155, 217, .12); }
 [data-bo-compras] .bo-compra-extraviado { color: #df8585; background: rgba(223, 133, 133, .12); }
+
+/* =========================================================================
+   19. CALENDÁRIO DA AGENDA (aluno) — navegação de mês/dia via link (GET),
+   sem JS: cada célula é um <a> para dashboard.php?section=agenda&mes=...&dia=...
+   ========================================================================= */
+.bo-calendar-day.is-passado { opacity: .4; }
+.bo-agenda-fields { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
+.bo-agenda-fields label { flex: 1 1 220px; }
+.bo-agenda-fields select { width: 100%; margin-top: 8px; }
+.bo-agenda-booking { display: block; }
+.bo-agenda-booking fieldset { border: 0; padding: 0; margin: 16px 0; }
+.bo-agenda-booking legend { font-size: 14px; }
+.bo-agenda-times { display: flex; flex-wrap: wrap; gap: 8px; }
+.bo-agenda-time { position: relative; cursor: pointer; }
+.bo-agenda-time input { position: absolute; opacity: 0; width: 100%; height: 100%; }
+.bo-agenda-time span { display: block; padding: 8px 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.bo-agenda-time input:checked + span { background: var(--gold); color: #1a1509; }
+.bo-agenda-time input:focus-visible + span { outline: 2px solid var(--gold); outline-offset: 3px; }
+.bo-agenda-booking button:disabled { opacity: .45; cursor: not-allowed; }
+.bo-calendar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 20px;
+}
+
+.bo-calendar-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.bo-calendar-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gold);
+    color: #1a1509;
+    text-decoration: none;
+    font-size: 14px;
+    flex-shrink: 0;
+    transition: background .15s ease;
+}
+
+.bo-calendar-nav-btn:hover {
+    background: var(--gold-bright);
+}
+
+.bo-calendar-mes-atual {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 20px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: capitalize;
+    min-width: 190px;
+    text-align: center;
+}
+
+.bo-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.bo-calendar-weekday {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+    color: var(--gold-bright);
+    padding-bottom: 4px;
+}
+
+.bo-calendar-day {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 84px;
+    padding: 8px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    background: var(--surface-2);
+    overflow: hidden;
+}
+
+.bo-calendar-day.is-outro-mes {
+    visibility: hidden;
+}
+
+.bo-calendar-day.is-disponivel {
+    cursor: pointer;
+}
+
+.bo-calendar-day.is-disponivel:hover {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, .1);
+}
+
+.bo-calendar-day.is-selecionado {
+    border-color: var(--gold);
+    background: rgba(212, 175, 55, .16);
+}
+
+.bo-calendar-day-topo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.bo-calendar-day-num {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--gold-bright);
+    margin-right: auto;
+}
+
+.bo-calendar-badge-livre,
+.bo-calendar-badge-evento {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.bo-calendar-badge-livre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+.bo-calendar-badge-evento {
+    background: var(--gold);
+    color: #1a1509;
+}
+
+.bo-calendar-evento-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    line-height: 1.2;
+}
+
+.bo-calendar-evento-preview strong {
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bo-calendar-evento-preview span {
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.bo-calendar-legenda {
+    margin: 14px 2px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.bo-slot-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bo-slot-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    flex-wrap: wrap;
+}
+
+/* =========================================================================
+   20. TESTEMUNHO DO ALUNO (card "Seu testemunho" na tela Perfil)
+   ========================================================================= */
+.bo-testemunho-card {
+    height: 100%;
+}
+
+.bo-testemunho-titulo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--gold-bright);
+    margin-bottom: 6px;
+}
+
+.bo-testemunho-sub {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+
+.bo-testemunho-card textarea {
+    resize: vertical;
+    min-height: 130px;
+}
+
+.bo-testemunho-status {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 10px;
+}
+
+.bo-testemunho-status strong {
+    color: var(--text);
+}
+
+.bo-testemunho-contador {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: right;
+    margin: 6px 0 14px;
+}
+
+.bo-testemunho-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 14px 0 0;
+}

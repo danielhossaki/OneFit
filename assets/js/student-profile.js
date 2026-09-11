@@ -67,4 +67,15 @@ var ofT = globalThis.ofT || (text => text);
         document.getElementById('studentChoosePhoto').disabled = true;
         document.getElementById('studentPhotoForm').requestSubmit();
     });
+
+    /* Contador de caracteres do card "Comente aqui" — só mostra quantos
+     * caracteres já foram digitados; o limite em si já é aplicado pelo
+     * maxlength="500" do textarea (funciona mesmo sem este JS). */
+    const testemunhoTexto = document.querySelector('[data-testemunho-texto]');
+    const testemunhoContador = document.querySelector('[data-testemunho-contador]');
+    if (testemunhoTexto && testemunhoContador) {
+        testemunhoTexto.addEventListener('input', () => {
+            testemunhoContador.textContent = testemunhoTexto.value.length;
+        });
+    }
 })();

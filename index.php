@@ -1,6 +1,7 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/pages/dashboard/includes/aluno-profile.php');
 
 // WhatsApp da Home: substitua pelo número real com 55 + DDD + número, somente dígitos.
 $whatsappNumero = '5512996908833';
@@ -55,6 +56,69 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
         ];
     }
 }
+
+/* "Há quanto tempo" o aluno está na ONE FIT, calculado a partir de
+ * usuarios.data_cadastro, usado no rodapé de cada card de testemunho. */
+function onefit_tempo_aluno(string $dataCadastro): string
+{
+    $inicio = new DateTime($dataCadastro);
+    $agora = new DateTime();
+    $diff = $inicio->diff($agora);
+    $meses = $diff->y * 12 + $diff->m;
+    if ($meses >= 12) {
+        $anos = intdiv($meses, 12);
+        return $anos === 1 ? '1 ano' : $anos . ' anos';
+    }
+    if ($meses >= 1) {
+        return $meses === 1 ? '1 mês' : $meses . ' meses';
+    }
+    return 'poucos dias';
+}
+
+/* Comentários enviados pelos alunos (card "Comente aqui" no backoffice) e
+ * aprovados/ativados pelo admin (aba "Comentários"), exibidos na seção
+ * "#depoimentos" logo abaixo — mais os comentários "avulsos" sem conta de
+ * aluno (id_usuario NULL, com nome_exibido/tempo_exibido próprios), usados
+ * como conteúdo inicial da home. Sem nenhum aprovado, cai no fallback fixo. */
+$testemunhosHome = [];
+$conn->query(
+    "CREATE TABLE IF NOT EXISTS testemunhos (
+        id_testemunho INT UNSIGNED NOT NULL AUTO_INCREMENT,
+        id_usuario INT NULL,
+        nome_exibido VARCHAR(120) NULL,
+        tempo_exibido VARCHAR(60) NULL,
+        texto VARCHAR(500) NOT NULL,
+        aprovacao ENUM('pendente','aprovado','reprovado') NOT NULL DEFAULT 'pendente',
+        visibilidade ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+        data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_testemunho),
+        UNIQUE KEY uk_testemunho_usuario (id_usuario),
+        CONSTRAINT fk_testemunho_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+);
+if ($r = $conn->query(
+    "SELECT t.texto, t.nome_exibido, t.tempo_exibido, u.nome, u.genero, u.data_cadastro, u.foto
+     FROM testemunhos t LEFT JOIN usuarios u ON u.id_usuario = t.id_usuario
+     WHERE t.aprovacao = 'aprovado' AND t.visibilidade = 'ativo'
+     ORDER BY t.data_criacao DESC LIMIT 6"
+)) {
+    while ($row = $r->fetch_assoc()) {
+        $testemunhosHome[] = [
+            'texto' => $row['texto'],
+            'nome' => $row['nome_exibido'] ?: $row['nome'],
+            'role' => $row['tempo_exibido']
+                ?: (strtolower((string) $row['genero']) === 'feminino' ? 'Aluna' : 'Aluno') . ' há ' . onefit_tempo_aluno($row['data_cadastro']),
+            'foto' => bo_aluno_foto_url($row['foto'] ?? null),
+        ];
+    }
+}
+if (!$testemunhosHome) {
+    $testemunhosHome = [
+        ['texto' => 'Entrei sem nunca ter pegado num peso na vida. Em oito meses, os professores me ensinaram tudo, sem pressa e sem julgamento.', 'nome' => 'Mariana Alvez', 'role' => 'Aluna há 8 meses', 'foto' => ''],
+        ['texto' => 'O CrossTraining daqui é outro nível. Turmas pequenas, WOD sempre diferente, e o pessoal se ajuda muito entre si.', 'nome' => 'Rafael Souza', 'role' => 'Aluno há 2 anos', 'foto' => ''],
+        ['texto' => 'Troquei três vezes de academia antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.', 'nome' => 'Gabriely Rocha', 'role' => 'Aluna há 1 ano', 'foto' => ''],
+    ];
+}
 ?>
 
 <!DOCTYPE html>
@@ -70,7 +134,7 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
   <!-- link das animações -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css">
   <!-- link do css -->
-  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/home.css'); ?>">
   <!-- link do favicon -->
   <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
@@ -269,39 +333,23 @@ if ($r = $conn->query("SELECT nome, valor, descricao, beneficios FROM cadastro_p
         </div>
       </div>
       <div class="testimonials">
-        <div class="testi" data-aos="fade-up" data-aos-delay="100">
-          <span class="quote-mark">"</span>
-          <p>Entrei sem nunca ter pegado num peso na vida. Em oito meses, os professores me ensinaram tudo, sem pressa e sem julgamento.</p>
-          <div class="who">
-            <div class="avatar"></div>
-            <div>
-              <div class="name">Mariana Alvez</div>
-              <div class="role"><?php echo of_t('Aluna há 8 meses'); ?></div>
+        <?php foreach ($testemunhosHome as $boIndex => $boTestemunho): ?>
+          <div class="testi" data-aos="fade-up" data-aos-delay="<?php echo 100 + $boIndex * 100; ?>">
+            <span class="quote-mark">"</span>
+            <p><?php echo htmlspecialchars($boTestemunho['texto'], ENT_QUOTES, 'UTF-8'); ?></p>
+            <div class="who">
+              <div class="avatar">
+                <?php if (!empty($boTestemunho['foto'])): ?>
+                  <img src="<?php echo htmlspecialchars($boTestemunho['foto'], ENT_QUOTES, 'UTF-8'); ?>" alt="Foto de <?php echo htmlspecialchars($boTestemunho['nome'], ENT_QUOTES, 'UTF-8'); ?>" loading="lazy">
+                <?php endif; ?>
+              </div>
+              <div>
+                <div class="name"><?php echo htmlspecialchars($boTestemunho['nome'], ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="role"><?php echo htmlspecialchars($boTestemunho['role'], ENT_QUOTES, 'UTF-8'); ?></div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="testi" data-aos="fade-up" data-aos-delay="200">
-          <span class="quote-mark">"</span>
-          <p>O CrossTraining daqui é outro nível. Turmas pequenas, WOD sempre diferente, e o pessoal se ajuda muito entre si.</p>
-          <div class="who">
-            <div class="avatar"></div>
-            <div>
-              <div class="name">Rafael Souza</div>
-              <div class="role"><?php echo of_t('Aluno há 2 anos'); ?></div>
-            </div>
-          </div>
-        </div>
-        <div class="testi" data-aos="fade-up" data-aos-delay="300">
-          <span class="quote-mark">"</span>
-          <p>Troquei três vezes de academia antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.</p>
-          <div class="who">
-            <div class="avatar"></div>
-            <div>
-              <div class="name">Gabriely Rocha</div>
-              <div class="role"><?php echo of_t('Aluna há 1 ano'); ?></div>
-            </div>
-          </div>
-        </div>
+        <?php endforeach; ?>
       </div>
     </div>
   </section>

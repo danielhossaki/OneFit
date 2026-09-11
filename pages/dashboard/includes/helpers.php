@@ -32,9 +32,9 @@ function bo_money($v)
 
 /**
  * Converte um array PHP em JSON seguro para ser colocado dentro de
- * atributos HTML (usado nos botões "Editar" que abrem o modal já
- * preenchido, ex: onclick='boOpenForm(..., <?php echo bo_json($u); ?>)').
- * As flags JSON_HEX_* evitam que aspas/tags quebrem o HTML.
+ * atributos/tags HTML (ex: o <script type="application/json"> com os
+ * dados do treino, consumido por assets/js/treino.js). As flags JSON_HEX_*
+ * evitam que aspas/tags quebrem o HTML.
  */
 function bo_json($data)
 {

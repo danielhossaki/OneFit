@@ -338,10 +338,14 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <?php if ($pedidoConcluido['cashbackGanho'] > 0): ?>
                     <p class="mb-0">Você ganhou <?php echo cart_money($pedidoConcluido['cashbackGanho']); ?> de cashback nesta compra.</p>
                 <?php endif; ?>
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=compras&amp;compra_finalizada=1" class="btn-crt-gold"><?php echo of_t('Ver minhas compras'); ?></a>
-                <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-outline">
-                    <i class="bi bi-shop"></i> <?php echo of_t('Continuar comprando'); ?>
-                </a>
+                <div class="crt-confirmation-actions">
+                    <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=compras&amp;compra_finalizada=1" class="btn-crt-outline">
+                        <i class="bi bi-bag" aria-hidden="true"></i> <?php echo of_t('Ver minhas compras'); ?>
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" class="btn-crt-outline">
+                        <i class="bi bi-shop" aria-hidden="true"></i> <?php echo of_t('Continuar comprando'); ?>
+                    </a>
+                </div>
             </div>
         <?php elseif (empty($itens)): ?>
             <div class="crt-empty">

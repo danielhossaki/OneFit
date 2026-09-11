@@ -491,11 +491,21 @@ section.block {
 }
 
 .testi .avatar {
+    position: relative;
     width: 38px;
     height: 38px;
     border-radius: 50%;
     background: linear-gradient(140deg, var(--bronze), var(--gold));
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+.testi .avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .testi .name {

@@ -2,14 +2,10 @@ var ofT = globalThis.ofT || (text => text);
 /* =========================================================================
    backoffice.js
    Toda a interatividade do painel: troca de perfil (admin/profissional/
-   aluno), montagem dinâmica do menu lateral, abertura do modal de
-   formulário genérico (cadastro/edição), filtros de tabela, cálculo de
-   IMC, simulação de pagamento (Pix/cartão) e exportação de tabela em CSV.
-
-   Depende de duas variáveis globais definidas ANTES deste arquivo, no
-   próprio dashboard.php (porque vêm de dados do PHP):
-     - BO_CATEGORIAS_OPTIONS  (nomes das categorias de produto)
-     - BO_PLANOS_OPTIONS      (nomes dos planos cadastrados)
+   aluno), montagem dinâmica do menu lateral, filtros de tabela, cálculo
+   de IMC, simulação de pagamento Pix (QR/copia-e-cola) e exportação de
+   tabela em CSV. Os CRUDs em si (cadastro/edição) são formulários PRG
+   reais — ver pages/dashboard/funcionalidades/*.php.
    ========================================================================= */
 
 /* ---------- Notificações reais do usuário autenticado ---------- */
@@ -207,6 +203,7 @@ const BO_PERFIS = {
             { key: 'funcoes', label: ofT('Funções'), icon: 'bi-diagram-3' },
             { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
             { key: 'cashbacks', label: 'Cashbacks', icon: 'bi-wallet2' },
+            { key: 'comentarios', label: ofT('Comentários'), icon: 'bi-chat-quote' },
             { key: 'categorias', label: ofT('Categorias'), icon: 'bi-tags' },
             { key: 'produtos', label: ofT('Produtos'), icon: 'bi-box-seam' },
             { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck' },
@@ -828,8 +825,6 @@ function boTrocarPerfil(perfilKey) {
 
 /* ---------- Inicialização geral (menu, sidebar mobile, filtros, ações de tabela) ---------- */
 document.addEventListener('DOMContentLoaded', () => {
-    boFormModalInstance = new bootstrap.Modal(document.getElementById('boFormModal'));
-
     boRenderSidebar();
     boRenderPerfilMenu();
     // A primeira seção depende do perfil: admin/profissional começam em
@@ -1104,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const metodoPix = document.getElementById('metodoPix');
 
     // Alterna entre o painel de Pix e o painel de cartão conforme o método escolhido
-    document.querySelectorAll('input[name="metodoPagamento"]').forEach((radio) => {
+    document.querySelectorAll('input[name="forma_pagamento"]').forEach((radio) => {
         radio.addEventListener('change', () => {
             const isPix = metodoPix.checked;
             painelPix.style.display = isPix ? 'block' : 'none';
@@ -1135,15 +1130,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // "Pagar" apenas fecha o modal e mostra o toast (pagamento simulado)
-    const btnPagar = document.getElementById('btnPagar');
-    if (btnPagar) {
-        btnPagar.addEventListener('click', () => {
-            const modalEl = document.getElementById('modalPagarPlano');
-            bootstrap.Modal.getOrCreateInstance(modalEl).hide();
-            boToast('Pagamento simulado com sucesso!');
-        });
-    }
+    // O botão "Pagar" agora é um submit real do <form id="formPagarPlano">
+    // (ver components/modal-pagar-plano.php), processado em
+    // funcionalidades/pagar-plano.php via PRG — sem simulação em JS.
 });
 
 /**

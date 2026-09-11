@@ -107,6 +107,35 @@ if ($perfilLogado === 'admin') {
         $admDashboard['profissionaisPendentes'] = (int) $row['pendentes'];
     }
 
+    // Tela "Comentários": depoimentos enviados pelos alunos (tabela ausente
+    // no dump original, por isso criada defensivamente aqui) + comentários
+    // avulsos sem conta de aluno (id_usuario NULL, seed inicial da home).
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS testemunhos (
+            id_testemunho INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_usuario INT NULL,
+            nome_exibido VARCHAR(120) NULL,
+            tempo_exibido VARCHAR(60) NULL,
+            texto VARCHAR(500) NOT NULL,
+            aprovacao ENUM('pendente','aprovado','reprovado') NOT NULL DEFAULT 'pendente',
+            visibilidade ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_testemunho),
+            UNIQUE KEY uk_testemunho_usuario (id_usuario),
+            CONSTRAINT fk_testemunho_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $testemunhosAdmin = [];
+    $r = $conn->query(
+        "SELECT t.id_testemunho, t.texto, t.aprovacao, t.visibilidade, t.data_criacao,
+                COALESCE(t.nome_exibido, u.nome) AS nome, u.genero
+         FROM testemunhos t LEFT JOIN usuarios u ON u.id_usuario = t.id_usuario
+         ORDER BY (t.aprovacao = 'pendente') DESC, t.data_criacao DESC"
+    );
+    while ($row = $r->fetch_assoc()) {
+        $testemunhosAdmin[] = $row;
+    }
+
     // Tela "Usuários"
     $usuarios = [];
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
@@ -286,11 +315,6 @@ if ($perfilLogado === 'admin') {
             ];
         }
     }
-    $planosAtivosOptions = array_values(array_map(
-        static fn(array $p): string => $p['nome'],
-        array_filter($planos, static fn(array $p): bool => $p['status'] === 'ativo')
-    ));
-
     // Tela "Modalidades"
     $modalidadesAdm = [];
     if ($r = $conn->query('SELECT id_modalidade, nome, descricao, icone, status FROM modalidades ORDER BY nome')) {
@@ -479,6 +503,29 @@ if ($perfilLogado === 'aluno') {
         'valorContratado' => (float) ($matriculaAtual['valor_contratado'] ?? 0),
     ];
 
+    // Tela "Perfil": testemunho enviado pelo aluno (card "Seu testemunho").
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS testemunhos (
+            id_testemunho INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_usuario INT NULL,
+            nome_exibido VARCHAR(120) NULL,
+            tempo_exibido VARCHAR(60) NULL,
+            texto VARCHAR(500) NOT NULL,
+            aprovacao ENUM('pendente','aprovado','reprovado') NOT NULL DEFAULT 'pendente',
+            visibilidade ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_testemunho),
+            UNIQUE KEY uk_testemunho_usuario (id_usuario),
+            CONSTRAINT fk_testemunho_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $alunoTestemunho = null;
+    $stmt = $conn->prepare('SELECT texto, aprovacao FROM testemunhos WHERE id_usuario = ? LIMIT 1');
+    $stmt->bind_param('i', $idUsuarioLogado);
+    $stmt->execute();
+    $alunoTestemunho = $stmt->get_result()->fetch_assoc() ?: null;
+    $stmt->close();
+
     // Tela "Histórico"
     $alunoHistorico = [];
     $stmt = $conn->prepare("SELECT p.data_pagamento, p.data_vencimento, p.forma_pagamento, p.status, p.valor, p.id_pagamento, pl.nome AS plano
@@ -539,8 +586,94 @@ if ($perfilLogado === 'aluno') {
     // Tela "Treino": ficha persistida do aluno autenticado.
     $alunoTreino = bo_treino_carregar($conn, $idUsuarioLogado);
 
-    // Tela "Minha agenda" — não há tabela de horários "disponíveis" distinta dos agendamentos
-    $alunoAgendaDisponiveis = [];
+    // Tela "Minha agenda": calendário de horários disponíveis cadastrados
+    // pelos profissionais (disponibilidade_profissional) + agendamentos já
+    // confirmados do aluno (agendamento). Navegação de mês/dia é só por
+    // querystring (?section=agenda&mes=AAAA-MM&dia=AAAA-MM-DD), sem JS.
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS disponibilidade_profissional (
+            id_disponibilidade INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_profissional INT NOT NULL,
+            modalidade VARCHAR(100) NOT NULL,
+            data_evento DATE NOT NULL,
+            hora_inicio TIME NOT NULL,
+            hora_fim TIME NOT NULL,
+            local VARCHAR(120) DEFAULT NULL,
+            status ENUM('disponivel','ocupado','cancelado') NOT NULL DEFAULT 'disponivel',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_disponibilidade),
+            KEY idx_disponibilidade_profissional (id_profissional, data_evento, hora_inicio)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS profissional_aluno (
+            id_vinculo INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_profissional INT NOT NULL,
+            id_aluno INT NOT NULL,
+            status ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            observacao VARCHAR(255) DEFAULT NULL,
+            data_vinculo TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            data_atualizacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_vinculo),
+            UNIQUE KEY uk_profissional_aluno (id_profissional, id_aluno),
+            KEY idx_profissional_aluno_aluno (id_aluno)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+
+    $alunoAgendaMesRef = (isset($_GET['mes']) && preg_match('/^\d{4}-\d{2}$/', (string) $_GET['mes']))
+        ? (string) $_GET['mes'] . '-01' : date('Y-m-01');
+    $alunoAgendaMesTs = strtotime($alunoAgendaMesRef) ?: strtotime(date('Y-m-01'));
+    $alunoAgendaMes = date('Y-m', $alunoAgendaMesTs);
+    $alunoAgendaDiaSelecionado = (isset($_GET['dia']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) $_GET['dia']))
+        ? (string) $_GET['dia'] : null;
+
+    $inicioMes = date('Y-m-01', $alunoAgendaMesTs);
+    $fimMes = date('Y-m-t', $alunoAgendaMesTs);
+
+    require_once __DIR__ . '/agenda-service.php';
+    $agendaMonthSlots = bo_agenda_slots($conn, $inicioMes, $fimMes);
+    $alunoAgendaDiasDisponiveis = array_fill_keys(array_column($agendaMonthSlots, 'data_evento'), true);
+
+    // Agendamentos do aluno dentro do mês exibido, agrupados por dia, para
+    // mostrar o preview do evento direto na célula do calendário.
+    $alunoAgendaEventosPorDia = [];
+    $stmt = $conn->prepare(
+        "SELECT a.tipo, a.data_evento, a.hora_inicio, p.nome AS profissional, p.especialidade
+         FROM agendamento a
+         LEFT JOIN cadastro_profissional p ON p.id_profissional = a.id_profissional
+         WHERE a.id_usuario = ? AND a.status IN ('agendado', 'confirmado') AND a.data_evento BETWEEN ? AND ?
+         ORDER BY a.data_evento, a.hora_inicio"
+    );
+    $stmt->bind_param('iss', $idUsuarioLogado, $inicioMes, $fimMes);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $alunoAgendaEventosPorDia[$row['data_evento']][] = [
+            'titulo' => $row['especialidade'] ?: $row['profissional'] ?: ucfirst($row['tipo']),
+            'hora' => substr($row['hora_inicio'], 0, 5),
+            'tipo' => $row['tipo'],
+        ];
+    }
+    $stmt->close();
+
+    $alunoAgendaSlots = array_values(array_filter($agendaMonthSlots,
+        static fn($slot) => $slot['data_evento'] === $alunoAgendaDiaSelecionado));
+
+    $alunoAgendaMeusAgendamentos = [];
+    $stmt = $conn->prepare(
+        "SELECT a.id_agendamento, a.titulo, a.tipo, a.data_evento, a.hora_inicio, a.status, p.nome AS profissional
+         FROM agendamento a
+         LEFT JOIN cadastro_profissional p ON p.id_profissional = a.id_profissional
+         WHERE a.id_usuario = ?
+         ORDER BY a.data_evento, a.hora_inicio"
+    );
+    $stmt->bind_param('i', $idUsuarioLogado);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    while ($row = $res->fetch_assoc()) {
+        $alunoAgendaMeusAgendamentos[] = $row;
+    }
+    $stmt->close();
 }
 
 /* =======================================================================
@@ -569,17 +702,6 @@ if ($perfilLogado === 'vendedor') {
         bo_carregar_transportadoras($conn),
         static fn(array $t): bool => $t['status'] === 'ativo'
     ));
-}
-
-// Nomes de planos ativos: usados no <select> do modal "Alterar plano" do
-// aluno. Para o admin, já foi calculado no bloco acima (evita repetir a query).
-if (!isset($planosAtivosOptions)) {
-    $planosAtivosOptions = [];
-    if ($r = $conn->query("SELECT nome FROM cadastro_planos WHERE status = 'ativo' ORDER BY nome")) {
-        while ($row = $r->fetch_assoc()) {
-            $planosAtivosOptions[] = $row['nome'];
-        }
-    }
 }
 
 /**
