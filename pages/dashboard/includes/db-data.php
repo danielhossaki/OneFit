@@ -107,6 +107,35 @@ if ($perfilLogado === 'admin') {
         $admDashboard['profissionaisPendentes'] = (int) $row['pendentes'];
     }
 
+    // Tela "Comentários": depoimentos enviados pelos alunos (tabela ausente
+    // no dump original, por isso criada defensivamente aqui) + comentários
+    // avulsos sem conta de aluno (id_usuario NULL, seed inicial da home).
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS testemunhos (
+            id_testemunho INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_usuario INT NULL,
+            nome_exibido VARCHAR(120) NULL,
+            tempo_exibido VARCHAR(60) NULL,
+            texto VARCHAR(500) NOT NULL,
+            aprovacao ENUM('pendente','aprovado','reprovado') NOT NULL DEFAULT 'pendente',
+            visibilidade ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_testemunho),
+            UNIQUE KEY uk_testemunho_usuario (id_usuario),
+            CONSTRAINT fk_testemunho_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $testemunhosAdmin = [];
+    $r = $conn->query(
+        "SELECT t.id_testemunho, t.texto, t.aprovacao, t.visibilidade, t.data_criacao,
+                COALESCE(t.nome_exibido, u.nome) AS nome, u.genero
+         FROM testemunhos t LEFT JOIN usuarios u ON u.id_usuario = t.id_usuario
+         ORDER BY (t.aprovacao = 'pendente') DESC, t.data_criacao DESC"
+    );
+    while ($row = $r->fetch_assoc()) {
+        $testemunhosAdmin[] = $row;
+    }
+
     // Tela "Usuários"
     $usuarios = [];
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
@@ -478,6 +507,29 @@ if ($perfilLogado === 'aluno') {
         'objetivo' => $usuarioBanco['objetivo'] ?: '',
         'valorContratado' => (float) ($matriculaAtual['valor_contratado'] ?? 0),
     ];
+
+    // Tela "Perfil": testemunho enviado pelo aluno (card "Seu testemunho").
+    $conn->query(
+        "CREATE TABLE IF NOT EXISTS testemunhos (
+            id_testemunho INT UNSIGNED NOT NULL AUTO_INCREMENT,
+            id_usuario INT NULL,
+            nome_exibido VARCHAR(120) NULL,
+            tempo_exibido VARCHAR(60) NULL,
+            texto VARCHAR(500) NOT NULL,
+            aprovacao ENUM('pendente','aprovado','reprovado') NOT NULL DEFAULT 'pendente',
+            visibilidade ENUM('ativo','inativo') NOT NULL DEFAULT 'ativo',
+            data_criacao TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id_testemunho),
+            UNIQUE KEY uk_testemunho_usuario (id_usuario),
+            CONSTRAINT fk_testemunho_usuario FOREIGN KEY (id_usuario) REFERENCES usuarios (id_usuario) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+    );
+    $alunoTestemunho = null;
+    $stmt = $conn->prepare('SELECT texto, aprovacao FROM testemunhos WHERE id_usuario = ? LIMIT 1');
+    $stmt->bind_param('i', $idUsuarioLogado);
+    $stmt->execute();
+    $alunoTestemunho = $stmt->get_result()->fetch_assoc() ?: null;
+    $stmt->close();
 
     // Tela "Histórico"
     $alunoHistorico = [];
