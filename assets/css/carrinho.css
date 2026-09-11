@@ -383,23 +383,6 @@ body {
     margin: 8px 0 6px;
 }
 
-.cashback-actions {
-    display: flex;
-    gap: 7px;
-    margin-top: 7px;
-}
-
-.cashback-action {
-    border: 1px solid #4a4d58;
-    background: #121319;
-    color: #fff;
-    border-radius: 6px;
-    padding: 3px 9px;
-    font-size: 9px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
 .cashback-aplicado {
     margin-top: 10px;
     padding: 6px 8px;
@@ -545,26 +528,20 @@ body {
     box-shadow: 0 5px 18px rgba(255, 196, 0, .16);
 }
 
-.checkout-clear {
-    width: 100%;
-    background: transparent;
-    border: 1px solid #454751;
-    border-radius: 7px;
-    padding: 8px;
-    color: #bfc4d0;
-    font-size: 10px;
-    font-weight: 700;
-    margin-top: 8px;
-    cursor: pointer;
-}
-
 .card-payment {
     display: none;
     margin-top: 14px;
 }
 
-.card-payment.show {
+.card-payment.show,
+#checkout-pagamento:has(#payCredito:checked) #card-payment,
+#checkout-pagamento:has(#payDebito:checked) #card-payment {
     display: block;
+}
+
+#checkout-pagamento:has(#payCredito:checked) #pix-payment,
+#checkout-pagamento:has(#payDebito:checked) #pix-payment {
+    display: none;
 }
 
 .payment-input {
@@ -779,17 +756,12 @@ body {
     margin: 12px 0 10px;
 }
 
-.cashback-actions {
-    gap: 8px;
-    margin-top: 4px;
-}
-
-.cashback-action {
-    border-color: #575a67;
-    background: transparent;
-    border-radius: 8px;
-    padding: 7px 11px;
-    font-size: 11px;
+.cashback-range-value {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--bo-gold-bright, #ffc400);
+    margin-bottom: 10px;
 }
 
 .cashback-aplicado {
@@ -939,13 +911,6 @@ body {
     border-radius: 11px;
     padding: 15px 12px;
     font-size: 13px;
-}
-
-.checkout-clear {
-    margin-top: 0;
-    border-radius: 10px;
-    padding: 12px;
-    font-size: 12px;
 }
 
 .btn-crt-gold {

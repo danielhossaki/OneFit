@@ -107,11 +107,17 @@ Disponível|Available|Disponible
 Aplicar|Apply|Aplicar
 Usar máximo|Use maximum|Usar máximo
 Não usar|Do not use|No usar
+Usar valor máximo|Use maximum amount|Usar el valor máximo
+Valor rápido...|Quick amount...|Monto rápido...
+Valor rápido de cashback|Quick cashback amount|Monto rápido de cashback
 Aplicado|Applied|Aplicado
 Restante para pagamento:|Remaining to pay:|Pendiente de pago:
 Concluir compra|Complete purchase|Completar compra
 Escolha um endereço de entrega antes de finalizar.|Choose a delivery address before continuing.|Elige una dirección de entrega antes de continuar.
 Cartão|Card|Tarjeta
+Crédito|Credit|Crédito
+Débito|Debit|Débito
+Arraste a barra até o valor desejado e clique em Aplicar|Drag the slider to the amount you want and click Apply|Arrastra la barra hasta el valor deseado y haz clic en Aplicar
 Valor a pagar no PIX|Amount to pay with PIX|Importe a pagar con PIX
 CHAVE PIX|PIX KEY|CLAVE PIX
 Copiar chave PIX|Copy PIX key|Copiar clave PIX
@@ -482,6 +488,7 @@ Produto adicionado ao carrinho!|Product added to cart!|¡Producto añadido al ca
 Nenhum produto disponível no momento. Volte em breve!|No products available right now. Check back soon!|No hay productos disponibles por el momento. ¡Vuelve pronto!
 Adicionar|Add|Añadir
 Comprar agora|Buy now|Comprar ahora
+Comprar|Buy|Comprar
 Seus favoritos|Your favorites|Tus favoritos
 Você ainda não favoritou nenhum produto.|You have no favorite products yet.|Todavía no tienes productos favoritos.
 Detalhes do produto|Product details|Detalles del producto

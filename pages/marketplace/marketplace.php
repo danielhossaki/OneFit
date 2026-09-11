@@ -274,7 +274,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                             <i class="bi bi-cart-plus"></i> <?php echo of_t('Adicionar'); ?>
                                         </button>
                                         <button type="submit" name="form_acao" value="comprar_agora" class="btn-mkt-gold">
-                                            <i class="bi bi-lightning-charge-fill"></i> <?php echo of_t('Comprar agora'); ?>
+                                            <i class="bi bi-lightning-charge-fill"></i> <?php echo of_t('Comprar'); ?>
                                         </button>
                                     </form>
                                 </div>
@@ -375,7 +375,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 <i class="bi bi-cart-plus"></i> <?php echo of_t('Adicionar ao carrinho'); ?>
                             </button>
                             <button type="submit" name="form_acao" value="comprar_agora" class="btn-mkt-gold">
-                                <i class="bi bi-lightning-charge-fill"></i> <?php echo of_t('Comprar agora'); ?>
+                                <i class="bi bi-lightning-charge-fill"></i> <?php echo of_t('Comprar'); ?>
                             </button>
                         </form>
                     </div>

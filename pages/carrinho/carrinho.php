@@ -81,9 +81,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && cart_csrf_
     $produtoId = (int) ($_POST['produto_id'] ?? 0);
 
     switch ($_POST['acao']) {
-        case 'limpar':
-            $_SESSION['carrinho'] = [];
-            break;
         case 'remover':
             unset($_SESSION['carrinho'][$produtoId]);
             break;
@@ -114,21 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['acao']) && cart_csrf_
             break;
 
         case 'escolher_transportadora':
+            // O botão "Continuar para pagamento" da etapa de endereço já
+            // envia a transportadora escolhida junto (não existe mais um
+            // botão separado só pra confirmar o tipo de entrega). Depois de
+            // salvar, volta pra tela principal do carrinho — de lá o cliente
+            // decide se ainda quer mexer no cashback ou ir direto pra forma
+            // de pagamento.
             $idTransportadoraForm = (int) ($_POST['transportadora_id'] ?? 0);
             if ($idTransportadoraForm > 0) {
                 $_SESSION['checkout_transportadora_id'] = $idTransportadoraForm;
             } else {
                 unset($_SESSION['checkout_transportadora_id']);
             }
-            break;
-
-        case 'aplicar_cashback':
-            // Guardado na sessão e reaplicado a cada carregamento da página
-            // (clamp final contra o saldo/total real acontece no render,
-            // logo abaixo, e de novo em cart_gravar_compra() ao finalizar) —
-            // fluxo de ida-e-volta ao servidor, sem depender de JS.
-            $valorCashback = filter_var($_POST['cashback_usado'] ?? '0', FILTER_VALIDATE_FLOAT);
-            $_SESSION['checkout_cashback_usado'] = ($valorCashback !== false && $valorCashback > 0) ? $valorCashback : 0.0;
             break;
 
         case 'finalizar':
@@ -253,10 +247,11 @@ $stmtSaldoCashback->close();
 $saldoCashback = max(0.0, $saldoCashback);
 $cashbackMaximoUsavel = round(min($saldoCashback, $totalComFrete), 2);
 
-/* Cashback já aplicado nesta sessão de checkout (ação "aplicar_cashback"),
- * sempre reclamado contra o máximo real de novo aqui — se o endereço/frete
- * mudou depois de aplicar, o valor não pode passar do novo máximo. */
-$cashbackAplicado = round(min((float) ($_SESSION['checkout_cashback_usado'] ?? 0), $cashbackMaximoUsavel), 2);
+/* A barra de cashback manda o valor direto no formulário de finalizar
+ * compra (sem etapa de "aplicar" no meio), então a página sempre começa
+ * com R$ 0 aqui — o texto/resumo acompanha a barra ao vivo via JS, e o
+ * valor de verdade só é conferido no servidor ao finalizar (checkout.php). */
+$cashbackAplicado = 0.0;
 $restanteAposCashback = round(max(0, $totalComFrete - $cashbackAplicado), 2);
 $cashbackCobreTudo = $restanteAposCashback <= 0.01;
 
@@ -273,10 +268,15 @@ $erroSemEndereco = isset($_GET['erro']) && $_GET['erro'] === 'endereco';
 $erroSemFrete = isset($_GET['erro']) && $_GET['erro'] === 'frete';
 $erroSemEstoque = isset($_GET['semestoque']);
 
-/* "Comprar agora" no marketplace já manda o produto pro carrinho e cai aqui
-   com ?comprar=1 — abre o checkout direto na etapa de pagamento (renderizado
-   assim já na primeira resposta do servidor, sem depender de JS). */
-$abrirCheckoutPagamento = (isset($_GET['comprar']) || isset($_GET['erro'])) && !empty($itens);
+/* O botão "Comprar" do marketplace manda o produto pro carrinho e cai aqui
+   com ?comprar=1: a própria tela do carrinho já mostra as opções de checkout
+   (endereço, cashback, forma de pagamento), então não é preciso abrir a
+   gaveta de checkout sozinha. Escolher o tipo de entrega também volta pra
+   essa mesma tela (não pra etapa de pagamento direto), pra deixar o cliente
+   decidir se ainda quer aplicar cashback antes de pagar. Só reabrimos direto
+   na etapa de pagamento quando a finalização falhou (?erro=...), pra
+   mostrar o motivo sem o cliente precisar reabrir tudo de novo. */
+$abrirCheckoutPagamento = isset($_GET['erro']) && !empty($itens);
 
 /* Tema (dark/light) escolhido no dashboard, persistido em cookie por assets/js/dashboard.js. */
 $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
@@ -450,7 +450,6 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <?php echo cart_csrf_field(); ?>
             <input type="hidden" name="acao" value="finalizar">
             <input type="hidden" name="checkout_token" value="<?php echo htmlspecialchars($_SESSION['checkout_token'], ENT_QUOTES, 'UTF-8'); ?>">
-            <input type="hidden" name="cashback_usado" value="<?php echo $cashbackAplicado; ?>">
             </form>
 
             <div class="crt-summary checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? '' : ' is-active'; ?>" id="checkout-resumo">
@@ -523,7 +522,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> <?php echo of_t('Não entregamos no CEP deste endereço.'); ?></p>
                 <?php elseif ($freteInfo): ?>
                     <h3 class="checkout-subtitle"><?php echo of_t('Tipo de entrega'); ?></h3>
-                    <form method="POST" action="carrinho.php" class="crt-frete-opcoes">
+                    <form method="POST" action="carrinho.php" class="crt-frete-opcoes" id="frete-form">
                         <?php echo cart_csrf_field(); ?>
                         <input type="hidden" name="acao" value="escolher_transportadora">
                         <?php foreach ($freteInfo['opcoes'] as $opcao): ?>
@@ -534,11 +533,14 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 <span class="crt-frete-opcao-valor"><?php echo cart_money($opcao['valor_frete']); ?></span>
                             </label>
                         <?php endforeach; ?>
-                        <button type="submit" class="btn-crt-outline"><?php echo of_t('Usar esta forma de entrega'); ?></button>
                     </form>
                 <?php endif; ?>
 
-                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>><?php echo of_t('Continuar para pagamento'); ?> <i class="bi bi-arrow-right"></i></button>
+                <?php if ($freteInfo): ?>
+                    <button type="submit" form="frete-form" class="btn-crt-gold"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>><?php echo of_t('Continuar para pagamento'); ?> <i class="bi bi-arrow-right"></i></button>
+                <?php else: ?>
+                    <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>><?php echo of_t('Continuar para pagamento'); ?> <i class="bi bi-arrow-right"></i></button>
+                <?php endif; ?>
             </div>
 
             <div class="checkout-card checkout-step" id="checkout-cashback">
@@ -546,45 +548,26 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 <div class="cashback-disponivel"><span><?php echo of_t('Disponível'); ?></span><strong><?php echo cart_money($saldoCashback); ?></strong></div>
                 <div class="cashback-disponivel"><span>Máximo permitido nesta compra: <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
 
-                <form method="POST" action="carrinho.php" class="crt-cashback-apply">
-                    <?php echo cart_csrf_field(); ?>
-                    <input type="hidden" name="acao" value="aplicar_cashback">
-                    <input type="number" class="form-control" name="cashback_usado" min="0" max="<?php echo $cashbackMaximoUsavel; ?>" step="0.01" value="<?php echo $cashbackAplicado; ?>" aria-label="Cashback a utilizar">
-                    <button type="submit" class="btn-crt-outline"><?php echo of_t('Aplicar'); ?></button>
-                </form>
-                <div class="cashback-actions">
-                    <form method="POST" action="carrinho.php" class="bo-inline-form">
-                        <?php echo cart_csrf_field(); ?>
-                        <input type="hidden" name="acao" value="aplicar_cashback">
-                        <input type="hidden" name="cashback_usado" value="<?php echo $cashbackMaximoUsavel; ?>">
-                        <button type="submit" class="cashback-action"><?php echo of_t('Usar máximo'); ?></button>
-                    </form>
-                    <form method="POST" action="carrinho.php" class="bo-inline-form">
-                        <?php echo cart_csrf_field(); ?>
-                        <input type="hidden" name="acao" value="aplicar_cashback">
-                        <input type="hidden" name="cashback_usado" value="0">
-                        <button type="submit" class="cashback-action"><?php echo of_t('Não usar'); ?></button>
-                    </form>
-                </div>
-                <div class="cashback-aplicado"><span><?php echo of_t('Aplicado'); ?></span><span><?php echo cart_money($cashbackAplicado); ?></span></div>
-                <p class="cashback-remaining"><?php echo of_t('Restante para pagamento:'); ?> <strong><?php echo cart_money($restanteAposCashback); ?></strong></p>
+                <input type="range" class="cashback-range" id="cashback-range" name="cashback_usado" form="checkout-form" min="0" max="<?php echo $cashbackMaximoUsavel; ?>" step="0.01" value="<?php echo $cashbackAplicado; ?>" aria-label="Cashback a utilizar">
+                <div class="cashback-range-value" id="cashback-range-value"><?php echo cart_money($cashbackAplicado); ?></div>
 
-                <?php if ($cashbackCobreTudo): ?>
-                    <button type="submit" form="checkout-form" class="btn-crt-gold"><?php echo of_t('Concluir compra'); ?></button>
-                <?php else: ?>
-                    <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>><?php echo of_t('Continuar para pagamento'); ?> <i class="bi bi-arrow-right"></i></button>
-                <?php endif; ?>
+                <div class="cashback-aplicado"><span><?php echo of_t('Aplicado'); ?></span><span id="cashback-aplicado-valor"><?php echo cart_money($cashbackAplicado); ?></span></div>
+                <p class="cashback-remaining"><?php echo of_t('Restante para pagamento:'); ?> <strong id="cashback-restante-valor"><?php echo cart_money($restanteAposCashback); ?></strong></p>
+
+                <button type="button" class="btn-crt-gold" data-open-checkout="checkout-pagamento"<?php echo $bloquearPagamento ? ' disabled' : ''; ?>><?php echo of_t('Continuar para pagamento'); ?> <i class="bi bi-arrow-right"></i></button>
             </div>
             <div class="checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? ' is-active' : ''; ?>" id="checkout-pagamento">
                 <div class="payment-heading"><h2 class="checkout-title"><?php echo of_t('Forma de pagamento'); ?></h2></div>
                 <?php if (!$enderecoSelecionado): ?>
                     <p class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> <?php echo of_t('Escolha um endereço de entrega antes de finalizar.'); ?></p>
                 <?php endif; ?>
-                <div class="payment-tabs">
+                <div class="payment-tabs payment-tabs--three">
                     <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payPix" value="pix" checked>
                     <label class="payment-tab" for="payPix"><i class="bi bi-qr-code"></i> PIX</label>
-                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payCartao" value="cartao">
-                    <label class="payment-tab" for="payCartao"><i class="bi bi-credit-card"></i> <?php echo of_t('Cartão'); ?></label>
+                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payCredito" value="cartao">
+                    <label class="payment-tab" for="payCredito"><i class="bi bi-credit-card"></i> <?php echo of_t('Crédito'); ?></label>
+                    <input type="radio" class="payment-radio" name="forma_pagamento" form="checkout-form" id="payDebito" value="cartao">
+                    <label class="payment-tab" for="payDebito"><i class="bi bi-credit-card-2-back"></i> <?php echo of_t('Débito'); ?></label>
                 </div>
                 <div id="pix-payment"><label class="pix-label"><?php echo of_t('Valor a pagar no PIX'); ?></label><div class="pix-key"><span id="pix-value"><?php echo cart_money($restanteAposCashback); ?></span></div><label class="pix-label"><?php echo of_t('CHAVE PIX'); ?></label><div class="pix-key"><span>onefit@pagamentos.com</span><button type="button" id="copy-pix" class="copy-key"><?php echo of_t('Copiar chave PIX'); ?></button></div></div>
                 <div id="card-payment" class="card-payment">
@@ -596,12 +579,11 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         <input class="payment-input" type="text" inputmode="numeric" maxlength="4" placeholder="CVV" name="cartao_cvv" form="checkout-form">
                     </div>
                 </div>
-                <div class="payment-summary"><div><span><?php echo of_t('Total da compra'); ?></span><strong><?php echo cart_money($totalComFrete); ?></strong></div><div><span><?php echo of_t('Cashback aplicado'); ?></span><strong><?php echo cart_money($cashbackAplicado); ?></strong></div><div><span><?php echo of_t('Restante via'); ?> <span id="payment-method-name">PIX</span></span><strong><?php echo cart_money($restanteAposCashback); ?></strong></div></div>
+                <div class="payment-summary"><div><span><?php echo of_t('Total da compra'); ?></span><strong><?php echo cart_money($totalComFrete); ?></strong></div><div><span><?php echo of_t('Cashback aplicado'); ?></span><strong id="payment-cashback-valor"><?php echo cart_money($cashbackAplicado); ?></strong></div><div><span><?php echo of_t('Restante via'); ?> <span id="payment-method-name">PIX</span></span><strong id="payment-restante-valor"><?php echo cart_money($restanteAposCashback); ?></strong></div></div>
 
                 <button type="submit" form="checkout-form" class="checkout-finish"><?php echo of_t('Finalizar compra'); ?></button>
             </div>
 
-            <form method="POST" action="carrinho.php"><?php echo cart_csrf_field(); ?><input type="hidden" name="acao" value="limpar"><button type="submit" class="checkout-clear"><?php echo of_t('Limpar carrinho'); ?></button></form>
             </aside>
             <div class="checkout-backdrop" data-close-checkout></div>
             </div>
@@ -683,6 +665,29 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 document.body.classList.remove('checkout-open');
             };
             document.querySelectorAll('[data-open-checkout]').forEach(button => button.addEventListener('click', () => openCheckout(button.dataset.openCheckout)));
+
+            // Barra de cashback: não existe mais um passo de "aplicar" — a barra já
+            // manda o valor direto no formulário de finalizar compra (atributo
+            // form="checkout-form"). Os textos abaixo (aplicado, restante, valor do
+            // PIX, resumo do pagamento) só são recalculados aqui pra acompanhar a
+            // barra visualmente; o valor que realmente vale é conferido no servidor
+            // (checkout.php) quando o formulário é enviado de verdade.
+            const totalComFrete = <?php echo json_encode($totalComFrete); ?>;
+            const cashbackRange = document.getElementById('cashback-range');
+            const formatBRL = valor => 'R$ ' + Number(valor).toFixed(2).replace('.', ',');
+            const atualizarCashbackVisual = () => {
+                if (!cashbackRange) return;
+                const usado = Number(cashbackRange.value) || 0;
+                const restante = Math.max(0, totalComFrete - usado);
+                document.getElementById('cashback-range-value').textContent = formatBRL(usado);
+                document.getElementById('cashback-aplicado-valor').textContent = formatBRL(usado);
+                document.getElementById('cashback-restante-valor').textContent = formatBRL(restante);
+                document.getElementById('payment-cashback-valor').textContent = formatBRL(usado);
+                document.getElementById('payment-restante-valor').textContent = formatBRL(restante);
+                const pixValue = document.getElementById('pix-value');
+                if (pixValue) pixValue.textContent = formatBRL(restante);
+            };
+            cashbackRange?.addEventListener('input', atualizarCashbackVisual);
             document.querySelector('.checkout-close')?.addEventListener('click', closeCheckout);
             document.querySelector('[data-close-checkout]')?.addEventListener('click', closeCheckout);
             document.addEventListener('keydown', event => { if (event.key === 'Escape') closeCheckout(); });
