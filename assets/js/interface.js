@@ -6,7 +6,21 @@
         const data = window.OneFit;
         if (!data?.brands) return;
         const brand = data.brands[document.documentElement.dataset.siteTheme] || data.brandFallback;
-        document.querySelectorAll('[data-brand-name]').forEach(node => { node.textContent = brand.name; });
+        // Mesma divisão de onefitBrandNameHtml() (config/interface.php): nome
+        // do tema com reflexo branco (.brand-nome) + "Fit" na cor do tema
+        // (.brand-fit), pra trocar de tema sem recarregar a página.
+        document.querySelectorAll('[data-brand-name]').forEach(node => {
+            const spaceIndex = brand.name.lastIndexOf(' ');
+            const prefixo = spaceIndex === -1 ? '' : brand.name.slice(0, spaceIndex);
+            const destaque = spaceIndex === -1 ? brand.name : brand.name.slice(spaceIndex + 1);
+            const nome = document.createElement('span');
+            nome.className = 'brand-nome';
+            nome.textContent = prefixo;
+            const fit = document.createElement('span');
+            fit.className = 'brand-fit';
+            fit.textContent = destaque;
+            node.replaceChildren(nome, document.createTextNode(' '), fit);
+        });
         document.querySelectorAll('[data-brand-logo]').forEach(node => {
             const url = data.base + 'assets/img/logo/' + brand.logo;
             if (node.tagName === 'IMG') {

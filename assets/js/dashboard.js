@@ -916,6 +916,17 @@ document.addEventListener('DOMContentLoaded', () => {
         avatar.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     });
 
+    // "Editar perfil": primeiro troca para a section "perfil" (mesma seção
+    // que o botão "Editar perfil" de Configurações usa) e só depois o modal
+    // #modalPerfilEditar abre por cima, via data-bs-toggle no próprio botão.
+    const editarPerfilItem = document.getElementById('boUserMenuEditarPerfil');
+    if (editarPerfilItem) {
+        editarPerfilItem.addEventListener('click', () => {
+            boGoToSection('perfil');
+            closeUserMenu();
+        });
+    }
+
     document.addEventListener('click', (event) => {
         if (!searchWrap.contains(event.target)) boCloseSearch();
         if (!userMenuWrap.contains(event.target)) closeUserMenu();

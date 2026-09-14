@@ -15,15 +15,25 @@
         }
 
         /* ---------- Header ---------- */
+        /* Estilo "Apple" (vidro fosco escuro, tipo a navbar da apple.com):
+           fundo escuro fixo + blur, igual em qualquer tema de cor e nos dois
+           modos (claro/escuro) — por isso NÃO usa var(--bg)/var(--theme-*)
+           aqui. Com fundo fixo, o texto (mais abaixo) também pode ser cor
+           fixa clara, sempre com contraste garantido, em vez de depender do
+           que está sendo rolado atrás do header (que mudava de claro pra
+           escuro dependendo da seção/tema). */
         header {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
+            top: 0.5rem;
+            left: 2.5%;
+            right: 2.5%;
             z-index: 100;
-            background: var(--bg2);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(22, 22, 23, 0.72);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
             transition: background 0.4s ease, border-color 0.4s ease;
         }
 
@@ -34,6 +44,27 @@
             padding: 10px 32px;
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        /* Acima do breakpoint mobile: logo + menu + botões viram um único
+           bloco centralizado na tela, em vez de logo na ponta esquerda e
+           botões na ponta direita. Tira o max-width daqui (o que sobra é o
+           padding) — com max-width:1200px + gap entre os 3 grupos, o
+           conteúdo passava da largura disponível e forçava um encolhimento
+           desigual dos itens, o que deixava tudo puxado pra esquerda em vez
+           de centralizado. Sem esse limite, o .nav ocupa a largura toda do
+           header e o conteúdo (bem mais estreito) centraliza livremente
+           dentro dela. No mobile/tablet (abaixo de 1300px) o menu vira
+           painel lateral e some do fluxo normal, então lá mantém-se o
+           space-between + max-width original (logo à esquerda, hambúrguer
+           à direita) — ver o breakpoint irmão em @media (max-width:1299px)
+           mais abaixo; os dois precisam ficar sincronizados. */
+        @media (min-width: 1300px) {
+            .nav {
+                max-width: none;
+                justify-content: space-around;
+                gap: 40px;
+            }
         }
 
         .logo {
@@ -48,9 +79,10 @@
             display: block;
         }
 
-        /* Nome da marca: some técnicas usadas no botão dourado (mesmo
-           gradiente "shine"), pra ficar coerente com a identidade e
-           continuar acompanhando os 5 temas automaticamente via var(). */
+        /* Nome da marca: o nome do tema e "Fit" são coloridos separadamente
+           por .brand-nome/.brand-fit (ver assets/css/interface.css), então
+           aqui só ficam as regras de tipografia compartilhadas pelas duas
+           partes. */
         .logo [data-brand-name] {
             font-family: 'Big Shoulders Display', sans-serif;
             font-size: 22px;
@@ -59,11 +91,6 @@
             text-transform: uppercase;
             line-height: 1;
             white-space: nowrap;
-            color: var(--gold);
-            background: linear-gradient(120deg, var(--bronze), var(--gold) 45%, var(--gold-bright) 60%, var(--gold) 75%, var(--bronze));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
         }
 
         .nav-links {
@@ -73,14 +100,14 @@
         }
 
         .nav-links a {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(235, 235, 245, 0.68);
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.05em;
             position: relative;
             padding-bottom: 4px;
-            transition: color 0.25s ease;
+            transition: color 0.2s ease;
         }
 
         .nav-links a::after {
@@ -95,7 +122,7 @@
         }
 
         .nav-links a:hover {
-            color: var(--text);
+            color: #fff;
         }
 
         .nav-links a:hover::after {
@@ -112,8 +139,8 @@
             width: 52px;
             height: 28px;
             border-radius: 20px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             position: relative;
             cursor: pointer;
             flex-shrink: 0;
@@ -179,8 +206,8 @@
 
         .btn-outline {
             background: transparent;
-            border-color: var(--border);
-            color: var(--text);
+            border-color: rgba(255, 255, 255, 0.28);
+            color: rgba(255, 255, 255, 0.92);
         }
 
         .btn-outline:hover {
@@ -199,12 +226,12 @@
             display: none;
             background: none;
             border: none;
-            color: var(--text);
+            color: rgba(255, 255, 255, 0.92);
             font-size: 30px;
             cursor: pointer;
         }
 
-        @media (max-width:992px) {
+        @media (max-width:1299px) {
 
             .nav {
                 padding: 15px 25px;
@@ -229,9 +256,9 @@
                 width: min(280px, 80vw);
                 height: 100vh;
 
-                background: var(--surface);
+                background: rgba(20, 20, 22, 0.86);
 
-                backdrop-filter: blur(25px);
+                backdrop-filter: saturate(180%) blur(24px);
 
                 display: flex;
                 flex-direction: column;
@@ -269,13 +296,39 @@
                 width: 200px;
                 margin-top: 10px;
                 padding-top: 30px;
-                border-top: 1px solid var(--border);
+                border-top: 1px solid rgba(255, 255, 255, 0.14);
             }
 
             .nav-mobile-actions .btn {
                 width: 100%;
             }
 
+        }
+
+        /* Telas de celular bem estreitas: logo + toggle de tema + hambúrguer
+           encostam um no outro (principalmente com nomes de marca mais
+           longos, tipo "NATUREFIT"/"BLOODFIT") — encolhe um pouco mais e
+           reduz os espaçamentos pra garantir que sempre caiba numa linha. */
+        @media (max-width: 420px) {
+            .nav {
+                padding: 12px 16px;
+            }
+
+            .nav-right {
+                gap: 10px;
+            }
+
+            .logo {
+                gap: 6px;
+            }
+
+            .logo-mark {
+                height: 40px;
+            }
+
+            .logo [data-brand-name] {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
@@ -284,7 +337,7 @@
 
     <div class="logo">
         <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>" class="logo-mark">
-        <span data-brand-name><?php echo onefitNomeMarca(); ?></span>
+        <span data-brand-name><?php echo onefitBrandNameHtml(); ?></span>
     </div>
 
     <div class="nav-links" id="navLinks">
@@ -292,7 +345,7 @@
         <a href="#modalidades"><?php echo of_t('Treinos'); ?></a>
         <a href="#planos"><?php echo of_t('Planos'); ?></a>
         <a href="#depoimentos"><?php echo of_t('Alunos'); ?></a>
-        <a href="#contato"><?php echo of_t('Contato'); ?></a>
+        <a href="#localizacao"><?php echo of_t('Localização'); ?></a>
 
         <!-- Ações visíveis só quando o menu mobile está aberto -->
         <div class="nav-mobile-actions">

@@ -405,7 +405,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Matrícula · ONE FIT'); ?></title>
+  <title><?php echo of_t('Matrícula · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -437,7 +437,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
       <div class="login-visual-overlay"></div>
 
       <div class="login-visual-content">
-        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo"><?php echo onefitWordmarkHtml(); ?></a>
 
         <div class="login-visual-text">
           <span class="eyebrow"><?php echo of_t('Comece agora'); ?></span>
@@ -450,7 +450,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <section class="login-form-panel">
       <div class="login-form-wrap matricula-wrap" data-aos="fade-right" data-aos-delay="250">
 
-        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile"><img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>"><span data-brand-name><?php echo onefitNomeMarca(); ?></span></a>
+        <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile"><?php echo onefitWordmarkHtml(); ?></a>
 
         <span class="tag"><?php echo of_t('Junte-se à ONE FIT'); ?></span>
         <h1><?php echo of_t('Matrícula'); ?></h1>

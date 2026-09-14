@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Alterar senha · ONE FIT'); ?></title>
+  <title><?php echo of_t('Alterar senha · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
   <script>
     (() => { let p = 'dark'; try { p = localStorage.getItem('onefit-theme') || p; } catch (e) {} const t = p === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); })();
   </script>
@@ -73,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
+  <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
 </head>
 <body class="login-body">

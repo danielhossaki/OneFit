@@ -21,6 +21,34 @@ function onefitLogo(): string {
     return htmlspecialchars(BASE_URL . 'assets/img/logo/' . onefitMarca()['logo'], ENT_QUOTES, 'UTF-8');
 }
 function onefitNomeMarca(): string { return htmlspecialchars(onefitMarca()['name'], ENT_QUOTES, 'UTF-8'); }
+/* Separa o nome da marca do tema em duas partes na última palavra (sempre
+   "Fit" nos temas atuais): ['prefixo' => 'One', 'destaque' => 'Fit']. */
+function onefitMarcaPartes(): array {
+    $nome = trim(onefitMarca()['name']);
+    $pos = strrpos($nome, ' ');
+    return [
+        'prefixo' => $pos === false ? '' : substr($nome, 0, $pos),
+        'destaque' => $pos === false ? $nome : substr($nome, $pos + 1),
+    ];
+}
+/* Wordmark em texto (sem logo em imagem, sem espaço entre as partes): usado
+   no link de voltar para a home das telas de login/matrícula/recuperação de
+   senha — o CSS de .login-logo já deixa tudo em uppercase e pinta o <span>
+   de dourado. */
+function onefitWordmarkHtml(): string {
+    $partes = onefitMarcaPartes();
+    return htmlspecialchars($partes['prefixo'], ENT_QUOTES, 'UTF-8') . '<span>' . htmlspecialchars($partes['destaque'], ENT_QUOTES, 'UTF-8') . '</span>';
+}
+/* Nome da marca com espaço entre as partes: prefixo com efeito "reflexo"
+   branco (.brand-nome) e a última palavra na cor de destaque do tema
+   (.brand-fit) — usado onde já existia [data-brand-name] (navbar, sidebar
+   do dashboard, marketplace). Ver assets/js/interface.js: updateBrand()
+   gera a mesma estrutura ao trocar de tema sem recarregar a página. */
+function onefitBrandNameHtml(): string {
+    $partes = onefitMarcaPartes();
+    return '<span class="brand-nome">' . htmlspecialchars($partes['prefixo'], ENT_QUOTES, 'UTF-8') . '</span> '
+        . '<span class="brand-fit">' . htmlspecialchars($partes['destaque'], ENT_QUOTES, 'UTF-8') . '</span>';
+}
 function onefitIdioma(): string {
     $value = $_SESSION['idioma'] ?? 'pt-BR';
     return in_array($value, onefitIdiomas(), true) ? $value : 'pt-BR';

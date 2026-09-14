@@ -59,7 +59,7 @@ if ($token === '') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Confirmar e-mail · ONE FIT'); ?></title>
+  <title><?php echo of_t('Confirmar e-mail · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
 <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">

@@ -59,57 +59,10 @@ var ofT = globalThis.ofT || (text => text);
     });
     const quick = document.getElementById('studentQuickPhoto');
     const status = document.getElementById('studentPhotoStatus');
-    const photoToggle = document.querySelector('[data-photo-menu-toggle]');
-    const photoMenu = document.getElementById('studentPhotoMenu');
-    const closePhotoMenu = (returnFocus = false) => {
-        if (!photoMenu || !photoToggle) return;
-        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (reduced) {
-            photoMenu.hidden = true;
-            photoToggle.setAttribute('aria-expanded', 'false');
-            if (returnFocus) photoToggle.focus();
-            return;
-        }
-        photoMenu.classList.add('is-closing');
-        const finish = () => {
-            photoMenu.hidden = true;
-            photoMenu.classList.remove('is-closing');
-            photoToggle.setAttribute('aria-expanded', 'false');
-            if (returnFocus) photoToggle.focus();
-        };
-        const onTransitionEnd = (event) => {
-            if (event.target === photoMenu) {
-                photoMenu.removeEventListener('transitionend', onTransitionEnd);
-                finish();
-            }
-        };
-        photoMenu.addEventListener('transitionend', onTransitionEnd, { once: true });
-        setTimeout(() => {
-            if (!photoMenu.hidden) finish();
-        }, 220);
-    };
-    const openPhotoMenu = () => {
-        if (!photoMenu || !photoToggle) return;
-        photoMenu.hidden = false;
-        photoMenu.classList.remove('is-closing');
-        photoToggle.setAttribute('aria-expanded', 'true');
-        const firstItem = photoMenu.querySelector('button');
-        firstItem?.focus();
-    };
-    if (photoToggle && photoMenu) {
-        photoToggle.addEventListener('click', () => {
-            if (photoMenu.hidden) openPhotoMenu(); else closePhotoMenu(true);
-        });
-        photoMenu.addEventListener('click', (event) => {
-            if (event.target.closest('button')) closePhotoMenu(true);
-        });
-        document.addEventListener('pointerdown', (event) => {
-            if (!photoMenu.hidden && !photoToggle.contains(event.target) && !photoMenu.contains(event.target)) closePhotoMenu();
-        });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !photoMenu.hidden) closePhotoMenu(true);
-        });
-    }
+    // O mini menu da foto (abrir/fechar, "Ver foto"/lightbox e navegação por
+    // teclado) já é implementado em assets/js/interface.js — não duplicar
+    // aqui (duas cópias escutando o mesmo botão faziam o menu abrir e
+    // fechar sozinho no mesmo clique).
     document.getElementById('studentChoosePhoto').addEventListener('click', () => quick.click());
     quick.addEventListener('change', () => {
         if (!quick.files.length) return;

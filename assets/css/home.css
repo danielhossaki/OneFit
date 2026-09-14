@@ -131,7 +131,7 @@ html[data-theme="light"] .hero {
 .hero,
 .hero .eyebrow,
 .hero .lead {
-    color: var(--theme-text);
+    color: #cfc7c0 !important;
 }
 
 .hero .lead {
@@ -434,6 +434,7 @@ section.block {
 }
 
 /* ---------- Depoimentos ---------- */
+
 .testimonials {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -500,7 +501,7 @@ section.block {
 /* ---------- CTA final ---------- */
 .final-cta {
     text-align: center;
-    padding: 120px 32px;
+    padding: 200px 32px;
     position: relative;
 }
 
@@ -508,7 +509,10 @@ section.block {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse 600px 300px at 50% 50%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 70%);
+    background: radial-gradient(ellipse 820px 440px at 50% 45%,
+            color-mix(in srgb, var(--gold-bright) 24%, transparent) 0%,
+            color-mix(in srgb, var(--gold) 11%, transparent) 45%,
+            transparent 75%);
     pointer-events: none;
 }
 
@@ -522,6 +526,42 @@ section.block {
     color: var(--text-muted);
     margin-bottom: 36px;
     position: relative;
+}
+
+/* ---------- Localização (mapa) ---------- */
+#localizacao {
+    position: relative;
+    padding: 100px 0px;
+    margin: 0;
+}
+
+section.block.map-section {
+    padding: 108px 0 0;
+}
+
+.map-section .section-head {
+    margin-bottom: 40px;
+}
+
+.map-frame {
+    width: 100%;
+    height: 500px;
+}
+
+.map-frame iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* Google Maps (embed sem API key) não tem modo escuro nativo — o filtro
+       abaixo inverte e reequilibra as cores para simular um mapa escuro,
+       independente do tema claro/escuro do site (sempre escuro). */
+    filter: invert(90%) hue-rotate(180deg) brightness(95%) contrast(90%);
+}
+
+@media (max-width: 860px) {
+    .map-frame {
+        height: 320px;
+    }
 }
 
 /* ---------- Footer ---------- */
@@ -579,6 +619,12 @@ footer {
     padding: 16px 0;
     position: relative;
     z-index: 1;
+}
+
+/* Nos temas escuros, fundo neutro puxado pro quase-preto (independe da cor
+   do tema) em vez do --surface tingido pela matiz. */
+html:not([data-theme="light"]) .equip-marquee {
+    background: #0d0d0d;
 }
 
 .equip-marquee .track {

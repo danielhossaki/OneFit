@@ -35,11 +35,13 @@ $resumoAluno = [
                         <?php if ($fotoAmpliavel): ?><button type="button" role="menuitem" data-photo-open><?php echo of_t('Ver foto de perfil'); ?></button><?php endif; ?>
                         <button type="button" role="menuitem" id="studentChoosePhoto"><?php echo of_t('Alterar foto de perfil'); ?></button>
                     </div>
+                    <div class="bo-actions bo-student-actions">
+                        <button class="btn-bo-gold w-100" type="button" data-bs-toggle="modal" data-bs-target="#modalPerfilEditar"><i class="bi bi-pencil-square"></i> <?php echo of_t('EDITAR PERFIL'); ?></button>
+                    </div>
                     <form action="<?php echo bo_action_url('update-profile.php'); ?>" method="post" enctype="multipart/form-data" id="studentPhotoForm">
                         <?php echo bo_csrf_field(); ?>
                         <input type="hidden" name="acao" value="foto">
                         <input type="file" name="foto_arquivo" id="studentQuickPhoto" accept="image/jpeg,image/png,image/webp" hidden>
-                        <small><?php echo of_t('JPG, PNG ou WEBP · Até 3 MB'); ?></small>
                         <span id="studentPhotoStatus" role="status"></span>
                     </form>
                 </div>
@@ -52,9 +54,6 @@ $resumoAluno = [
                             <div class="bo-student-metric"><span><i class="bi <?php echo $icon; ?>"></i> <?php echo of_t($label); ?></span><strong><?php echo bo_val($value); ?></strong></div>
                         <?php endforeach; ?>
                     </div>
-                    <div class="bo-actions bo-student-actions">
-                        <button class="btn-bo-gold" type="button" data-bs-toggle="modal" data-bs-target="#modalPerfilEditar"><i class="bi bi-pencil-square"></i> <?php echo of_t('EDITAR PERFIL'); ?></button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -63,7 +62,6 @@ $resumoAluno = [
             <div class="col-lg-4">
                 <div class="bo-settings-card bo-testemunho-card">
                     <div class="bo-testemunho-titulo"><i class="bi bi-star-fill"></i> <?php echo of_t('Comente aqui'); ?></div>
-                    <p class="bo-testemunho-sub"><?php echo of_t('Compartilhe sua experiência e ajude outras pessoas a também darem o próximo passo!'); ?></p>
                     <?php if ($alunoTestemunho ?? null): ?>
                         <?php $boStatusLabel = ['pendente' => 'Em análise', 'aprovado' => 'Aprovado', 'reprovado' => 'Não aprovado']; ?>
                         <p class="bo-testemunho-status"><?php echo of_t('Status atual'); ?>: <strong><?php echo $boStatusLabel[$alunoTestemunho['aprovacao']] ?? ucfirst($alunoTestemunho['aprovacao']); ?></strong></p>

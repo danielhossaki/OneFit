@@ -148,7 +148,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace · ONE FIT</title>
+    <title>Marketplace · <?php echo mb_strtoupper(onefitNomeMarca()); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -163,7 +163,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <header class="mkt-header">
         <div class="mkt-logo">
             <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
-            <span><span data-brand-name><?php echo onefitNomeMarca(); ?></span> · Marketplace</span>
+            <span><span data-brand-name><?php echo onefitBrandNameHtml(); ?></span> · Marketplace</span>
         </div>
 
         <div class="mkt-header-actions">
@@ -184,7 +184,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <main class="mkt-main">
 
         <div class="mkt-page-title">
-            <h1>Marketplace <span data-brand-name><?php echo onefitNomeMarca(); ?></span></h1>
+            <h1>Marketplace <span data-brand-name><?php echo onefitBrandNameHtml(); ?></span></h1>
             <p class="mkt-cashback-saldo"><?php echo of_t('Seu Cashback:'); ?> <strong><?php echo mkt_money($saldoCashback); ?></strong></p>
         </div>
 

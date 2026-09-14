@@ -48,7 +48,7 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo of_t('Confirmar exclusão · ONE FIT'); ?></title>
+    <title><?php echo of_t('Confirmar exclusão · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">

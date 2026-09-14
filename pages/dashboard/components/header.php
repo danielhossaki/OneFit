@@ -56,7 +56,7 @@ if ($perfilLogado === 'aluno') {
                 <?php endif; ?>
             </button>
             <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">
-                <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=perfil" role="menuitem"><i class="bi bi-person"></i> <?php echo of_t('Editar perfil'); ?></a>
+                <button type="button" id="boUserMenuEditarPerfil" data-bs-toggle="modal" data-bs-target="#modalPerfilEditar" role="menuitem"><i class="bi bi-person"></i> <?php echo of_t('Editar perfil'); ?></button>
                 <a href="<?php echo BASE_URL; ?>pages/dashboard/alterar-senha.php" role="menuitem"><i class="bi bi-key"></i> <?php echo of_t('Alterar senha'); ?></a>
                 <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=configuracoes" role="menuitem"><i class="bi bi-gear"></i> <?php echo of_t('Configurações'); ?></a>
                 <a href="<?php echo BASE_URL; ?>config/logout.php" role="menuitem" class="bo-user-menu-logout"><i class="bi bi-box-arrow-right"></i> <?php echo of_t('Logout'); ?></a>

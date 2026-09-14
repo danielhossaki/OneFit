@@ -12,6 +12,10 @@ $whatsappUrl = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($wha
 $whatsappMensagemAula = 'Olá! Vim pelo site da OneFit e gostaria de agendar uma aula experimental. Poderia me passar mais informações?';
 $whatsappUrlAula = 'https://wa.me/' . $whatsappNumero . '?text=' . rawurlencode($whatsappMensagemAula);
 
+// Endereço usado no mapa da seção "Localização".
+$enderecoMapa = 'Jardim das Indústrias, São José dos Campos - SP';
+$mapaUrl = 'https://www.google.com/maps?q=' . rawurlencode($enderecoMapa) . '&output=embed';
+
 /* Ícones das modalidades (chave = coluna `modalidades.icone`) — mesmo
  * conjunto oferecido no select da tela admin (bo_icones_modalidade_options
  * em pages/dashboard/includes/admin-forms.php). Mantém o SVG idêntico ao
@@ -127,7 +131,7 @@ if (!$testemunhosHome) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('ONE FIT · Treino de Alta Performance'); ?></title>
+  <title><?php echo of_t('{marca} · Treino de Alta Performance', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -136,7 +140,7 @@ if (!$testemunhosHome) {
   <!-- link do css -->
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/css/home.css'); ?>">
   <!-- link do favicon -->
-  <link rel="icon" href="<?php echo BASE_URL; ?>assets/img/logo/logo.webp" type="image/x-icon">
+  <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
 <?php onefitInterfaceHead(); ?>
 </head>
 
@@ -324,7 +328,7 @@ if (!$testemunhosHome) {
     </div>
   </section>
 
-  <section class="block" id="depoimentos" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);" data-aos="fade-up">
+  <section class="block" id="depoimentos" data-aos="fade-up">
     <div class="wrap">
       <div class="section-head">
         <div>
@@ -359,6 +363,23 @@ if (!$testemunhosHome) {
     <h2><?php echo of_t('Sua primeira'); ?><br><?php echo of_t('aula é'); ?> <span class="shine" style="background:linear-gradient(100deg, var(--bronze) 0%, var(--gold) 25%, var(--gold-bright) 40%, var(--accent-pale, #fff8e1) 48%, var(--gold-bright) 56%, var(--gold) 70%, var(--bronze) 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;"><?php echo of_t('grátis'); ?></span></h2>
     <p><?php echo of_t('Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.'); ?></p>
     <a href="<?php echo htmlspecialchars($whatsappUrlAula, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-gold" target="_blank" rel="noopener noreferrer"><?php echo of_t('Agendar aula experimental'); ?></a>
+  </section>
+
+  <section class="block map-section" id="localizacao" data-aos="fade-up">
+    <div class="wrap section-head">
+      <div>
+        <span class="tag"><?php echo of_t('Localização'); ?></span>
+        <h2><?php echo of_t('Venha treinar'); ?><br><?php echo of_t('perto de você'); ?></h2>
+      </div>
+      <p><?php echo of_t('Estamos no Jardim das Indústrias, em São José dos Campos — fácil acesso e estacionamento por perto.'); ?></p>
+    </div>
+    <div class="map-frame">
+      <iframe
+        src="<?php echo htmlspecialchars($mapaUrl, ENT_QUOTES, 'UTF-8'); ?>"
+        width="100%" height="100%" style="border:0;" allowfullscreen=""
+        loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+        title="<?php echo htmlspecialchars(of_t('Mapa - Jardim das Indústrias, São José dos Campos'), ENT_QUOTES, 'UTF-8'); ?>"></iframe>
+    </div>
   </section>
 
   <?php include __DIR__ . '/components/footer.php'; ?>
