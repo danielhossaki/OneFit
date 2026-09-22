@@ -16,7 +16,7 @@ unset($_SESSION['esqueci_senha_msg'], $_SESSION['esqueci_senha_tipo']);
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Esqueci minha senha · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+  <title><?php echo of_t('Esqueci minha senha · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
   <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -26,7 +26,7 @@ unset($_SESSION['esqueci_senha_msg'], $_SESSION['esqueci_senha_tipo']);
 </head>
 <body class="login-body"
   <?php if ($mensagem): ?>
-    data-form-message="<?php echo htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message="<?php echo of_t($mensagem); ?>"
     data-form-message-type="<?php echo htmlspecialchars($tipo, ENT_QUOTES, 'UTF-8'); ?>"
   <?php endif; ?>>
   <main class="login-page">

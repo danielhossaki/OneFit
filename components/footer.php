@@ -229,7 +229,7 @@
             <div class="footer-col contact">
                 <h4><?php echo of_t('Entre em contato'); ?></h4>
                 <a href="https://mail.google.com/mail/u/0/#inbox?compose=CllgCJNstzFdDCFXGTcQrssZxrtrZCTkwNNMqszFVwlCrVvpKRpwjfrVTLqLgNBtQGQBKSqDbRg" class="contact-btn">
-                    Converse com a One... <span class="arrow">↗</span>
+                    <?php echo of_t('Converse com a One...'); ?> <span class="arrow">↗</span>
                 </a>
             </div>
 
@@ -257,7 +257,7 @@
         </div>
 
         <div class="footer-bottom">
-            <span>© 2026 Desenvolvido por Grupo 1</span>
+            <span><?php echo of_t('© 2026 Desenvolvido por Grupo 1'); ?></span>
         </div>
     </div>
 </footer>

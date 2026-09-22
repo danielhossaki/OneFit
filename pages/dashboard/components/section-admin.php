@@ -19,7 +19,7 @@
     <div class="bo-page-title">
         <div>
             <h1><?php echo of_t('Dashboard'); ?></h1>
-            <p><?php echo of_t('Resumo geral da operação ONE FIT.'); ?></p>
+            <p><?php echo of_t('Resumo geral da operação {marca}.'); ?></p>
         </div>
     </div>
 
@@ -29,21 +29,21 @@
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Usuários ativos'); ?></div>
                 <div class="bo-card-value"><?php echo $admDashboard['usuariosAtivos']; ?></div>
-                <div class="bo-card-sub">+<?php echo $admDashboard['usuariosNovosMes']; ?> este mês</div>
+                <div class="bo-card-sub">+<?php echo $admDashboard['usuariosNovosMes']; ?> <?php echo of_t('este mês'); ?></div>
             </div>
         </div>
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Saldo operacional (mês)'); ?></div>
                 <div class="bo-card-value"><?php echo bo_money($admDashboard['saldoMes']); ?></div>
-                <div class="bo-card-sub">Ano <?php echo bo_money($admDashboard['saldoAno']); ?> · Semana <?php echo bo_money($admDashboard['saldoSemana']); ?> · Dia <?php echo bo_money($admDashboard['saldoDia']); ?></div>
+                <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['saldoAno']); ?> <?php echo of_t('· Semana'); ?> <?php echo bo_money($admDashboard['saldoSemana']); ?> <?php echo of_t('· Dia'); ?> <?php echo bo_money($admDashboard['saldoDia']); ?></div>
             </div>
         </div>
         <div class="col-12 col-md-4">
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Cashback distribuído'); ?></div>
                 <div class="bo-card-value"><?php echo bo_money($admDashboard['cashbackMes']); ?></div>
-                <div class="bo-card-sub">Ano <?php echo bo_money($admDashboard['cashbackAno']); ?> · Semana <?php echo bo_money($admDashboard['cashbackSemana']); ?> · Dia <?php echo bo_money($admDashboard['cashbackDia']); ?></div>
+                <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['cashbackAno']); ?> <?php echo of_t('· Semana'); ?> <?php echo bo_money($admDashboard['cashbackSemana']); ?> <?php echo of_t('· Dia'); ?> <?php echo bo_money($admDashboard['cashbackDia']); ?></div>
             </div>
         </div>
     </div>
@@ -54,21 +54,21 @@
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Acessos liberados'); ?></div>
                 <div class="bo-card-value"><?php echo $admDashboard['acessosLiberados']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosLiberados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?>% da base</div>
+                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosLiberados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base'); ?></div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Acessos bloqueados'); ?></div>
                 <div class="bo-card-value"><?php echo $admDashboard['acessosBloqueados']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosBloqueados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?>% da base</div>
+                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosBloqueados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base'); ?></div>
             </div>
         </div>
         <div class="col-12 col-md-3">
             <div class="bo-card">
                 <div class="bo-card-label"><?php echo of_t('Profissionais ativos'); ?></div>
                 <div class="bo-card-value"><?php echo $admDashboard['profissionaisAtivos']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['profissionaisPendentes']; ?> pendentes de contrato</div>
+                <div class="bo-card-sub"><?php echo $admDashboard['profissionaisPendentes']; ?> <?php echo of_t('pendentes de contrato'); ?></div>
             </div>
         </div>
     </div>
@@ -89,7 +89,7 @@
 
     <!-- Filtros: busca por texto + status (ligados à tabela pelo data-bo-target="usuarios") -->
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:320px" placeholder="Buscar por ID, nome e email"
+        <input type="text" class="form-control" style="max-width:320px" placeholder="<?php echo of_t('Buscar por ID, nome e email'); ?>"
             data-bo-filter="search" data-bo-target="usuarios">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="usuarios">
             <option value=""><?php echo of_t('Todos os status'); ?></option>
@@ -124,8 +124,8 @@
                             <td><?php echo bo_badge($u['status'] === 'ativo'); ?></td>
                             <td><?php echo htmlspecialchars($u['plano']); ?></td>
                             <td><?php echo $u['matricula']; ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($u['dataInicial'])); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($u['dataFinal'])); ?></td>
+                            <td><?php echo onefitData('d/m/Y', strtotime($u['dataInicial'])); ?></td>
+                            <td><?php echo onefitData('d/m/Y', strtotime($u['dataFinal'])); ?></td>
                             <td>
                                 <div class="bo-table-actions">
                                     <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar<?php echo $u['id']; ?>">
@@ -251,7 +251,7 @@
 
     <!-- Filtros: busca por ID, tipo de pagamento e intervalo de datas -->
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:200px" placeholder="Buscar por ID"
+        <input type="text" class="form-control" style="max-width:200px" placeholder="<?php echo of_t('Buscar por ID'); ?>"
             data-bo-filter="search" data-bo-target="pagamentos">
         <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="pagamentos">
             <option value=""><?php echo of_t('Todos os tipos'); ?></option>
@@ -283,7 +283,7 @@
                         <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo substr($p['data'], 0, 10); ?>"
                             data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id']); ?>">
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($p['data'])); ?></td>
+                            <td><?php echo onefitData('d/m/Y', strtotime($p['data'])); ?></td>
                             <td><?php echo $p['tipo']; ?></td>
                             <td><?php echo bo_money($p['valor']); ?></td>
                             <td>#<?php echo str_pad($p['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
@@ -315,7 +315,7 @@
 <section class="bo-content-section" data-perfil="admin" data-section="cashbacks">
     <div class="bo-page-title">
         <div>
-            <h1>Cashbacks</h1>
+            <h1><?php echo of_t('Cashbacks'); ?></h1>
             <p><?php echo of_t('Acompanhe saldo, distribuição e lançamentos de cashback.'); ?></p>
         </div>
         <div class="bo-actions">
@@ -359,7 +359,7 @@
     </div>
 
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:200px" placeholder="Buscar por ID"
+        <input type="text" class="form-control" style="max-width:200px" placeholder="<?php echo of_t('Buscar por ID'); ?>"
             data-bo-filter="search" data-bo-target="cashbacks">
         <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="cashbacks">
             <option value=""><?php echo of_t('Todos os tipos'); ?></option>
@@ -386,7 +386,7 @@
                     <?php foreach ($cashbackTransacoes as $c): ?>
                         <tr data-type="<?php echo $c['tipo']; ?>" data-search="<?php echo strtolower('#' . str_pad($c['id'], 4, '0', STR_PAD_LEFT) . ' ' . $c['id']); ?>">
                             <td>#<?php echo str_pad($c['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($c['data'])); ?></td>
+                            <td><?php echo onefitData('d/m/Y', strtotime($c['data'])); ?></td>
                             <td><?php echo $c['tipo'] === 'credito' ? onefitTraduzir('Crédito') : onefitTraduzir('Débito'); ?></td>
                             <td><?php echo bo_money($c['valor']); ?></td>
                             <td>#<?php echo str_pad($c['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
@@ -414,8 +414,8 @@
 <section class="bo-content-section" data-perfil="admin" data-section="comentarios">
     <div class="bo-page-title">
         <div>
-            <h1>Comentários</h1>
-            <p>Aprove ou reprove os depoimentos enviados pelos alunos e controle quais aparecem na home.</p>
+            <h1><?php echo of_t('Comentários'); ?></h1>
+            <p><?php echo of_t('Aprove ou reprove os depoimentos enviados pelos alunos e controle quais aparecem na home.'); ?></p>
         </div>
     </div>
 
@@ -425,12 +425,12 @@
             <table class="bo-table">
                 <thead>
                     <tr>
-                        <th>Aluno</th>
-                        <th>Comentário</th>
-                        <th>Data</th>
-                        <th>Status</th>
-                        <th>Visível na home</th>
-                        <th>Ações</th>
+                        <th><?php echo of_t('Aluno'); ?></th>
+                        <th><?php echo of_t('Comentário'); ?></th>
+                        <th><?php echo of_t('Data'); ?></th>
+                        <th><?php echo of_t('Status'); ?></th>
+                        <th><?php echo of_t('Visível na home'); ?></th>
+                        <th><?php echo of_t('Ações'); ?></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -438,7 +438,7 @@
                         <tr>
                             <td><?php echo htmlspecialchars($t['nome'], ENT_QUOTES, 'UTF-8'); ?></td>
                             <td style="max-width:320px;"><?php echo htmlspecialchars($t['texto'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td><?php echo date('d/m/Y', strtotime($t['data_criacao'])); ?></td>
+                            <td><?php echo onefitData('d/m/Y', strtotime($t['data_criacao'])); ?></td>
                             <td><?php echo bo_badge($t['aprovacao'] === 'aprovado', $boTestemunhoStatusLabel[$t['aprovacao']] ?? ucfirst($t['aprovacao']), $boTestemunhoStatusLabel[$t['aprovacao']] ?? ucfirst($t['aprovacao'])); ?></td>
                             <td>
                                 <?php if ($t['aprovacao'] === 'aprovado'): ?>
@@ -455,7 +455,7 @@
                                             <?php echo bo_hidden('secao', 'comentarios'); ?>
                                             <?php echo bo_hidden('acao', 'aprovar'); ?>
                                             <?php echo bo_hidden('id', $t['id_testemunho']); ?>
-                                            <button type="submit" class="btn-bo-icon" title="Aprovar"><i class="bi bi-check-circle"></i></button>
+                                            <button type="submit" class="btn-bo-icon" title="<?php echo of_t('Aprovar'); ?>"><i class="bi bi-check-circle"></i></button>
                                         </form>
                                     <?php endif; ?>
                                     <?php if ($t['aprovacao'] !== 'reprovado'): ?>
@@ -464,7 +464,7 @@
                                             <?php echo bo_hidden('secao', 'comentarios'); ?>
                                             <?php echo bo_hidden('acao', 'reprovar'); ?>
                                             <?php echo bo_hidden('id', $t['id_testemunho']); ?>
-                                            <button type="submit" class="btn-bo-icon danger" title="Reprovar"><i class="bi bi-x-circle"></i></button>
+                                            <button type="submit" class="btn-bo-icon danger" title="<?php echo of_t('Reprovar'); ?>"><i class="bi bi-x-circle"></i></button>
                                         </form>
                                     <?php endif; ?>
                                     <?php if ($t['aprovacao'] === 'aprovado'): ?>
@@ -475,7 +475,7 @@
                             </td>
                         </tr>
                     <?php endforeach; ?>
-                    <?php if (!$testemunhosAdmin): ?><tr><td colspan="6">Nenhum comentário enviado ainda.</td></tr><?php endif; ?>
+                    <?php if (!$testemunhosAdmin): ?><tr><td colspan="6"><?php echo of_t('Nenhum comentário enviado ainda.'); ?></td></tr><?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -510,7 +510,7 @@
                 </div>
             </div>
             <?php bo_modal_categoria($c, 'categorias'); ?>
-            <?php bo_modal_confirmar_exclusao('categorias', $c['id'], 'a categoria ' . $c['nome'], 'categorias'); ?>
+            <?php bo_modal_confirmar_exclusao('categorias', $c['id'], $c['nome'], 'categorias'); ?>
         <?php endforeach; ?>
     </div>
 </section>
@@ -551,7 +551,7 @@
     </div>
 
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome ou ID"
+        <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por nome ou ID'); ?>"
             data-bo-filter="search" data-bo-target="produtos">
         <select class="form-select" style="max-width:200px" data-bo-filter="status" data-bo-target="produtos">
             <option value=""><?php echo of_t('Todos'); ?></option>
@@ -571,7 +571,7 @@
                         <th><?php echo of_t('Preço'); ?></th>
                         <th><?php echo of_t('Desconto'); ?></th>
                         <th><?php echo of_t('Valor final'); ?></th>
-                        <th>Cashback</th>
+                        <th><?php echo of_t('Cashback'); ?></th>
                         <th><?php echo of_t('Estoque'); ?></th>
                         <th><?php echo of_t('Status'); ?></th>
                         <th><?php echo of_t('Ações'); ?></th>
@@ -649,12 +649,12 @@
         <!-- ===== Vendas de todos os vendedores ===== -->
         <div class="tab-pane fade show active" id="admVendasTabVendas" role="tabpanel">
             <div class="bo-filters mt-3">
-                <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por produto, vendedor, comprador ou rastreio"
+                <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por produto, vendedor, comprador ou rastreio'); ?>"
                     data-bo-filter="search" data-bo-target="admVendasVendas">
                 <select class="form-select" style="max-width:220px" data-bo-filter="status" data-bo-target="admVendasVendas">
                     <option value=""><?php echo of_t('Todos os status'); ?></option>
                     <?php foreach ($admVendasStatusLabel as $valor => $label): ?>
-                        <option value="<?php echo $valor; ?>"><?php echo $label; ?></option>
+                        <option value="<?php echo $valor; ?>"><?php echo of_t($label); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -684,10 +684,10 @@
                                             <?php echo bo_hidden('id', $v['id']); ?>
                                             <select class="form-select form-select-sm" name="status_logistica" style="min-width:150px">
                                                 <?php foreach ($admVendasStatusLabel as $valor => $label): ?>
-                                                    <option value="<?php echo $valor; ?>" <?php echo $v['statusLogistica'] === $valor ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                                                    <option value="<?php echo $valor; ?>" <?php echo $v['statusLogistica'] === $valor ? 'selected' : ''; ?>><?php echo of_t($label); ?></option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="Código de rastreio" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
+                                            <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="<?php echo of_t('Código de rastreio'); ?>" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
                                             <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Salvar'); ?></button>
                                         </form>
                                     </td>
@@ -715,7 +715,7 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <strong><?php echo htmlspecialchars($t['nome']); ?></strong>
-                            <span class="bo-card-sub"><?php echo ucfirst($t['tipo']); ?></span>
+                            <span class="bo-card-sub"><?php echo of_t(ucfirst($t['tipo'])); ?></span>
                             <?php echo bo_badge($t['status'] === 'ativo', onefitTraduzir('Ativo'), onefitTraduzir('Inativo')); ?>
                         </div>
                         <div class="bo-table-actions">
@@ -735,14 +735,14 @@
                                             <td><?php echo $f['cepInicial']; ?></td>
                                             <td><?php echo $f['cepFinal']; ?></td>
                                             <td><?php echo bo_money($f['valorFrete']); ?></td>
-                                            <td><?php echo $f['prazoDias']; ?> dia(s)</td>
+                                            <td><?php echo of_t((int) $f['prazoDias'] === 1 ? '{n} dia' : '{n} dias', ['{n}' => (int) $f['prazoDias']]); ?></td>
                                             <td>
                                                 <form method="POST" action="<?php echo bo_form_action('transportadoras.php'); ?>">
                                                     <?php echo bo_csrf_field(); ?>
                                                     <?php echo bo_hidden('secao', 'vendas'); ?>
                                                     <?php echo bo_hidden('acao', 'delete-faixa'); ?>
                                                     <?php echo bo_hidden('id_faixa', $f['id']); ?>
-                                                    <button type="submit" class="btn-bo-icon danger" title="Remover faixa"><i class="bi bi-trash"></i></button>
+                                                    <button type="submit" class="btn-bo-icon danger" title="<?php echo of_t('Remover faixa'); ?>"><i class="bi bi-trash"></i></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -777,7 +777,7 @@
                                     <td><?php echo htmlspecialchars($d['comprador']); ?></td>
                                     <td><?php echo bo_money($d['valor']); ?></td>
                                     <td><?php echo htmlspecialchars($d['motivo']); ?></td>
-                                    <td><span class="bo-badge"><?php echo $admDevolucaoStatusLabel[$d['status']] ?? ucfirst($d['status']); ?></span></td>
+                                    <td><span class="bo-badge"><?php echo of_t($admDevolucaoStatusLabel[$d['status']] ?? ucfirst($d['status'])); ?></span></td>
                                     <td>
                                         <?php if ($d['status'] === 'pendente'): ?>
                                             <form method="POST" action="<?php echo bo_form_action('devolucoes.php'); ?>" class="bo-inline-form">
@@ -794,7 +794,7 @@
                                                     <?php echo bo_hidden('secao', 'vendas'); ?>
                                                     <?php echo bo_hidden('acao', 'recusar'); ?>
                                                     <?php echo bo_hidden('id', $d['id']); ?>
-                                                    <textarea name="resposta_admin" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="Motivo da recusa" required></textarea>
+                                                    <textarea name="resposta_admin" class="form-control form-control-sm" rows="2" maxlength="500" placeholder="<?php echo of_t('Motivo da recusa'); ?>" required></textarea>
                                                     <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Confirmar recusa'); ?></button>
                                                 </form>
                                             </details>
@@ -835,7 +835,7 @@
     <?php bo_modal_plano(null, 'planos'); ?>
 
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por plano ou ID"
+        <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por plano ou ID'); ?>"
             data-bo-filter="search" data-bo-target="planos">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="planos">
             <option value=""><?php echo of_t('Todos'); ?></option>
@@ -865,7 +865,7 @@
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo $p['nome']; ?></td>
                             <td><?php echo bo_money($p['valor']); ?></td>
-                            <td><?php echo $p['ciclo']; ?></td>
+                            <td><?php echo of_t($p['ciclo']); ?></td>
                             <td><?php echo $p['descricao']; ?></td>
                             <td><?php echo bo_badge($p['status'] === 'ativo'); ?></td>
                             <td>
@@ -904,7 +904,7 @@
     <?php bo_modal_profissional(null, 'profissionais', $modalidadesOptions); ?>
 
     <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por ID, nome, função ou doc"
+        <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por ID, nome, função ou doc'); ?>"
             data-bo-filter="search" data-bo-target="profissionais">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="profissionais">
             <option value=""><?php echo of_t('Todos'); ?></option>

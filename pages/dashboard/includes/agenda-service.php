@@ -50,7 +50,7 @@ function bo_agenda_slots(mysqli $conn, string $start, string $end): array
                     $time = sprintf('%02d:00:00', $hour);
                     $slots[] = ['key' => 'sim:' . $date . ':' . $id . ':' . array_search($label, array_keys(bo_agenda_types()), true) . ':' . $hour,
                         'id_profissional' => $id, 'profissional' => $professional['nome'], 'especialidade' => $professional['especialidade'],
-                        'modalidade' => $label, 'tipo' => $type, 'data_evento' => $date, 'hora_inicio' => $time,
+                        'modalidade' => $label, 'modalidade_label' => onefitTraduzir($label), 'tipo' => $type, 'data_evento' => $date, 'hora_inicio' => $time,
                         'hora_fim' => sprintf('%02d:00:00', $hour + 1), 'local' => 'ONE FIT — simulação'];
                 }
             }

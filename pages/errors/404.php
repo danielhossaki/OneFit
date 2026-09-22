@@ -34,7 +34,7 @@ $logLine = sprintf(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>404 — Página não encontrada | <?php echo mb_strtoupper(onefitNomeMarca()); ?></title>
+  <title><?php echo of_t('404 — Página não encontrada'); ?> | <?php echo onefitNomeMarca(); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -53,7 +53,7 @@ $logLine = sprintf(
   <section class="error-page" data-aos="fade-up">
     <span class="eyebrow error-eyebrow"><?php echo of_t('Série falhada'); ?></span>
  
-    <div class="error-code" aria-label="Erro 404">
+    <div class="error-code" aria-label="<?php echo of_t('Erro 404'); ?>">
       <span class="digit">4</span><span class="plate-zero">
         <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
           <circle cx="15" cy="15" r="13" fill="none" stroke="var(--gold)" stroke-width="2.4" />

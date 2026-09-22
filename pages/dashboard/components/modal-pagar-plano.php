@@ -67,7 +67,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label"><?php echo of_t('Validade'); ?></label>
-                            <input type="text" class="form-control" placeholder="MM/AA">
+                            <input type="text" class="form-control" placeholder="<?php echo of_t('MM/AA'); ?>">
                         </div>
                         <div class="col-6">
                             <label class="form-label">CVV</label>

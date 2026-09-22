@@ -7,8 +7,8 @@
     </div>
 
     <div class="bo-filters">
-        <input data-compras-busca aria-label="Buscar por produto ou ID da transação" type="search" maxlength="150" class="form-control" style="max-width:280px" placeholder="Buscar por produto, ID da transação ou pedido">
-        <select data-compras-status aria-label="Status da compra" class="form-select" style="max-width:200px">
+        <input data-compras-busca aria-label="<?php echo of_t('Buscar por produto ou ID da transação'); ?>" type="search" maxlength="150" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por produto, ID da transação ou pedido'); ?>">
+        <select data-compras-status aria-label="<?php echo of_t('Status da compra'); ?>" class="form-select" style="max-width:200px">
             <option value=""><?php echo of_t('Todos'); ?></option>
             <option value="aguardando"><?php echo of_t('Aguardando'); ?></option>
             <option value="preparando"><?php echo of_t('Em preparação'); ?></option>

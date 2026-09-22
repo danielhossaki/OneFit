@@ -314,7 +314,7 @@ try {
             try {
                 require_once __DIR__ . '/../../../config/notificacoes.php';
                 criarNotificacao((int) $agendamentoCancelado['id_usuario'], 'Agendamento cancelado',
-                    'Seu agendamento de ' . date('d/m/Y', strtotime($agendamentoCancelado['data_evento']))
+                    'Seu agendamento de ' . onefitData('d/m/Y', strtotime($agendamentoCancelado['data_evento']))
                     . ' às ' . substr($agendamentoCancelado['hora_inicio'], 0, 5) . ' foi cancelado.', 'agendamento');
             } catch (Throwable $erroNotificacao) {
                 error_log('ONE FIT: falha ao notificar agendamento cancelado #' . $idAgendamento . '; código ' . $erroNotificacao->getCode());
@@ -411,7 +411,7 @@ try {
     $resultado = $stmt->get_result();
     while ($row = $resultado->fetch_assoc()) {
         $row['modalidade'] = $row['titulo'] ?: ucfirst($row['tipo']);
-        $row['data'] = date('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5);
+        $row['data'] = onefitData('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5);
         $profAgendados[] = $row;
     }
     $stmt->close();
@@ -427,7 +427,7 @@ try {
     $stmt->execute();
     $resultado = $stmt->get_result();
     while ($row = $resultado->fetch_assoc()) {
-        $row['data'] = date('d/m/Y', strtotime($row['data_evento']))
+        $row['data'] = onefitData('d/m/Y', strtotime($row['data_evento']))
             . ' ' . substr($row['hora_inicio'], 0, 5)
             . ' às ' . substr($row['hora_fim'], 0, 5);
         $profDisponiveis[] = $row;
@@ -453,7 +453,7 @@ try {
     $resultado = $stmt->get_result();
     while ($row = $resultado->fetch_assoc()) {
         $profCashbackHistorico[] = [
-            'data' => date('d/m/Y', strtotime($row['data_criacao'])),
+            'data' => onefitData('d/m/Y', strtotime($row['data_criacao'])),
             'descricao' => $row['descricao'],
             'valor' => $row['tipo'] === 'debito' ? -(float) $row['valor'] : (float) $row['valor'],
         ];
@@ -472,7 +472,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 
 <?php if ($ofFeedback): ?>
     <div class="alert alert-<?php echo $ofH($ofFeedback['type']); ?> alert-dismissible fade show" role="alert">
-        <?php echo $ofH($ofFeedback['message']); ?>
+        <?php echo of_t($ofFeedback['message']); ?>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="<?php echo of_t('Fechar'); ?>"></button>
     </div>
 <?php endif; ?>
@@ -480,7 +480,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
 <!-- ===== PROFISSIONAL · Dashboard ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="dashboard">
     <div class="bo-page-title">
-        <div><h1><?php echo of_t('Dashboard'); ?></h1><p><?php echo of_t('Resumo do seu contrato e saldo com a ONE FIT.'); ?></p></div>
+        <div><h1><?php echo of_t('Dashboard'); ?></h1><p><?php echo of_t('Resumo do seu contrato e saldo com a {marca}.'); ?></p></div>
     </div>
     <div class="row g-3">
         <div class="col-12 col-md-4"><div class="bo-card">
@@ -506,13 +506,13 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div>
     <div class="bo-table-wrap"><div class="table-responsive">
         <table class="bo-table" data-bo-table="profHistorico">
-            <thead><tr><th><?php echo of_t('Competência'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Tipo'); ?></th><th>Cashback</th></tr></thead>
+            <thead><tr><th><?php echo of_t('Competência'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Tipo'); ?></th><th><?php echo of_t('Cashback'); ?></th></tr></thead>
             <tbody>
                 <?php foreach (($profHistorico ?? []) as $h): ?>
                     <tr>
                         <td><?php echo $ofH($h['competencia'] ?? '—'); ?></td>
                         <td><?php echo bo_money((float) ($h['valor'] ?? 0)); ?></td>
-                        <td><?php echo $ofH(ucfirst((string) ($h['tipo'] ?? '—'))); ?></td>
+                        <td><?php echo of_t(ucfirst((string) ($h['tipo'] ?? '—'))); ?></td>
                         <td><?php echo bo_money((float) ($h['cashback'] ?? 0)); ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -531,7 +531,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
         </button>
     </div>
     <div class="bo-filters">
-        <input type="search" class="form-control" style="max-width:300px" placeholder="Buscar aluno" data-bo-filter="search" data-bo-target="profAlunos">
+        <input type="search" class="form-control" style="max-width:300px" placeholder="<?php echo of_t('Buscar aluno'); ?>" data-bo-filter="search" data-bo-target="profAlunos">
         <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="profAlunos">
             <option value=""><?php echo of_t('Todos os status'); ?></option><option value="ativo"><?php echo of_t('Ativo'); ?></option><option value="inativo"><?php echo of_t('Inativo'); ?></option>
         </select>
@@ -551,7 +551,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         <td><?php echo bo_badge($a['status'] === 'ativo'); ?></td>
                         <td><?php echo bo_money((float) ($a['valor'] ?? 0)); ?></td>
                         <td><div class="bo-table-actions">
-                            <button type="button" class="btn-bo-icon" title="Editar vínculo"
+                            <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar vínculo'); ?>"
                                 data-bs-toggle="modal" data-bs-target="#ofAlunoModal" data-of-edit-student
                                 data-id="<?php echo (int) $a['id_vinculo']; ?>"
                                 data-name="<?php echo $ofH($a['nome']); ?>"
@@ -559,11 +559,11 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                                 data-observation="<?php echo $ofH($a['observacao'] ?? ''); ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <form method="post" action="?section=alunos" class="d-inline" data-of-confirm="Remover este aluno da sua lista?">
+                            <form method="post" action="?section=alunos" class="d-inline" data-of-confirm="<?php echo of_t('Remover este aluno da sua lista?'); ?>">
                                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                                 <input type="hidden" name="prof_action" value="excluir_vinculo">
                                 <input type="hidden" name="id_vinculo" value="<?php echo (int) $a['id_vinculo']; ?>">
-                                <button type="submit" class="btn-bo-icon danger" title="Excluir vínculo"><i class="bi bi-trash"></i></button>
+                                <button type="submit" class="btn-bo-icon danger" title="<?php echo of_t('Excluir vínculo'); ?>"><i class="bi bi-trash"></i></button>
                             </form>
                         </div></td>
                     </tr>
@@ -599,7 +599,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         <?php if (!empty($ag['local'])): ?> · <?php echo $ofH($ag['local']); ?><?php endif; ?>
                     </div>
                 </div>
-                <form method="post" action="?section=agenda" data-of-confirm="Cancelar este agendamento?">
+                <form method="post" action="?section=agenda" data-of-confirm="<?php echo of_t('Cancelar este agendamento?'); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                     <input type="hidden" name="prof_action" value="cancelar_agendamento">
                     <input type="hidden" name="id_agendamento" value="<?php echo (int) $ag['id_agendamento']; ?>">
@@ -620,11 +620,11 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         <?php echo $ofH($d['data']); ?><?php if (!empty($d['local'])): ?> · <?php echo $ofH($d['local']); ?><?php endif; ?>
                     </div>
                 </div>
-                <form method="post" action="?section=agenda" data-of-confirm="Remover este horário disponível?">
+                <form method="post" action="?section=agenda" data-of-confirm="<?php echo of_t('Remover este horário disponível?'); ?>">
                     <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                     <input type="hidden" name="prof_action" value="remover_disponibilidade">
                     <input type="hidden" name="id_disponibilidade" value="<?php echo (int) $d['id_disponibilidade']; ?>">
-                    <button type="submit" class="btn-bo-icon danger" title="Remover"><i class="bi bi-x-lg"></i></button>
+                    <button type="submit" class="btn-bo-icon danger" title="<?php echo of_t('Remover'); ?>"><i class="bi bi-x-lg"></i></button>
                 </form>
             </div>
         <?php endforeach; ?>
@@ -743,7 +743,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                 <div class="col-12 col-md-8"><label class="form-label"><?php echo of_t('Título'); ?></label><input class="form-control" name="titulo" maxlength="150" required></div>
                 <div class="col-12 col-md-4">
                     <label class="form-label"><?php echo of_t('Tipo'); ?></label>
-                    <select class="form-select" name="tipo"><option value="aula"><?php echo of_t('Aula'); ?></option><option value="personal">Personal</option><option value="avaliacao"><?php echo of_t('Avaliação'); ?></option><option value="consulta"><?php echo of_t('Consulta'); ?></option><option value="reuniao"><?php echo of_t('Reunião'); ?></option><option value="outro"><?php echo of_t('Outro'); ?></option></select>
+                    <select class="form-select" name="tipo"><option value="aula"><?php echo of_t('Aula'); ?></option><option value="personal"><?php echo of_t('Personal'); ?></option><option value="avaliacao"><?php echo of_t('Avaliação'); ?></option><option value="consulta"><?php echo of_t('Consulta'); ?></option><option value="reuniao"><?php echo of_t('Reunião'); ?></option><option value="outro"><?php echo of_t('Outro'); ?></option></select>
                 </div>
                 <div class="col-12 col-md-6"><label class="form-label"><?php echo of_t('Data'); ?></label><input type="date" class="form-control" name="data_evento" min="<?php echo date('Y-m-d'); ?>" required></div>
                 <div class="col-6 col-md-3"><label class="form-label"><?php echo of_t('Início'); ?></label><input type="time" class="form-control" name="hora_inicio" required></div>
@@ -767,7 +767,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                 <label class="form-label"><?php echo of_t('Valor'); ?></label>
                 <input type="number" class="form-control" name="valor" min="0.01" step="0.01"
                     max="<?php echo $ofH(number_format((float) ($profContrato['saldoCashback'] ?? 0), 2, '.', '')); ?>" required>
-                <small class="text-secondary">Saldo disponível: <?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></small>
+                <small class="text-secondary"><?php echo of_t('Saldo disponível:'); ?> <?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></small>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Confirmar uso'); ?></button></div>
         </form>
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
     alunoModal?.addEventListener('show.bs.modal', (event) => {
         const button = event.relatedTarget;
         const editing = button?.hasAttribute('data-of-edit-student');
-        document.getElementById('ofAlunoModalTitle').textContent = editing ? 'Editar vínculo' : 'Adicionar aluno';
+        document.getElementById('ofAlunoModalTitle').textContent = editing ? ofT('Editar vínculo') : ofT('Adicionar aluno');
         alunoAction.value = editing ? 'atualizar_vinculo' : 'vincular_aluno';
         alunoVinculo.value = editing ? button.dataset.id : '';
         alunoName.value = editing ? button.dataset.name : '';

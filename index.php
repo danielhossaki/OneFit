@@ -71,12 +71,12 @@ function onefit_tempo_aluno(string $dataCadastro): string
     $meses = $diff->y * 12 + $diff->m;
     if ($meses >= 12) {
         $anos = intdiv($meses, 12);
-        return $anos === 1 ? '1 ano' : $anos . ' anos';
+        return onefitTraduzir($anos === 1 ? '{n} ano' : '{n} anos', ['{n}' => $anos]);
     }
     if ($meses >= 1) {
-        return $meses === 1 ? '1 mês' : $meses . ' meses';
+        return onefitTraduzir($meses === 1 ? '{n} mês' : '{n} meses', ['{n}' => $meses]);
     }
-    return 'poucos dias';
+    return onefitTraduzir('poucos dias');
 }
 
 /* Comentários enviados pelos alunos (card "Comente aqui" no backoffice) e
@@ -111,7 +111,7 @@ if ($r = $conn->query(
             'texto' => $row['texto'],
             'nome' => $row['nome_exibido'] ?: $row['nome'],
             'role' => $row['tempo_exibido']
-                ?: (strtolower((string) $row['genero']) === 'feminino' ? 'Aluna' : 'Aluno') . ' há ' . onefit_tempo_aluno($row['data_cadastro']),
+                ?: onefitTraduzir('Aluno há {tempo}', ['{tempo}' => onefit_tempo_aluno($row['data_cadastro'])]),
             'foto' => bo_aluno_foto_url($row['foto'] ?? null),
         ];
     }
@@ -120,8 +120,13 @@ if (!$testemunhosHome) {
     $testemunhosHome = [
         ['texto' => 'Entrei sem nunca ter pegado num peso na vida. Em oito meses, os professores me ensinaram tudo, sem pressa e sem julgamento.', 'nome' => 'Mariana Alvez', 'role' => 'Aluna há 8 meses', 'foto' => ''],
         ['texto' => 'O CrossTraining daqui é outro nível. Turmas pequenas, WOD sempre diferente, e o pessoal se ajuda muito entre si.', 'nome' => 'Rafael Souza', 'role' => 'Aluno há 2 anos', 'foto' => ''],
-        ['texto' => 'Troquei três vezes de academia antes da ONE FIT. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.', 'nome' => 'Gabriely Rocha', 'role' => 'Aluna há 1 ano', 'foto' => ''],
+        ['texto' => 'Troquei três vezes de academia antes da {marca}. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.', 'nome' => 'Gabriely Rocha', 'role' => 'Aluna há 1 ano', 'foto' => ''],
     ];
+    foreach ($testemunhosHome as &$testemunhoExemplo) {
+        $testemunhoExemplo['texto'] = onefitTraduzir($testemunhoExemplo['texto']);
+        $testemunhoExemplo['role'] = onefitTraduzir($testemunhoExemplo['role']);
+    }
+    unset($testemunhoExemplo);
 }
 ?>
 
@@ -131,7 +136,7 @@ if (!$testemunhosHome) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('{marca} · Treino de Alta Performance', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+  <title><?php echo of_t('{marca} · Treino de Alta Performance', ['{marca}' => onefitMarca()['name']]); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- link da fonte -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -144,20 +149,25 @@ if (!$testemunhosHome) {
 <?php onefitInterfaceHead(); ?>
 </head>
 
-<body>
+<body class="home-page">
 
-  <header class="header" data-aos="fade-down" data-aos-delay="50">
+  <header class="header">
     <?php include  __DIR__ . '/components/navbar.php'; ?>
   </header>
 
-  <section class="hero" data-aos="fade-up">
+  <main id="conteudo">
+  <section class="hero">
     <span class="eyebrow"><?php echo of_t('Treino de alta performance'); ?></span>
     <h1><?php echo of_t('TREINE PARA'); ?><br><?php echo of_t('SER O'); ?> <span class="shine"><?php echo of_t('UM'); ?></span></h1>
-    <p class="lead"><?php echo of_t('Não existe segundo lugar no seu treino. Na ONE FIT você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.'); ?></p>
+    <p class="lead"><?php echo of_t('Treine com propósito. Evolua com método. Mais perto da sua melhor versão, todos os dias.'); ?></p>
     <div class="hero-actions">
       <a href="#planos" class="btn btn-gold"><?php echo of_t('Comece hoje'); ?></a>
       <a href="#modalidades" class="btn btn-outline"><?php echo of_t('Ver modalidades'); ?></a>
     </div>
+    <figure class="hero-media">
+      <img src="https://images.unsplash.com/photo-1689877020200-403d8542d95d?q=85&w=1800&auto=format&fit=crop" alt="<?php echo of_t('Espaço de treino e equipamentos da academia'); ?>" width="1800" height="1000" fetchpriority="high">
+      <figcaption><span><?php echo of_t('Estrutura'); ?></span><a href="#estrutura"><?php echo of_t('Conheça o espaço'); ?> <span aria-hidden="true">↗</span></a></figcaption>
+    </figure>
   </section>
 
   <div class="equip-marquee" data-aos="fade-up">
@@ -202,7 +212,7 @@ if (!$testemunhosHome) {
     </div>
 
     <div class="stat">
-      <div class="num">05h—23h</div>
+      <div class="num"><?php echo of_t('05h—23h'); ?></div>
       <div class="label"><?php echo of_t('Todos os dias'); ?></div>
     </div>
   </div>
@@ -219,7 +229,7 @@ if (!$testemunhosHome) {
       <div class="equip-grid">
 
         <div class="equip-item" data-aos="fade-right" data-aos-delay="50">
-          <img src="https://images.unsplash.com/photo-1637430308606-86576d8fef3c?q=80&w=800&auto=format&fit=crop" alt="Sala de musculação" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1637430308606-86576d8fef3c?q=80&w=800&auto=format&fit=crop" alt="<?php echo of_t('Sala de musculação'); ?>" loading="lazy">
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
@@ -229,7 +239,7 @@ if (!$testemunhosHome) {
         </div>
 
         <div class="equip-item" data-aos="fade-right" data-aos-delay="100">
-          <img src="https://images.unsplash.com/photo-1613845205719-8c87760ab728?q=80&w=800&auto=format&fit=crop" alt="Treino de força com halteres" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1613845205719-8c87760ab728?q=80&w=800&auto=format&fit=crop" alt="<?php echo of_t('Treino de força com halteres'); ?>" loading="lazy">
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
@@ -239,7 +249,7 @@ if (!$testemunhosHome) {
         </div>
 
         <div class="equip-item" data-aos="fade-right" data-aos-delay="200">
-          <img src="https://images.unsplash.com/photo-1734630341082-0fec0e10126c?q=80&w=800&auto=format&fit=crop" alt="Área de halteres" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1734630341082-0fec0e10126c?q=80&w=800&auto=format&fit=crop" alt="<?php echo of_t('Área de halteres'); ?>" loading="lazy">
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
@@ -249,7 +259,7 @@ if (!$testemunhosHome) {
         </div>
 
         <div class="equip-item" data-aos="fade-right" data-aos-delay="350">
-          <img src="https://images.unsplash.com/photo-1637870473618-8c9fa7d11f0a?q=80&w=800&auto=format&fit=crop" alt="Estúdio de spinning" loading="lazy">
+          <img src="https://images.unsplash.com/photo-1637870473618-8c9fa7d11f0a?q=80&w=800&auto=format&fit=crop" alt="<?php echo of_t('Estúdio de spinning'); ?>" loading="lazy">
           <div class="shade"></div>
           <span class="tagdot"></span>
           <div class="caption">
@@ -308,7 +318,7 @@ if (!$testemunhosHome) {
       <div class="plans">
 
         <?php foreach ($planosAtivos as $i => $p): ?>
-          <div class="plan<?php echo $i === 1 ? ' featured' : ''; ?>" data-aos="fade-up" data-aos-delay="<?php echo 50 + $i * 50; ?>">
+          <div data-featured-label="<?php echo of_t('Mais escolhido'); ?>" class="plan<?php echo $i === 1 ? ' featured' : ''; ?>" data-aos="fade-up" data-aos-delay="<?php echo 50 + $i * 50; ?>">
             <span class="plan-name"><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></span>
             <h3><?php echo htmlspecialchars($p['nome'], ENT_QUOTES, 'UTF-8'); ?></h3>
             <div class="price">R$<?php echo number_format($p['valor'], 0, ',', '.'); ?><span><?php echo of_t('/mês'); ?></span></div>
@@ -382,12 +392,13 @@ if (!$testemunhosHome) {
     </div>
   </section>
 
+  </main>
   <?php include __DIR__ . '/components/footer.php'; ?>
 
   <a class="whatsapp-float"
      href="<?php echo htmlspecialchars($whatsappUrl, ENT_QUOTES, 'UTF-8'); ?>"
      target="_blank" rel="noopener noreferrer"
-     aria-label="Converse com a OneFit pelo WhatsApp (abre em nova aba)">
+     aria-label="<?php echo of_t('Converse com a {marca} pelo WhatsApp (abre em nova aba)'); ?>">
     <span class="whatsapp-float-message" aria-hidden="true"><?php echo of_t('Fale conosco pelo WhatsApp!'); ?></span>
     <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor" aria-hidden="true" focusable="false">
       <path d="M20.52 3.48A11.87 11.87 0 0 0 12.05 0C5.46 0 .1 5.36 .1 11.95c0 2.1.55 4.16 1.6 5.98L0 24l6.24-1.64a11.94 11.94 0 0 0 5.8 1.48h.01C18.64 23.84 24 18.48 24 11.89c0-3.19-1.24-6.18-3.48-8.41zM12.05 21.82a9.9 9.9 0 0 1-5.04-1.38l-.36-.21-3.73.98.99-3.64-.23-.37a9.86 9.86 0 0 1-1.51-5.25c0-5.48 4.46-9.94 9.95-9.94a9.87 9.87 0 0 1 7.03 2.92 9.87 9.87 0 0 1 2.91 7.03c0 5.48-4.46 9.94-9.94 9.94zm5.45-7.44c-.3-.15-1.77-.87-2.04-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.17-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.13-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.49s1.07 2.89 1.22 3.09c.15.2 2.1 3.21 5.09 4.5.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.77-.72 2.02-1.42.25-.7.25-1.29.17-1.42-.07-.12-.27-.2-.57-.35z" />
@@ -395,18 +406,22 @@ if (!$testemunhosHome) {
   </a>
 
   <!-- Link para JavaScript -->
-  <script src="<?php echo BASE_URL; ?>assets/js/home.js"></script>
+  <script src="<?php echo BASE_URL; ?>assets/js/home.js?v=<?php echo filemtime(__DIR__ . '/assets/js/home.js'); ?>"></script>
 
   <!-- Link para animações AOS JS -->
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
   <!-- Animacão do AOS JS -->
   <script>
+    if (window.AOS) {
+    document.documentElement.classList.add('aos-initialized');
     AOS.init({
       duration: 800,
       once: true,
-      offset: 100
+      offset: 60,
+      disable: () => window.matchMedia('(prefers-reduced-motion: reduce)').matches
     });
+    }
   </script>
 
 </body>

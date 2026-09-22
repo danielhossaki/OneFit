@@ -158,7 +158,7 @@ if ($perfilLogado === 'admin') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo of_t('Painel · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+    <title><?php echo of_t('Painel · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -183,7 +183,7 @@ if ($perfilLogado === 'admin') {
     <?php onefitInterfaceHead(); ?>
 </head>
 
-<body>
+<body class="dashboard-page">
 
     <?php require __DIR__ . '/components/header.php'; ?>
     <?php require __DIR__ . '/components/sidebar.php'; ?>
@@ -194,7 +194,7 @@ if ($perfilLogado === 'admin') {
             unset($_SESSION['bo_flash']); ?>
             <div class="bo-notice" style="<?php echo $boFlash['type'] === 'error' ? 'border-color:#dc3545;' : ''; ?>">
                 <i class="bi <?php echo $boFlash['type'] === 'error' ? 'bi-exclamation-triangle' : 'bi-check-circle'; ?>"></i>
-                <div><span><?php echo htmlspecialchars($boFlash['text'], ENT_QUOTES, 'UTF-8'); ?></span></div>
+                <div><span><?php echo of_t($boFlash['text']); ?></span></div>
             </div>
         <?php endif; ?>
         <?php

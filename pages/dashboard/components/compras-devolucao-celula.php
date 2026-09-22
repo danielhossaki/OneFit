@@ -7,7 +7,7 @@
 $devolucao = $devolucoesPorPedido[$ped['idPedido']] ?? null;
 
 if ($devolucao) {
-    echo '<small>' . htmlspecialchars($devolucaoStatusLabel[$devolucao['status']] ?? ucfirst($devolucao['status'])) . '</small>';
+    echo '<small>' . of_t($devolucaoStatusLabel[$devolucao['status']] ?? ucfirst($devolucao['status'])) . '</small>';
 } elseif (bo_status_permite_devolucao($ped['statusBanco'])) {
     ?>
     <details>
@@ -17,7 +17,7 @@ if ($devolucao) {
             <?php echo bo_hidden('secao', 'compras'); ?>
             <?php echo bo_hidden('acao', 'solicitar-devolucao'); ?>
             <?php echo bo_hidden('id_pedido', $ped['idPedido']); ?>
-            <textarea name="motivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="Motivo da devolução" required></textarea>
+            <textarea name="motivo" class="form-control form-control-sm" rows="2" maxlength="1000" placeholder="<?php echo of_t('Motivo da devolução'); ?>" required></textarea>
             <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Solicitar devolução'); ?></button>
         </form>
     </details>

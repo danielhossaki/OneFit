@@ -148,7 +148,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marketplace · <?php echo mb_strtoupper(onefitNomeMarca()); ?></title>
+    <title><?php echo of_t('Marketplace ·'); ?> <?php echo mb_strtoupper(onefitNomeMarca()); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -163,18 +163,18 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <header class="mkt-header">
         <div class="mkt-logo">
             <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
-            <span><span data-brand-name><?php echo onefitBrandNameHtml(); ?></span> · Marketplace</span>
+            <span><span data-brand-name><?php echo onefitBrandNameHtml(); ?></span> <?php echo of_t('· Marketplace'); ?></span>
         </div>
 
         <div class="mkt-header-actions">
             <a class="mkt-icon-btn" href="<?php echo htmlspecialchars($mktVoltarUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="<?php echo of_t('Voltar'); ?>" title="<?php echo of_t('Voltar'); ?>">
                 <i class="bi bi-arrow-left"></i>
             </a>
-            <button type="button" class="mkt-icon-btn" aria-label="Favoritos" title="Favoritos" data-bs-toggle="offcanvas" data-bs-target="#mktFavoritosOffcanvas">
+            <button type="button" class="mkt-icon-btn" aria-label="<?php echo of_t('Favoritos'); ?>" title="<?php echo of_t('Favoritos'); ?>" data-bs-toggle="offcanvas" data-bs-target="#mktFavoritosOffcanvas">
                 <i class="bi bi-star-fill"></i>
                 <span class="mkt-icon-badge"><?php echo (int) $favoritosCount; ?></span>
             </button>
-            <a class="mkt-icon-btn" href="<?php echo BASE_URL; ?>pages/carrinho/carrinho.php" aria-label="Carrinho" title="Carrinho">
+            <a class="mkt-icon-btn" href="<?php echo BASE_URL; ?>pages/carrinho/carrinho.php" aria-label="<?php echo of_t('Carrinho'); ?>" title="<?php echo of_t('Carrinho'); ?>">
                 <i class="bi bi-cart3"></i>
                 <span class="mkt-icon-badge"><?php echo (int) $carrinhoCount; ?></span>
             </a>
@@ -184,7 +184,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <main class="mkt-main">
 
         <div class="mkt-page-title">
-            <h1>Marketplace <span data-brand-name><?php echo onefitBrandNameHtml(); ?></span></h1>
+            <h1><?php echo of_t('Marketplace'); ?> <span data-brand-name><?php echo onefitBrandNameHtml(); ?></span></h1>
             <p class="mkt-cashback-saldo"><?php echo of_t('Seu Cashback:'); ?> <strong><?php echo mkt_money($saldoCashback); ?></strong></p>
         </div>
 
@@ -227,7 +227,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 <?php endif; ?>
 
                                 <?php if ($produto['desconto'] > 0): ?>
-                                    <span class="mkt-badge-off"><?php echo (int) $produto['desconto']; ?>% OFF</span>
+                                    <span class="mkt-badge-off"><?php echo (int) $produto['desconto']; ?><?php echo of_t('% OFF'); ?></span>
                                 <?php endif; ?>
 
                                 <form method="POST" action="marketplace.php" class="mkt-fav-form">
@@ -235,7 +235,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                     <input type="hidden" name="form_acao" value="toggle_favorito">
                                     <input type="hidden" name="produto_id" value="<?php echo (int) $produto['id']; ?>">
                                     <input type="hidden" name="categoria" value="<?php echo htmlspecialchars($categoriaAtiva, ENT_QUOTES, 'UTF-8'); ?>">
-                                    <button type="submit" class="mkt-fav-btn<?php echo $isFavorito ? ' active' : ''; ?>" aria-label="Favoritar" title="Favoritar">
+                                    <button type="submit" class="mkt-fav-btn<?php echo $isFavorito ? ' active' : ''; ?>" aria-label="<?php echo of_t('Favoritar'); ?>" title="<?php echo of_t('Favoritar'); ?>">
                                         <i class="bi <?php echo $isFavorito ? 'bi-star-fill' : 'bi-star'; ?>"></i>
                                     </button>
                                 </form>
@@ -256,13 +256,13 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 <?php if ($produto['cashback'] > 0): ?>
                                     <div class="mkt-cashback-linha">
                                         <i class="bi bi-coin"></i>
-                                        Ganhe cashback: <?php echo mkt_money($produto['cashbackValor']); ?>
+                                        <?php echo of_t('Ganhe cashback:'); ?> <?php echo mkt_money($produto['cashbackValor']); ?>
                                     </div>
                                 <?php endif; ?>
 
                                 <div class="mkt-card-estoque">
                                     <i class="bi bi-box-seam"></i>
-                                    <?php echo (int) $produto['estoque']; ?> em estoque
+                                    <?php echo (int) $produto['estoque']; ?> <?php echo of_t('em estoque'); ?>
                                 </div>
 
                                 <div class="mkt-card-footer">
@@ -323,7 +323,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                             <?php echo mkt_csrf_field(); ?>
                             <input type="hidden" name="form_acao" value="toggle_favorito">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $fp['id']; ?>">
-                            <button type="submit" class="mkt-off-remove" title="Remover dos favoritos">
+                            <button type="submit" class="mkt-off-remove" title="<?php echo of_t('Remover dos favoritos'); ?>">
                                 <i class="bi bi-star-fill"></i>
                             </button>
                         </form>
@@ -362,7 +362,7 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         </div>
                         <?php if ($fp['cashback'] > 0): ?>
                             <div class="mkt-cashback-linha">
-                                <i class="bi bi-coin"></i> Ganhe cashback: <?php echo mkt_money($fp['cashbackValor']); ?>
+                                <i class="bi bi-coin"></i> <?php echo of_t('Ganhe cashback:'); ?> <?php echo mkt_money($fp['cashbackValor']); ?>
                             </div>
                         <?php endif; ?>
                     </div>

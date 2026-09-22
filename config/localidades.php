@@ -33,7 +33,7 @@ function onefitSelectLocalidade(string $id, string $name, string $value, string 
         echo '<option selected value="' . $escape($value) . '" data-country="' . $escape($code ?? '') . '">' . $escape($value) . '</option>';
     }
     foreach ($items as $code => $label) {
-        echo '<option value="' . $code . '"' . ($value === $code ? ' selected' : '') . '>' . $escape($label) . ' (' . $code . ')</option>';
+        echo '<option value="' . $code . '"' . ($value === $code ? ' selected' : '') . '>' . ($kind === 'country' && function_exists('of_t') ? of_t($label) : $escape($label)) . ' (' . $code . ')</option>';
     }
     echo '</select>';
 }

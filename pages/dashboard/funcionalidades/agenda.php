@@ -54,7 +54,12 @@ try {
         $stmt = $conn->prepare("INSERT INTO profissional_aluno (id_profissional, id_aluno, status) VALUES (?, ?, 'ativo') ON DUPLICATE KEY UPDATE status = 'ativo'");
         $stmt->bind_param('ii', $slot['id_profissional'], $idUsuario);
         $stmt->execute();
-        $message = 'Agendamento realizado com sucesso! Data: ' . date('d/m/Y', strtotime($date)) . ' • Horário: ' . substr($slot['hora_inicio'], 0, 5) . ' • Atendimento: ' . $slot['modalidade'] . ' • Profissional: ' . $slot['profissional'];
+        $message = onefitTraduzir('Agendamento realizado com sucesso! Data: {data} • Horário: {hora} • Atendimento: {atendimento} • Profissional: {profissional}', [
+            '{data}' => onefitData('d/m/Y', strtotime($date)),
+            '{hora}' => substr($slot['hora_inicio'], 0, 5),
+            '{atendimento}' => $slot['modalidade_label'] ?? $slot['modalidade'],
+            '{profissional}' => $slot['profissional'],
+        ]);
     }
     $conn->commit();
     bo_flash('success', $message);

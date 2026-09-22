@@ -21,7 +21,7 @@ $status = $_GET['status'] ?? '';
 if (!is_string($busca) || !is_string($status) || strlen($busca) > 600
     || !in_array($status, ['', 'aguardando', 'preparando', 'despachado', 'entregue', 'cancelado', 'devolvido', 'extraviado'], true)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Filtros inválidos.']);
+    echo json_encode(['error' => onefitTraduzir('Filtros inválidos.')]);
     exit;
 }
 $bufferLevel = ob_get_level();
@@ -41,5 +41,5 @@ try {
     }
     error_log('ONE FIT: falha na busca de compras; código ' . $erro->getCode());
     http_response_code(500);
-    echo json_encode(['error' => 'Não foi possível carregar as compras. Tente novamente.']);
+    echo json_encode(['error' => onefitTraduzir('Não foi possível carregar as compras. Tente novamente.')]);
 }

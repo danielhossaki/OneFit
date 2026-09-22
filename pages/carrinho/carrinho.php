@@ -30,7 +30,7 @@ function cart_csrf_field(): string
 
 function cart_money($v)
 {
-    return 'R$ ' . number_format((float) $v, 2, ',', '.');
+    return onefitMoeda((float) $v);
 }
 
 require_once __DIR__ . '/checkout.php';
@@ -287,7 +287,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo of_t('Carrinho · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+    <title><?php echo of_t('Carrinho · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -309,10 +309,10 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
     <header class="crt-header">
         <div class="crt-logo">
             <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
-            <span><?php echo of_t('One Fit · Carrinho'); ?></span>
+            <span><?php echo of_t('{marca} · Carrinho'); ?></span>
         </div>
 
-        <a class="crt-icon-btn" href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" aria-label="Voltar ao marketplace" title="Voltar ao marketplace">
+        <a class="crt-icon-btn" href="<?php echo BASE_URL; ?>pages/marketplace/marketplace.php" aria-label="<?php echo of_t('Voltar ao marketplace'); ?>" title="<?php echo of_t('Voltar ao marketplace'); ?>">
             <i class="bi bi-arrow-left"></i>
         </a>
     </header>
@@ -328,15 +328,15 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
         <?php endif; ?>
 
         <?php if ($erroFinalizar && empty($itens)): ?>
-            <div class="payment-error"><?php echo htmlspecialchars($erroCheckout ?: 'Não foi possível finalizar a compra. Revise o carrinho.', ENT_QUOTES, 'UTF-8'); ?></div>
+            <div class="payment-error"><?php echo of_t($erroCheckout ?: 'Não foi possível finalizar a compra. Revise o carrinho.'); ?></div>
         <?php endif; ?>
         <?php if ($pedidoConcluido): ?>
             <div class="crt-empty">
                 <i class="bi bi-check-circle"></i>
-                <p class="mb-0">Pedido <?php echo htmlspecialchars($pedidoConcluido['transacao']); ?> registrado com sucesso! Status: Aguardando.</p>
-                <p class="mb-0">Total do pedido: <?php echo cart_money($pedidoConcluido['total']); ?><?php if ($pedidoConcluido['cashbackUsado'] > 0): ?> (<?php echo cart_money($pedidoConcluido['cashbackUsado']); ?> em cashback) <?php endif; ?></p>
+                <p class="mb-0"><?php echo of_t('Pedido {pedido} registrado com sucesso! Status: Aguardando.', ['{pedido}' => $pedidoConcluido['transacao']]); ?></p>
+                <p class="mb-0"><?php echo of_t('Total do pedido:'); ?> <?php echo cart_money($pedidoConcluido['total']); ?><?php if ($pedidoConcluido['cashbackUsado'] > 0): ?> (<?php echo of_t('{valor} em cashback', ['{valor}' => cart_money($pedidoConcluido['cashbackUsado'])]); ?>) <?php endif; ?></p>
                 <?php if ($pedidoConcluido['cashbackGanho'] > 0): ?>
-                    <p class="mb-0">Você ganhou <?php echo cart_money($pedidoConcluido['cashbackGanho']); ?> de cashback nesta compra.</p>
+                    <p class="mb-0"><?php echo of_t('Você ganhou {valor} de cashback nesta compra.', ['{valor}' => cart_money($pedidoConcluido['cashbackGanho'])]); ?></p>
                 <?php endif; ?>
                 <div class="crt-confirmation-actions">
                     <a href="<?php echo BASE_URL; ?>pages/dashboard/dashboard.php?section=compras&amp;compra_finalizada=1" class="btn-crt-outline">
@@ -373,7 +373,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         <div class="crt-categoria"><?php echo htmlspecialchars($item['categoria']); ?></div>
                         <div class="crt-nome"><?php echo htmlspecialchars($item['nome']); ?></div>
                         <div class="crt-cashback">
-                            <i class="bi bi-coin"></i> Cashback: <?php echo cart_money($item['cashbackItem']); ?>
+                            <i class="bi bi-coin"></i> <?php echo of_t('Cashback:'); ?> <?php echo cart_money($item['cashbackItem']); ?>
                         </div>
                     </div>
 
@@ -382,14 +382,14 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                             <?php echo cart_csrf_field(); ?>
                             <input type="hidden" name="acao" value="decrementar">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
-                            <button type="submit" class="crt-qty-btn" aria-label="Diminuir quantidade">−</button>
+                            <button type="submit" class="crt-qty-btn" aria-label="<?php echo of_t('Diminuir quantidade'); ?>">−</button>
                         </form>
                         <span class="crt-qty-value"><?php echo (int) $item['quantidade']; ?></span>
                         <form method="POST" action="carrinho.php">
                             <?php echo cart_csrf_field(); ?>
                             <input type="hidden" name="acao" value="incrementar">
                             <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
-                            <button type="submit" class="crt-qty-btn" aria-label="Aumentar quantidade">+</button>
+                            <button type="submit" class="crt-qty-btn" aria-label="<?php echo of_t('Aumentar quantidade'); ?>">+</button>
                         </form>
                     </div>
 
@@ -399,7 +399,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                         <?php echo cart_csrf_field(); ?>
                         <input type="hidden" name="acao" value="remover">
                         <input type="hidden" name="produto_id" value="<?php echo (int) $item['id']; ?>">
-                        <button type="submit" class="crt-remove-btn" aria-label="Remover item" title="Remover item">
+                        <button type="submit" class="crt-remove-btn" aria-label="<?php echo of_t('Remover item'); ?>" title="<?php echo of_t('Remover item'); ?>">
                             <i class="bi bi-trash"></i>
                         </button>
                     </form>
@@ -421,11 +421,11 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <button type="button" class="checkout-open-primary" data-open-checkout="checkout-resumo"><i class="bi bi-bag-check"></i> <?php echo of_t('Abrir checkout'); ?></button>
                 </section>
 
-            <aside class="crt-checkout<?php echo $abrirCheckoutPagamento ? ' is-open' : ''; ?>" id="checkout-panel" aria-hidden="<?php echo $abrirCheckoutPagamento ? 'false' : 'true'; ?>" aria-label="Checkout">
-            <div class="checkout-panel-header"><strong>Checkout ONE FIT</strong><button class="checkout-close" type="button" aria-label="Fechar checkout"><i class="bi bi-x-lg"></i></button></div>
+            <aside class="crt-checkout<?php echo $abrirCheckoutPagamento ? ' is-open' : ''; ?>" id="checkout-panel" aria-hidden="<?php echo $abrirCheckoutPagamento ? 'false' : 'true'; ?>" aria-label="<?php echo of_t('Checkout'); ?>">
+            <div class="checkout-panel-header"><strong><?php echo of_t('Checkout {marca}'); ?></strong><button class="checkout-close" type="button" aria-label="<?php echo of_t('Fechar checkout'); ?>"><i class="bi bi-x-lg"></i></button></div>
 
             <?php if ($erroFinalizar): ?>
-                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> <?php echo htmlspecialchars($erroCheckout ?: 'Não foi possível finalizar a compra. Revise o carrinho e tente novamente.', ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> <?php echo of_t($erroCheckout ?: 'Não foi possível finalizar a compra. Revise o carrinho e tente novamente.'); ?></div>
             <?php endif; ?>
             <?php if ($erroSemEndereco): ?>
                 <div class="payment-error"><i class="bi bi-exclamation-triangle-fill"></i> <?php echo of_t('Escolha um endereço de entrega antes de finalizar a compra.'); ?></div>
@@ -455,7 +455,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <div class="crt-summary checkout-card checkout-step<?php echo $abrirCheckoutPagamento ? '' : ' is-active'; ?>" id="checkout-resumo">
                 <h2 class="checkout-title"><?php echo of_t('Resumo da compra'); ?></h2>
                 <div class="crt-summary-row">
-                    <span>Subtotal</span>
+                    <span><?php echo of_t('Subtotal'); ?></span>
                     <span><?php echo cart_money($totalGeral); ?></span>
                 </div>
                 <div class="crt-summary-row">
@@ -467,7 +467,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <span class="cashback-valor" id="resumo-cashback"><?php echo cart_money($cashbackTotal); ?></span>
                 </div>
                 <div class="crt-summary-row total">
-                    <span>Total</span>
+                    <span><?php echo of_t('Total'); ?></span>
                     <span id="total-final"><?php echo cart_money($totalComFrete); ?></span>
                 </div>
 
@@ -505,7 +505,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                     <?php echo cart_csrf_field(); ?>
                                     <input type="hidden" name="acao" value="delete">
                                     <input type="hidden" name="id" value="<?php echo (int) $end['id_endereco']; ?>">
-                                    <button type="submit" class="crt-remove-btn" aria-label="Excluir endereço" title="Excluir endereço"><i class="bi bi-trash"></i></button>
+                                    <button type="submit" class="crt-remove-btn" aria-label="<?php echo of_t('Excluir endereço'); ?>" title="<?php echo of_t('Excluir endereço'); ?>"><i class="bi bi-trash"></i></button>
                                 </form>
                             </div>
                         </div>
@@ -529,7 +529,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                             <label class="crt-frete-opcao<?php echo $freteInfo['escolhida'] === $opcao['id_transportadora'] ? ' is-selected' : ''; ?>">
                                 <input type="radio" name="transportadora_id" value="<?php echo (int) $opcao['id_transportadora']; ?>" <?php echo $freteInfo['escolhida'] === $opcao['id_transportadora'] ? 'checked' : ''; ?>>
                                 <span class="crt-frete-opcao-nome"><?php echo htmlspecialchars($opcao['nome']); ?> <small>(<?php echo htmlspecialchars(ucfirst($opcao['tipo'])); ?>)</small></span>
-                                <span class="crt-frete-opcao-prazo"><?php echo (int) $opcao['prazo_dias']; ?> dia(s)</span>
+                                <span class="crt-frete-opcao-prazo"><?php echo of_t((int) $opcao['prazo_dias'] === 1 ? '{n} dia' : '{n} dias', ['{n}' => (int) $opcao['prazo_dias']]); ?></span>
                                 <span class="crt-frete-opcao-valor"><?php echo cart_money($opcao['valor_frete']); ?></span>
                             </label>
                         <?php endforeach; ?>
@@ -546,9 +546,9 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <div class="checkout-card checkout-step" id="checkout-cashback">
                 <h2 class="checkout-title"><?php echo of_t('Usar meu cashback'); ?></h2>
                 <div class="cashback-disponivel"><span><?php echo of_t('Disponível'); ?></span><strong><?php echo cart_money($saldoCashback); ?></strong></div>
-                <div class="cashback-disponivel"><span>Máximo permitido nesta compra: <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
+                <div class="cashback-disponivel"><span><?php echo of_t('Máximo permitido nesta compra:'); ?> <?php echo cart_money($cashbackMaximoUsavel); ?></span></div>
 
-                <input type="range" class="cashback-range" id="cashback-range" name="cashback_usado" form="checkout-form" min="0" max="<?php echo $cashbackMaximoUsavel; ?>" step="0.01" value="<?php echo $cashbackAplicado; ?>" aria-label="Cashback a utilizar">
+                <input type="range" class="cashback-range" id="cashback-range" name="cashback_usado" form="checkout-form" min="0" max="<?php echo $cashbackMaximoUsavel; ?>" step="0.01" value="<?php echo $cashbackAplicado; ?>" aria-label="<?php echo of_t('Cashback a utilizar'); ?>">
                 <div class="cashback-range-value" id="cashback-range-value"><?php echo cart_money($cashbackAplicado); ?></div>
 
                 <div class="cashback-aplicado"><span><?php echo of_t('Aplicado'); ?></span><span id="cashback-aplicado-valor"><?php echo cart_money($cashbackAplicado); ?></span></div>
@@ -575,7 +575,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <input class="payment-input" type="text" inputmode="numeric" maxlength="19" placeholder="<?php echo of_t('Número do cartão'); ?>" name="cartao_numero" form="checkout-form">
                     <input class="payment-input" type="text" placeholder="<?php echo of_t('Nome impresso no cartão'); ?>" name="cartao_nome" form="checkout-form">
                     <div class="card-payment-row">
-                        <input class="payment-input" type="text" inputmode="numeric" maxlength="5" placeholder="Validade (MM/AA)" name="cartao_validade" form="checkout-form">
+                        <input class="payment-input" type="text" inputmode="numeric" maxlength="5" placeholder="<?php echo of_t('Validade (MM/AA)'); ?>" name="cartao_validade" form="checkout-form">
                         <input class="payment-input" type="text" inputmode="numeric" maxlength="4" placeholder="CVV" name="cartao_cvv" form="checkout-form">
                     </div>
                 </div>
@@ -601,7 +601,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                                 <input type="hidden" name="acao" value="create">
                                 <div class="col-12">
                                     <label class="form-label"><?php echo of_t('Apelido (opcional)'); ?></label>
-                                    <input type="text" class="form-control" name="apelido" placeholder="Casa, trabalho...">
+                                    <input type="text" class="form-control" name="apelido" placeholder="<?php echo of_t('Casa, trabalho...'); ?>">
                                 </div>
                                 <div class="col-4">
                                     <label class="form-label"><?php echo of_t('CEP'); ?></label>
@@ -674,7 +674,7 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             // (checkout.php) quando o formulário é enviado de verdade.
             const totalComFrete = <?php echo json_encode($totalComFrete); ?>;
             const cashbackRange = document.getElementById('cashback-range');
-            const formatBRL = valor => 'R$ ' + Number(valor).toFixed(2).replace('.', ',');
+            const formatBRL = valor => 'R$ ' + Number(valor).toLocaleString(OneFit.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const atualizarCashbackVisual = () => {
                 if (!cashbackRange) return;
                 const usado = Number(cashbackRange.value) || 0;
@@ -697,14 +697,14 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 checkoutForm.dataset.sending = '1';
                 const button = document.querySelector('.checkout-finish');
                 button.disabled = true;
-                button.textContent = 'Finalizando...';
+                button.textContent = ofT('Finalizando...');
             });
             window.addEventListener('pageshow', () => {
                 if (!checkoutForm) return;
                 delete checkoutForm.dataset.sending;
                 const button = document.querySelector('.checkout-finish');
                 button.disabled = pixLocalSemFrete && !document.getElementById('payPix').checked;
-                button.textContent = 'Finalizar compra';
+                button.textContent = ofT('Finalizar compra');
             });
 
             // Seleção de pagamento: os "botões" agora são <label for="..."> ligados a
@@ -716,13 +716,13 @@ $cartTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                 document.querySelector('.checkout-finish').disabled = pixLocalSemFrete && !pix;
                 document.getElementById('pix-payment').style.display = pix ? 'block' : 'none';
                 document.getElementById('card-payment').classList.toggle('show', !pix);
-                document.getElementById('payment-method-name').textContent = pix ? 'PIX' : 'cartão';
+                document.getElementById('payment-method-name').textContent = pix ? 'PIX' : ofT('cartão');
             }));
 
             const copyPixBtn = document.getElementById('copy-pix');
             if (copyPixBtn) {
                 copyPixBtn.addEventListener('click', async () => {
-                    try { await navigator.clipboard.writeText('onefit@pagamentos.com'); copyPixBtn.textContent = 'Chave copiada!'; } catch (e) { copyPixBtn.textContent = 'onefit@pagamentos.com'; }
+                    try { await navigator.clipboard.writeText('onefit@pagamentos.com'); copyPixBtn.textContent = ofT('Chave copiada!'); } catch (e) { copyPixBtn.textContent = 'onefit@pagamentos.com'; }
                 });
             }
         })();

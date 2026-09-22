@@ -139,7 +139,7 @@
         wrap.addEventListener('focusout', event => { if (!wrap.contains(event.relatedTarget)) setTimeout(() => { if (!wrap.contains(document.activeElement)) close(); }, 150); });
         document.addEventListener('pointerdown', event => { if (!wrap.contains(event.target)) close(); });
         select.addEventListener('change', sync);
-        select.addEventListener('invalid', event => { event.preventDefault(); input.setCustomValidity(select.validationMessage || t('Selecione uma opção válida.')); input.focus(); input.reportValidity(); });
+        select.addEventListener('invalid', event => { event.preventDefault(); input.setCustomValidity(t('Selecione uma opção válida.')); input.focus(); input.reportValidity(); });
         select.addEventListener('focus', () => input.focus());
         select.form?.addEventListener('reset', () => setTimeout(close));
         new MutationObserver(() => { sync(); if (!list.hidden) open(input.value); }).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled','selected'] });

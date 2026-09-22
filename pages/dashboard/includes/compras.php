@@ -74,8 +74,8 @@ function bo_buscar_pedidos_por_situacao(mysqli $conn, int $idUsuario, string $bu
                 'idPedido' => $idPedido,
                 'transacao' => 'TRX-' . str_pad((string) $idPedido, 4, '0', STR_PAD_LEFT),
                 'valor' => (float) $row['valor_total'],
-                'status' => $statusLabel[$row['status']] ?? ucfirst($row['status']),
-                'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
+                'status' => onefitTraduzir($statusLabel[$row['status']] ?? ucfirst($row['status'])),
+                'data' => onefitData('d/m/Y H:i', strtotime($row['data_pedido'])),
                 'statusBanco' => $row['status'],
                 'itens' => [],
                 // Mantido por compatibilidade com quem ainda espera um resumo em texto.
@@ -88,9 +88,9 @@ function bo_buscar_pedidos_por_situacao(mysqli $conn, int $idUsuario, string $bu
             'quantidade' => (int) $row['quantidade'],
             'vendedor' => $row['vendedor_nome'],
             'statusLogisticaBanco' => $row['status_logistica'],
-            'statusLogistica' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+            'statusLogistica' => onefitTraduzir($statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica'])),
             'confirmadoRecebimento' => (bool) $row['confirmado_recebimento'],
-            'confirmadoRecebimentoEm' => $row['confirmado_recebimento_em'] ? date('d/m/Y H:i', strtotime($row['confirmado_recebimento_em'])) : null,
+            'confirmadoRecebimentoEm' => $row['confirmado_recebimento_em'] ? onefitData('d/m/Y H:i', strtotime($row['confirmado_recebimento_em'])) : null,
             'codigoRastreio' => $row['codigo_rastreio'],
         ];
     }

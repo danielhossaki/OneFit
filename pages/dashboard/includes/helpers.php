@@ -27,7 +27,7 @@ function bo_badge($isActive, $onLabel = 'Ativo', $offLabel = 'Inativo')
  */
 function bo_money($v)
 {
-    return 'R$ ' . number_format($v, 2, ',', '.');
+    return onefitMoeda((float) $v);
 }
 
 /**

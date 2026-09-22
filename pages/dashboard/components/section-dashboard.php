@@ -35,17 +35,17 @@ foreach ($boSections[$perfilLogado] as $key => [$title, $description, $icon]):
 <section class="bo-content-section" data-perfil="<?php echo $perfilLogado; ?>" data-section="<?php echo $key; ?>">
     <?php if ($key === 'dashboard'): ?>
         <div class="bo-page-title bo-page-title-modern"><div><span class="bo-eyebrow"><i class="bi bi-sun"></i> <?php echo of_t('Visão geral'); ?></span><h1><?php echo $title; ?></h1><p><?php echo $description; ?></p></div></div>
-        <div class="bo-notice"><i class="bi bi-database"></i><div><strong><?php echo of_t('Conectando seus dados'); ?></strong><span>Os indicadores serão preenchidos assim que a leitura do banco de dados for integrada.</span></div></div>
+        <div class="bo-notice"><i class="bi bi-database"></i><div><strong><?php echo of_t('Conectando seus dados'); ?></strong><span><?php echo of_t('Os indicadores serão preenchidos assim que a leitura do banco de dados for integrada.'); ?></span></div></div>
         <div class="bo-metric-grid">
-            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-graph-up-arrow"></i></span><div><span class="bo-card-label"><?php echo of_t('Receita'); ?></span><strong>—</strong><small>Aguardando dados reais</small></div></article>
-            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-people"></i></span><div><span class="bo-card-label"><?php echo of_t('Pessoas ativas'); ?></span><strong>—</strong><small>Aguardando dados reais</small></div></article>
-            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-calendar3"></i></span><div><span class="bo-card-label"><?php echo of_t('Agenda'); ?></span><strong>—</strong><small>Aguardando dados reais</small></div></article>
-            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-wallet2"></i></span><div><span class="bo-card-label">Cashback</span><strong>—</strong><small>Aguardando dados reais</small></div></article>
+            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-graph-up-arrow"></i></span><div><span class="bo-card-label"><?php echo of_t('Receita'); ?></span><strong>—</strong><small><?php echo of_t('Aguardando dados reais'); ?></small></div></article>
+            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-people"></i></span><div><span class="bo-card-label"><?php echo of_t('Pessoas ativas'); ?></span><strong>—</strong><small><?php echo of_t('Aguardando dados reais'); ?></small></div></article>
+            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-calendar3"></i></span><div><span class="bo-card-label"><?php echo of_t('Agenda'); ?></span><strong>—</strong><small><?php echo of_t('Aguardando dados reais'); ?></small></div></article>
+            <article class="bo-metric-card"><span class="bo-metric-icon"><i class="bi bi-wallet2"></i></span><div><span class="bo-card-label"><?php echo of_t('Cashback'); ?></span><strong>—</strong><small><?php echo of_t('Aguardando dados reais'); ?></small></div></article>
         </div>
-        <div class="bo-data-panel bo-empty-panel"><i class="bi bi-bar-chart-line"></i><h2><?php echo of_t('Sem dados para exibir'); ?></h2><p>Não mostramos números de exemplo. Quando o banco estiver conectado, os indicadores e gráficos aparecerão aqui.</p></div>
+        <div class="bo-data-panel bo-empty-panel"><i class="bi bi-bar-chart-line"></i><h2><?php echo of_t('Sem dados para exibir'); ?></h2><p><?php echo of_t('Não mostramos números de exemplo. Quando o banco estiver conectado, os indicadores e gráficos aparecerão aqui.'); ?></p></div>
     <?php else: ?>
         <div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-sun"></i> ONE FIT</span><h1><?php echo $title; ?></h1><p><?php echo $description; ?></p></div></div>
-        <div class="bo-data-panel bo-empty-panel"><i class="bi <?php echo $icon; ?>"></i><h2><?php echo of_t('Nenhum dado carregado'); ?></h2><p>Esta área está pronta para receber os dados reais do banco.</p></div>
+        <div class="bo-data-panel bo-empty-panel"><i class="bi <?php echo $icon; ?>"></i><h2><?php echo of_t('Nenhum dado carregado'); ?></h2><p><?php echo of_t('Esta área está pronta para receber os dados reais do banco.'); ?></p></div>
     <?php endif; ?>
 </section>
 <?php endforeach; ?>

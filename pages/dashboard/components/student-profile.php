@@ -5,7 +5,7 @@ $imcAluno = bo_aluno_imc($usuarioDashboard['altura'], $usuarioDashboard['peso'])
 $fotoAluno = bo_aluno_foto_url($usuarioDashboard['foto']);
 $fotoAmpliavel = bo_aluno_foto_ampliavel($usuarioDashboard['foto']);
 $resumoAluno = [
-    ['Gênero', ucfirst($usuarioDashboard['genero'] ?: onefitTraduzir('Não informado')), 'bi-person'],
+    ['Gênero', onefitTraduzir(ucfirst($usuarioDashboard['genero'] ?: 'Não informado')), 'bi-person'],
     ['Altura', bo_aluno_medida($usuarioDashboard['altura'], 3) ? number_format((float) $usuarioDashboard['altura'], 2, ',', '.') . ' m' : onefitTraduzir('Não informado'), 'bi-rulers'],
     ['Peso', bo_aluno_medida($usuarioDashboard['peso'], 500) ? number_format((float) $usuarioDashboard['peso'], 1, ',', '.') . ' kg' : onefitTraduzir('Não informado'), 'bi-speedometer2'],
     ['IMC', $imcAluno['valor'] === null ? onefitTraduzir('Não informado') : number_format($imcAluno['valor'], 1, ',', '.') . ' · ' . $imcAluno['classe'], 'bi-heart-pulse'],
@@ -48,7 +48,7 @@ $resumoAluno = [
                 <div class="bo-student-details">
                     <h2 id="boProfileName"><?php echo bo_val($usuarioDashboard['nome']); ?></h2>
                     <p id="boProfileEmail"><?php echo bo_val($usuarioDashboard['email']); ?></p>
-                    <p id="boProfileId">ID: #<?php echo str_pad((string) $_SESSION['id_usuario'], 4, '0', STR_PAD_LEFT); ?></p>
+                    <p id="boProfileId"><?php echo of_t('ID: #'); ?><?php echo str_pad((string) $_SESSION['id_usuario'], 4, '0', STR_PAD_LEFT); ?></p>
                     <div class="bo-student-metrics">
                         <?php foreach ($resumoAluno as [$label, $value, $icon]): ?>
                             <div class="bo-student-metric"><span><i class="bi <?php echo $icon; ?>"></i> <?php echo of_t($label); ?></span><strong><?php echo bo_val($value); ?></strong></div>
@@ -64,7 +64,7 @@ $resumoAluno = [
                     <div class="bo-testemunho-titulo"><i class="bi bi-star-fill"></i> <?php echo of_t('Comente aqui'); ?></div>
                     <?php if ($alunoTestemunho ?? null): ?>
                         <?php $boStatusLabel = ['pendente' => 'Em análise', 'aprovado' => 'Aprovado', 'reprovado' => 'Não aprovado']; ?>
-                        <p class="bo-testemunho-status"><?php echo of_t('Status atual'); ?>: <strong><?php echo $boStatusLabel[$alunoTestemunho['aprovacao']] ?? ucfirst($alunoTestemunho['aprovacao']); ?></strong></p>
+                        <p class="bo-testemunho-status"><?php echo of_t('Status atual'); ?>: <strong><?php echo of_t($boStatusLabel[$alunoTestemunho['aprovacao']] ?? ucfirst($alunoTestemunho['aprovacao'])); ?></strong></p>
                     <?php endif; ?>
                     <form method="POST" action="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/funcionalidades/testemunho.php', ENT_QUOTES, 'UTF-8'); ?>">
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">

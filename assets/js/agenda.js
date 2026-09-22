@@ -5,7 +5,7 @@ document.querySelectorAll('.bo-agenda-booking').forEach(form => {
     const professional = form.querySelector('[data-agenda-professional]');
     const times = form.querySelector('[data-agenda-times]');
     const submit = form.querySelector('[type="submit"]');
-    [...new Set(slots.map(slot => slot.modalidade))].forEach(label => type.add(new Option(label, label)));
+    [...new Set(slots.map(slot => slot.modalidade))].forEach(label => type.add(new Option(slots.find(slot => slot.modalidade === label)?.modalidade_label || label, label)));
     function renderTimes() {
         times.replaceChildren();
         submit.disabled = true;

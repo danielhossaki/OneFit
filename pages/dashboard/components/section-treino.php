@@ -20,7 +20,7 @@
         <?php $boPrimeiroDia = true; ?>
         <?php foreach (bo_treino_dias() as $valor => $dia): ?>
             <li class="nav-item" role="presentation">
-                <button class="nav-link<?php echo $boPrimeiroDia ? ' active' : ''; ?>" data-bs-toggle="tab" data-bs-target="#boTreinoDiaTab-<?php echo $valor; ?>" type="button" role="tab"><?php echo $dia; ?></button>
+                <button class="nav-link<?php echo $boPrimeiroDia ? ' active' : ''; ?>" data-bs-toggle="tab" data-bs-target="#boTreinoDiaTab-<?php echo $valor; ?>" type="button" role="tab"><?php echo of_t($dia); ?></button>
             </li>
             <?php $boPrimeiroDia = false; ?>
         <?php endforeach; ?>
@@ -46,7 +46,7 @@
                             <tbody data-treino-linhas="<?php echo $valor; ?>">
                                 <?php foreach ($boExerciciosDoDia as $exercicio): ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($exercicio['nome']); ?></td>
+                                        <td><?php echo of_t($exercicio['nome']); ?></td>
                                         <td><?php echo (int) $exercicio['series']; ?></td>
                                         <td><?php echo (int) $exercicio['repeticoes']; ?></td>
                                         <td><?php echo (int) $exercicio['carga']; ?> kg</td>
@@ -90,7 +90,7 @@
                         <select class="form-select" name="dia_semana" id="boTreinoDia" required>
                             <option value="" disabled><?php echo of_t('Selecione um dia'); ?></option>
                             <?php foreach (bo_treino_dias() as $valor => $dia): ?>
-                                <option value="<?php echo $valor; ?>" <?php echo $valor === 'segunda' ? 'selected' : ''; ?>><?php echo $dia; ?></option>
+                                <option value="<?php echo $valor; ?>" <?php echo $valor === 'segunda' ? 'selected' : ''; ?>><?php echo of_t($dia); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -99,15 +99,15 @@
                         <select class="form-select" name="nome" id="boTreinoNome" required>
                             <option value=""><?php echo of_t('Selecione um exercício'); ?></option>
                             <?php foreach (bo_treino_catalogo() as $grupo => $nomes): ?>
-                                <optgroup label="<?php echo htmlspecialchars($grupo); ?>">
-                                    <?php foreach ($nomes as $nome): ?><option><?php echo htmlspecialchars($nome); ?></option><?php endforeach; ?>
+                                <optgroup label="<?php echo of_t($grupo); ?>">
+                                    <?php foreach ($nomes as $nome): ?><option value="<?php echo htmlspecialchars($nome, ENT_QUOTES, 'UTF-8'); ?>"><?php echo of_t($nome); ?></option><?php endforeach; ?>
                                 </optgroup>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     <?php foreach (['series' => ['Séries', 1, 10, 3], 'repeticoes' => ['Repetições', 1, 50, 12], 'carga' => ['Carga (kg)', 0, 300, 0]] as $campo => [$label, $minimo, $maximo, $padrao]): ?>
                         <div class="col-12 col-sm-4">
-                            <label class="form-label" for="boTreino-<?php echo $campo; ?>"><?php echo $label; ?></label>
+                            <label class="form-label" for="boTreino-<?php echo $campo; ?>"><?php echo of_t($label); ?></label>
                             <select class="form-select" name="<?php echo $campo; ?>" id="boTreino-<?php echo $campo; ?>" required>
                                 <?php for ($valor = $minimo; $valor <= $maximo; $valor++): ?>
                                     <option value="<?php echo $valor; ?>" <?php echo $valor === $padrao ? 'selected' : ''; ?>><?php echo $valor . ($campo === 'carga' ? ' kg' : ''); ?></option>

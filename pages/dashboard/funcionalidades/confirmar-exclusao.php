@@ -34,7 +34,7 @@ $recursosPermitidos = [
 
 $recurso = (string) ($_GET['recurso'] ?? '');
 $id = (int) ($_GET['id'] ?? 0);
-$nome = (string) ($_GET['nome'] ?? 'este registro');
+$nome = (string) ($_GET['nome'] ?? onefitTraduzir('este registro'));
 $secao = (string) ($_GET['secao'] ?? 'dashboard');
 
 if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
@@ -48,7 +48,7 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo of_t('Confirmar exclusão · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+    <title><?php echo of_t('Confirmar exclusão · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
@@ -61,24 +61,24 @@ if (!isset($recursosPermitidos[$recurso]) || $id <= 0) {
 <?php onefitInterfaceHead(); ?>
 </head>
 
-<body>
+<body class="dashboard-page">
     <main class="bo-main" style="margin-left:0;max-width:520px;padding:48px 24px;">
         <div class="bo-data-panel" style="padding:32px;">
             <div class="bo-page-title">
                 <div>
                     <span class="bo-eyebrow"><i class="bi bi-exclamation-triangle"></i> <?php echo of_t('Ação irreversível'); ?></span>
-                    <h1>Excluir <?php echo htmlspecialchars($nome, ENT_QUOTES, 'UTF-8'); ?>?</h1>
+                    <h1><?php echo of_t('Excluir {nome}?', ['{nome}' => $nome]); ?></h1>
                     <p><?php echo of_t('Essa exclusão remove o registro definitivamente do banco de dados e não pode ser desfeita.'); ?></p>
                 </div>
             </div>
 
-            <form method="POST" action="<?php echo BASE_URL . 'pages/dashboard/funcionalidades/' . $recursosPermitidos[$recurso]; ?>" style="display:flex; gap:12px; margin-top:20px;">
+            <form class="bo-confirm-actions" method="POST" action="<?php echo BASE_URL . 'pages/dashboard/funcionalidades/' . $recursosPermitidos[$recurso]; ?>" style="display:flex; gap:12px; margin-top:20px;">
                 <input type="hidden" name="acao" value="delete">
                 <input type="hidden" name="id" value="<?php echo $id; ?>">
                 <input type="hidden" name="secao" value="<?php echo htmlspecialchars($secao, ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                 <a class="btn-bo-outline" style="flex:1; text-align:center;" href="<?php echo BASE_URL . 'pages/dashboard/dashboard.php?section=' . urlencode($secao); ?>"><?php echo of_t('Cancelar'); ?></a>
-                <button type="submit" class="btn-bo-gold" style="flex:1; background:#dc3545; border-color:#dc3545; color:#fff;">
+                <button type="submit" class="btn-bo-outline btn-bo-danger" style="flex:1;">
                     <i class="bi bi-trash"></i> <?php echo of_t('Sim, excluir'); ?>
                 </button>
             </form>

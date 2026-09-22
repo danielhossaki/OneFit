@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/interface.php';
 
 function onefitAppUrl(): string
 {
@@ -58,17 +59,17 @@ function onefitEnviarEmail(string $destinatario, string $nomeDestinatario, strin
 
 function onefitTemplateEmail(string $nome, string $texto, string $textoBotao, string $link, string $rodape): string
 {
-    $nomeSeguro = htmlspecialchars($nome, ENT_QUOTES, 'UTF-8');
-    $textoSeguro = htmlspecialchars($texto, ENT_QUOTES, 'UTF-8');
-    $botaoSeguro = htmlspecialchars($textoBotao, ENT_QUOTES, 'UTF-8');
+    $saudacao = of_t('Olá, {nome}!', ['{nome}' => $nome]);
+    $textoSeguro = of_t($texto);
+    $botaoSeguro = of_t($textoBotao);
     $linkSeguro = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
-    $rodapeSeguro = htmlspecialchars($rodape, ENT_QUOTES, 'UTF-8');
+    $rodapeSeguro = of_t($rodape);
 
-    return '<!DOCTYPE html><html lang="pt-BR"><body style="margin:0;background:#171411;font-family:Arial,sans-serif;color:#f3ede2">'
+    return '<!DOCTYPE html><html lang="' . onefitIdioma() . '"><body style="margin:0;background:#171411;font-family:Arial,sans-serif;color:#f3ede2">'
         . '<table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" style="padding:32px 16px">'
         . '<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;background:#211d19;border:1px solid #403730;border-radius:12px">'
-        . '<tr><td style="padding:36px"><div style="font-size:28px;font-weight:800;letter-spacing:1px">ONE<span style="color:#d6bc75">FIT</span></div>'
-        . '<h1 style="margin:28px 0 12px;font-size:28px">Olá, ' . $nomeSeguro . '!</h1>'
+        . '<tr><td style="padding:36px"><div style="font-size:28px;font-weight:800;letter-spacing:1px">' . onefitNomeMarca() . '</div>'
+        . '<h1 style="margin:28px 0 12px;font-size:28px">' . $saudacao . '</h1>'
         . '<p style="margin:0 0 28px;line-height:1.7;color:#c9c0b7">' . $textoSeguro . '</p>'
         . '<p style="margin:0 0 28px"><a href="' . $linkSeguro . '" style="display:inline-block;padding:14px 20px;border-radius:6px;background:#d6bc75;color:#1a1613;text-decoration:none;font-weight:700">' . $botaoSeguro . '</a></p>'
         . '<p style="margin:0;color:#a79b90;font-size:13px;line-height:1.6">' . $rodapeSeguro . '</p>'
@@ -80,13 +81,13 @@ function onefitEnviarVerificacaoEmail(string $email, string $nome, string $token
     $link = onefitAppUrl() . '/pages/auth/email/verificar-email.php?token=' . rawurlencode($token);
     $html = onefitTemplateEmail(
         $nome,
-        'Seu cadastro na OneFit foi realizado. Para confirmar seu endereço de e-mail, clique no botão abaixo.',
+        'Seu cadastro na {marca} foi realizado. Para confirmar seu endereço de e-mail, clique no botão abaixo.',
         'Confirmar meu e-mail',
         $link,
         'Este link expira em 24 horas. Se você não realizou este cadastro, ignore este e-mail.'
     );
 
-    return onefitEnviarEmail($email, $nome, 'Confirme seu e-mail - OneFit', $html);
+    return onefitEnviarEmail($email, $nome, onefitTraduzir('Confirme seu e-mail - {marca}'), $html);
 }
 
 function onefitEnviarRedefinicaoSenha(string $email, string $nome, string $token): bool
@@ -100,5 +101,5 @@ function onefitEnviarRedefinicaoSenha(string $email, string $nome, string $token
         'Este link expira em 30 minutos. Se você não solicitou a alteração, ignore este e-mail. Sua senha permanecerá a mesma.'
     );
 
-    return onefitEnviarEmail($email, $nome, 'Redefinição de senha - OneFit', $html);
+    return onefitEnviarEmail($email, $nome, onefitTraduzir('Redefinição de senha - {marca}'), $html);
 }

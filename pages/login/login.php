@@ -6,7 +6,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 
 $mensagensLogin = [
   '1' => ['tipo' => 'erro', 'texto' => onefitTraduzir('E-mail ou senha incorretos. Confira os dados e tente novamente.')],
-  '2' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT caso deseja reativar sua conta.')],
+  '2' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Sua conta está inativa ou bloqueada. Entre em contato com a {marca} caso deseja reativar sua conta.')],
   '3' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Preencha o e-mail e a senha para entrar.')],
   '4' => ['tipo' => 'sucesso', 'texto' => onefitTraduzir('Cadastro realizado com sucesso! Agora você já pode entrar.')],
   '5' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Digite um endereço de e-mail válido.')],
@@ -104,7 +104,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Entrar · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+  <title><?php echo of_t('Entrar · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -120,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body class="login-body"
   <?php if ($mensagemLogin): ?>
-    data-form-message="<?php echo htmlspecialchars($mensagemLogin['texto'], ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message="<?php echo of_t($mensagemLogin['texto']); ?>"
     data-form-message-type="<?php echo htmlspecialchars($mensagemLogin['tipo'], ENT_QUOTES, 'UTF-8'); ?>"
   <?php endif; ?>>
 
@@ -168,7 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <label for="password"><?php echo of_t('Senha'); ?></label>
             <div class="password-wrap">
               <input type="password" id="password" name="password" placeholder="••••••••" required>
-              <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
+              <button type="button" class="toggle-password" aria-label="<?php echo of_t('Mostrar senha'); ?>" aria-pressed="false" data-target="password">
                 <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" />
                   <circle cx="12" cy="12" r="3.2" />

@@ -405,7 +405,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Matrícula · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+  <title><?php echo of_t('Matrícula · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <!-- Fontes usadas pela identidade visual da página. -->
   <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -422,7 +422,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body class="login-body"
   <?php if ($mensagemMatricula): ?>
-    data-form-message="<?php echo htmlspecialchars($mensagemMatricula, ENT_QUOTES, 'UTF-8'); ?>"
+    data-form-message="<?php echo of_t($mensagemMatricula); ?>"
     data-form-message-type="erro"
   <?php endif; ?>>
 
@@ -452,7 +452,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         <a href="<?php echo BASE_URL; ?>index.php" class="login-logo login-logo-mobile"><?php echo onefitWordmarkHtml(); ?></a>
 
-        <span class="tag"><?php echo of_t('Junte-se à ONE FIT'); ?></span>
+        <span class="tag"><?php echo of_t('Junte-se à {marca}'); ?></span>
         <h1><?php echo of_t('Matrícula'); ?></h1>
         <p class="login-subtitle" id="step-subtitle"><?php echo of_t('Preencha seus dados para começar a treinar com a gente.'); ?></p>
 
@@ -482,7 +482,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="field">
               <label for="nome"><?php echo of_t('Nome completo'); ?></label>
-              <input type="text" id="nome" name="nome" placeholder="Seu nome" required>
+              <input type="text" id="nome" name="nome" placeholder="<?php echo of_t('Seu nome'); ?>" required>
             </div>
 
             <div class="field-row">
@@ -523,8 +523,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <div class="field">
                 <label for="password"><?php echo of_t('Senha'); ?></label>
                 <div class="password-wrap">
-                  <input type="password" id="password" name="password" placeholder="Mínimo de 8 caracteres" minlength="8" required>
-                  <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="password">
+                  <input type="password" id="password" name="password" placeholder="<?php echo of_t('Mínimo de 8 caracteres'); ?>" minlength="8" required>
+                  <button type="button" class="toggle-password" aria-label="<?php echo of_t('Mostrar senha'); ?>" aria-pressed="false" data-target="password">
                     <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" />
                       <circle cx="12" cy="12" r="3.2" />
@@ -540,8 +540,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <div class="field">
                 <label for="confirmar-senha"><?php echo of_t('Confirmar senha'); ?></label>
                 <div class="password-wrap">
-                  <input type="password" id="confirmar-senha" name="confirmar_senha" placeholder="Repita sua senha" minlength="8" required>
-                  <button type="button" class="toggle-password" aria-label="Mostrar senha" aria-pressed="false" data-target="confirmar-senha">
+                  <input type="password" id="confirmar-senha" name="confirmar_senha" placeholder="<?php echo of_t('Repita sua senha'); ?>" minlength="8" required>
+                  <button type="button" class="toggle-password" aria-label="<?php echo of_t('Mostrar senha'); ?>" aria-pressed="false" data-target="confirmar-senha">
                     <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
                       <path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" />
                       <circle cx="12" cy="12" r="3.2" />
@@ -575,17 +575,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             <div class="field">
               <label for="endereco"><?php echo of_t('Endereço'); ?></label>
-              <input type="text" id="endereco" name="endereco" placeholder="Rua, avenida..." required>
+              <input type="text" id="endereco" name="endereco" placeholder="<?php echo of_t('Rua, avenida...'); ?>" required>
             </div>
 
             <div class="field-row">
               <div class="field">
                 <label for="numero"><?php echo of_t('Número'); ?></label>
-                <input type="text" id="numero" name="numero" placeholder="Nº" required>
+                <input type="text" id="numero" name="numero" placeholder="<?php echo of_t('Nº'); ?>" required>
               </div>
               <div class="field">
                 <label for="complemento"><?php echo of_t('Complemento'); ?></label>
-                <input type="text" id="complemento" name="complemento" placeholder="Apto, bloco... (opcional)">
+                <input type="text" id="complemento" name="complemento" placeholder="<?php echo of_t('Apto, bloco... (opcional)'); ?>">
               </div>
             </div>
 
@@ -598,7 +598,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
               <div class="field">
                 <label for="cidade"><?php echo of_t('Cidade'); ?></label>
                 <div class="city-combobox">
-                  <input type="text" id="cidade" name="cidade" placeholder="Selecione primeiro um estado"
+                  <input type="text" id="cidade" name="cidade" placeholder="<?php echo of_t('Selecione primeiro um estado'); ?>"
                     autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
                     aria-controls="cidade-sugestoes" data-city-selected="" disabled required>
                   <div id="cidade-sugestoes" class="city-suggestions" role="listbox" hidden></div>
@@ -666,13 +666,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
               <div class="field">
                 <label for="cartao-nome"><?php echo of_t('Nome impresso no cartão'); ?></label>
-                <input type="text" id="cartao-nome" name="cartao_nome" placeholder="Como está no cartão">
+                <input type="text" id="cartao-nome" name="cartao_nome" placeholder="<?php echo of_t('Como está no cartão'); ?>">
               </div>
 
               <div class="field-row">
                 <div class="field">
                   <label for="cartao-validade"><?php echo of_t('Validade'); ?></label>
-                  <input type="text" id="cartao-validade" name="cartao_validade" placeholder="MM/AA" inputmode="numeric" maxlength="5">
+                  <input type="text" id="cartao-validade" name="cartao_validade" placeholder="<?php echo of_t('MM/AA'); ?>" inputmode="numeric" maxlength="5">
                 </div>
                 <div class="field">
                   <label for="cartao-cvv">CVV</label>

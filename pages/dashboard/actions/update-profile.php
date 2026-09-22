@@ -94,7 +94,7 @@ if (!array_key_exists($estado, onefitEstados())) {
 $dataNascimento = DateTime::createFromFormat('!Y-m-d', $nascimento);
 $dataMinima = (new DateTime('today'))->modify('-12 years');
 if (!$dataNascimento || $dataNascimento->format('Y-m-d') !== $nascimento || $dataNascimento > $dataMinima) {
-    bo_flash('error', onefitTraduzir('Para manter seu perfil na ONE FIT, você precisa ter pelo menos 12 anos.'));
+    bo_flash('error', onefitTraduzir('Para manter seu perfil na {marca}, você precisa ter pelo menos 12 anos.'));
     bo_redirect_perfil();
 }
 if (($altura !== null && ($altura === false || $altura <= 0 || $altura > 3)) ||

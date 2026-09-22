@@ -65,7 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><?php echo of_t('Alterar senha · {marca}', ['{marca}' => mb_strtoupper(onefitMarca()['name'])]); ?></title>
+  <title><?php echo of_t('Alterar senha · {marca}', ['{marca}' => onefitMarca()['name']]); ?></title>
   <script>
     (() => { let p = 'dark'; try { p = localStorage.getItem('onefit-theme') || p; } catch (e) {} const t = p === 'system' ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark') : p; document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); })();
   </script>
@@ -74,17 +74,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/home.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/login.css">
   <link rel="icon" data-brand-logo href="<?php echo onefitLogo(); ?>" type="image/x-icon">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/dashboard.css?v=<?php echo filemtime(__DIR__ . '/../../assets/css/dashboard.css'); ?>">
 <?php onefitInterfaceHead(); ?>
 </head>
-<body class="login-body">
+<body class="login-body dashboard-page dashboard-account">
   <main class="login-page">
     <section class="login-form-panel" style="grid-column: 1 / -1;">
       <div class="login-form-wrap">
         <span class="tag"><?php echo of_t('Segurança da conta'); ?></span>
         <h1><?php echo of_t('Alterar senha'); ?></h1>
         <p class="login-subtitle"><?php echo of_t('Use sua senha atual para definir uma nova senha de acesso.'); ?></p>
-        <?php if ($erro): ?><p class="form-msg form-msg-erro" style="position:static;transform:none;width:auto;"> <?php echo htmlspecialchars($erro, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
-        <?php if ($sucesso): ?><p class="form-msg form-msg-sucesso" style="position:static;transform:none;width:auto;"> <?php echo htmlspecialchars($sucesso, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
+        <?php if ($erro): ?><p class="form-msg form-msg-erro" style="position:static;transform:none;width:auto;"> <?php echo of_t($erro); ?></p><?php endif; ?>
+        <?php if ($sucesso): ?><p class="form-msg form-msg-sucesso" style="position:static;transform:none;width:auto;"> <?php echo of_t($sucesso); ?></p><?php endif; ?>
         <form class="login-form" method="POST" action="<?php echo BASE_URL; ?>pages/dashboard/alterar-senha.php">
           <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
           <div class="field"><label for="senha_atual"><?php echo of_t('Senha atual'); ?></label><input type="password" id="senha_atual" name="senha_atual" required></div>

@@ -1,9 +1,9 @@
-ONE FIT · Treino de Alta Performance|ONE FIT · High Performance Training|ONE FIT · Entrenamiento de Alto Rendimiento
+{marca} · Treino de Alta Performance|{marca} · High Performance Training|{marca} · Entrenamiento de Alto Rendimiento
 Treino de alta performance|High performance training|Entrenamiento de alto rendimiento
 TREINE PARA|TRAIN TO|ENTRENA PARA
 SER O|BE THE|SER EL
 UM|ONE|UNO
-Não existe segundo lugar no seu treino. Na ONE FIT você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.|There is no second place in your training. At ONE FIT you train hard, make steady progress and leave each class closer to your best self.|No hay segundo lugar en tu entrenamiento. En ONE FIT entrenas con intensidad, progresas con método y sales de cada clase más cerca de tu mejor versión.
+Não existe segundo lugar no seu treino. Na {marca} você treina pesado, evolui com método e sai de cada aula um pouco mais perto da sua melhor versão.|There is no second place in your training. At {marca} you train hard, make steady progress and leave each class closer to your best self.|No hay segundo lugar en tu entrenamiento. En {marca} entrenas con intensidad, progresas con método y sales de cada clase más cerca de tu mejor versión.
 Comece hoje|Start today|Empieza hoy
 Ver modalidades|Explore classes|Ver disciplinas
 HALTERES|DUMBBELLS|MANCUERNAS
@@ -51,11 +51,11 @@ grátis|free|gratis
 Apareça, treine e sinta a diferença. Sem compromisso, sem cartão, sem letras miúdas.|Show up, train and feel the difference. No commitment, no card, no fine print.|Ven, entrena y siente la diferencia. Sin compromiso, sin tarjeta, sin letra pequeña.
 Agendar aula experimental|Book a trial class|Reservar clase de prueba
 Fale conosco pelo WhatsApp!|Chat with us on WhatsApp!|¡Contáctanos por WhatsApp!
-Confirmar e-mail · ONE FIT|Confirm email · ONE FIT|Confirmar correo · ONE FIT
+Confirmar e-mail · {marca}|Confirm email · {marca}|Confirmar correo · {marca}
 Segurança da conta|Account security|Seguridad de la cuenta
 Confirmação de e-mail|Email confirmation|Confirmación del correo
 Entrar na minha conta|Sign in to my account|Entrar en mi cuenta
-Esqueci minha senha · ONE FIT|Forgot password · ONE FIT|Olvidé mi contraseña · ONE FIT
+Esqueci minha senha · {marca}|Forgot password · {marca}|Olvidé mi contraseña · {marca}
 Recuperar acesso|Recover access|Recuperar acceso
 SUA CONTA|YOUR ACCOUNT|TU CUENTA
 EM SEGURANÇA|KEPT SAFE|SEGURA
@@ -65,15 +65,15 @@ E-mail|Email|Correo electrónico
 Enviar instruções|Send instructions|Enviar instrucciones
 Lembrou sua senha?|Remember your password?|¿Recuerdas tu contraseña?
 Entrar|Sign in|Entrar
-Redefinir senha · ONE FIT|Reset password · ONE FIT|Restablecer contraseña · ONE FIT
+Redefinir senha · {marca}|Reset password · {marca}|Restablecer contraseña · {marca}
 Redefinir senha|Reset password|Restablecer contraseña
 Defina uma nova senha para sua conta.|Set a new password for your account.|Establece una nueva contraseña para tu cuenta.
 Nova senha|New password|Nueva contraseña
 Confirmar nova senha|Confirm new password|Confirmar nueva contraseña
 Salvar nova senha|Save new password|Guardar nueva contraseña
 Solicitar novo link|Request a new link|Solicitar un nuevo enlace
-Carrinho · ONE FIT|Cart · ONE FIT|Carrito · ONE FIT
-One Fit · Carrinho|One Fit · Cart|One Fit · Carrito
+Carrinho · {marca}|Cart · {marca}|Carrito · {marca}
+{marca} · Carrinho|{marca} · Cart|{marca} · Carrito
 Seu carrinho|Your cart|Tu carrito
 Sem estoque suficiente para adicionar mais unidades deste produto.|Not enough stock to add more units of this product.|No hay existencias suficientes para añadir más unidades.
 Ver minhas compras|View my purchases|Ver mis compras
@@ -138,7 +138,7 @@ Cidade|City|Ciudad
 UF|State|Estado
 Cancelar|Cancel|Cancelar
 Salvar endereço|Save address|Guardar dirección
-Alterar senha · ONE FIT|Change password · ONE FIT|Cambiar contraseña · ONE FIT
+Alterar senha · {marca}|Change password · {marca}|Cambiar contraseña · {marca}
 Alterar senha|Change password|Cambiar contraseña
 Use sua senha atual para definir uma nova senha de acesso.|Use your current password to set a new one.|Usa tu contraseña actual para establecer una nueva.
 Senha atual|Current password|Contraseña actual
@@ -171,8 +171,6 @@ Formulário|Form|Formulario
 Salvar|Save|Guardar
 Pagar plano|Pay for plan|Pagar plan
 Tipo do plano|Plan type|Tipo de plan
-Crédito|Credit|Crédito
-Débito|Debit|Débito
 Gerar QR Code|Generate QR code|Generar código QR
 Copiar código Pix|Copy Pix code|Copiar código Pix
 Número do cartão|Card number|Número de tarjeta
@@ -198,7 +196,7 @@ Não informado|Not provided|No informado
 Foto|Photo|Foto
 JPG, PNG ou WEBP · Até 3 MB|JPG, PNG or WEBP · Up to 3 MB|JPG, PNG o WEBP · Hasta 3 MB
 Dashboard|Dashboard|Panel
-Resumo geral da operação ONE FIT.|Overview of ONE FIT operations.|Resumen general de la operación ONE FIT.
+Resumo geral da operação {marca}.|Overview of {marca} operations.|Resumen general de la operación {marca}.
 Usuários ativos|Active users|Usuarios activos
 Saldo operacional (mês)|Operating balance (month)|Saldo operativo (mes)
 Cashback distribuído|Cashback distributed|Cashback distribuido
@@ -302,7 +300,7 @@ Nenhum profissional encontrado para os filtros selecionados.|No professionals ma
 Gerencie as modalidades oferecidas pela academia.|Manage the classes offered by the gym.|Gestiona las disciplinas ofrecidas por el gimnasio.
 Nova Modalidade|New class|Nueva disciplina
 Perfil|Profile|Perfil
-Seus dados cadastrais na ONE FIT.|Your ONE FIT account details.|Tus datos de registro en ONE FIT.
+Seus dados cadastrais na {marca}.|Your {marca} account details.|Tus datos de registro en {marca}.
 Editar|Edit|Editar
 Alterar|Change|Cambiar
 Telefone|Phone|Teléfono
@@ -340,7 +338,7 @@ Escolha o idioma da interface.|Choose the interface language.|Elige el idioma de
 Tema de cores do site|Site color theme|Tema de colores del sitio
 A cor escolhida será aplicada para todos após salvar.|The selected color will apply to everyone after saving.|El color elegido se aplicará a todos después de guardar.
 Tema da interface|Interface theme|Tema de la interfaz
-Escolha como o ONE FIT será exibido neste dispositivo.|Choose how ONE FIT appears on this device.|Elige cómo se muestra ONE FIT en este dispositivo.
+Escolha como o {marca} será exibido neste dispositivo.|Choose how {marca} appears on this device.|Elige cómo se muestra {marca} en este dispositivo.
 Tema claro|Light theme|Tema claro
 Interface iluminada|Bright interface|Interfaz clara
 Tema escuro|Dark theme|Tema oscuro
@@ -350,7 +348,7 @@ Acompanha este dispositivo|Follows this device|Sigue la configuración del dispo
 Escolha individualmente quais comunicações deseja receber.|Choose which notifications you want to receive.|Elige qué comunicaciones deseas recibir.
 Não foi possível carregar suas preferências. Atualize a página e tente novamente.|Could not load your preferences. Refresh and try again.|No se pudieron cargar tus preferencias. Actualiza la página e inténtalo de nuevo.
 Privacidade e segurança|Privacy and security|Privacidad y seguridad
-Proteja suas credenciais de acesso ao ONE FIT.|Protect your ONE FIT login credentials.|Protege tus credenciales de acceso a ONE FIT.
+Proteja suas credenciais de acesso ao {marca}.|Protect your {marca} login credentials.|Protege tus credenciales de acceso a {marca}.
 Senha da conta|Account password|Contraseña de la cuenta
 Use uma senha exclusiva com pelo menos 8 caracteres.|Use a unique password with at least 8 characters.|Usa una contraseña única de al menos 8 caracteres.
 Gerencie sua sessão atual.|Manage your current session.|Gestiona tu sesión actual.
@@ -363,7 +361,7 @@ Pessoas ativas|Active people|Personas activas
 Agenda|Schedule|Agenda
 Sem dados para exibir|No data to display|No hay datos para mostrar
 Nenhum dado carregado|No data loaded|No se han cargado datos
-Resumo do seu contrato e saldo com a ONE FIT.|Your ONE FIT contract and balance summary.|Resumen de tu contrato y saldo con ONE FIT.
+Resumo do seu contrato e saldo com a {marca}.|Your {marca} contract and balance summary.|Resumen de tu contrato y saldo con {marca}.
 Status de contrato|Contract status|Estado del contrato
 Validade de contrato|Contract expiry|Vigencia del contrato
 Histórico de competências e valores recebidos.|History of payment periods and amounts received.|Historial de períodos e importes recibidos.
@@ -421,8 +419,8 @@ Inativos / pausados|Inactive / paused|Inactivos / pausados
 Inativo / pausado|Inactive / paused|Inactivo / pausado
 Alterar foto|Change photo|Cambiar foto
 EDITAR PERFIL|EDIT PROFILE|EDITAR PERFIL
-Painel · ONE FIT|Dashboard · ONE FIT|Panel · ONE FIT
-Confirmar exclusão · ONE FIT|Confirm deletion · ONE FIT|Confirmar eliminación · ONE FIT
+Painel · {marca}|Dashboard · {marca}|Panel · {marca}
+Confirmar exclusão · {marca}|Confirm deletion · {marca}|Confirmar eliminación · {marca}
 Ação irreversível|Irreversible action|Acción irreversible
 Essa exclusão remove o registro definitivamente do banco de dados e não pode ser desfeita.|This permanently deletes the record and cannot be undone.|Esta acción elimina el registro permanentemente y no se puede deshacer.
 Sim, excluir|Yes, delete|Sí, eliminar
@@ -471,7 +469,7 @@ A página que você procura não existe, mudou de lugar ou foi removida. Sem exc
 Voltar para o início|Back to home|Volver al inicio
 Ver planos|View plans|Ver planes
 Contato|Contact|Contacto
-Entrar · ONE FIT|Sign in · ONE FIT|Entrar · ONE FIT
+Entrar · {marca}|Sign in · {marca}|Entrar · {marca}
 Seu navegador não suporta vídeos|Your browser does not support video|Tu navegador no admite vídeos
 Seu navegador não suporta vídeos.|Your browser does not support video.|Tu navegador no admite vídeos.
 NÃO EXISTE|THERE IS NO|NO HAY
@@ -493,11 +491,11 @@ Seus favoritos|Your favorites|Tus favoritos
 Você ainda não favoritou nenhum produto.|You have no favorite products yet.|Todavía no tienes productos favoritos.
 Detalhes do produto|Product details|Detalles del producto
 Adicionar ao carrinho|Add to cart|Añadir al carrito
-Matrícula · ONE FIT|Enrollment · ONE FIT|Inscripción · ONE FIT
+Matrícula · {marca}|Enrollment · {marca}|Inscripción · {marca}
 Comece agora|Start now|Empieza ahora
 SUA PRIMEIRA|YOUR FIRST|TU PRIMERA
 AULA É GRÁTIS|CLASS IS FREE|CLASE ES GRATIS
-Junte-se à ONE FIT|Join ONE FIT|Únete a ONE FIT
+Junte-se à {marca}|Join {marca}|Únete a {marca}
 Matrícula|Enrollment|Inscripción
 Preencha seus dados para começar a treinar com a gente.|Enter your details to start training with us.|Completa tus datos para empezar a entrenar con nosotros.
 Dados|Details|Datos
@@ -565,7 +563,7 @@ Informe um e-mail válido.|Enter a valid email address.|Introduce un correo vál
 Informe um celular/telefone válido, com DDD (10 ou 11 números).|Enter a valid phone number with area code (10 or 11 digits).|Introduce un teléfono válido con código de área (10 u 11 dígitos).
 Selecione um gênero válido.|Select a valid gender.|Selecciona un género válido.
 Informe o estado usando uma UF válida.|Enter a valid state code.|Introduce un código de estado válido.
-Para manter seu perfil na ONE FIT, você precisa ter pelo menos 12 anos.|You must be at least 12 years old to have a ONE FIT profile.|Debes tener al menos 12 años para tener un perfil en ONE FIT.
+Para manter seu perfil na {marca}, você precisa ter pelo menos 12 anos.|You must be at least 12 years old to have a {marca} profile.|Debes tener al menos 12 años para tener un perfil en {marca}.
 Confira os valores de altura e peso.|Check the height and weight values.|Comprueba los valores de altura y peso.
 O CPF ou e-mail informado já pertence a outra conta.|This CPF or email is already used by another account.|El CPF o correo ya pertenece a otra cuenta.
 Perfil atualizado com sucesso!|Profile updated successfully!|¡Perfil actualizado correctamente!
@@ -586,7 +584,7 @@ Ver detalhes|View details|Ver detalles
 Atualize a página e tente novamente.|Refresh the page and try again.|Actualiza la página e inténtalo de nuevo.
 Não foi possível atualizar as notificações. Tente novamente.|Could not update notifications. Try again.|No se pudieron actualizar las notificaciones. Inténtalo de nuevo.
 E-mail ou senha incorretos. Confira os dados e tente novamente.|Incorrect email or password. Check your details and try again.|Correo o contraseña incorrectos. Comprueba los datos e inténtalo de nuevo.
-Sua conta está inativa ou bloqueada. Entre em contato com a ONE FIT caso deseja reativar sua conta.|Your account is inactive or blocked. Contact ONE FIT to reactivate it.|Tu cuenta está inactiva o bloqueada. Contacta con ONE FIT para reactivarla.
+Sua conta está inativa ou bloqueada. Entre em contato com a {marca} caso deseja reativar sua conta.|Your account is inactive or blocked. Contact {marca} to reactivate it.|Tu cuenta está inactiva o bloqueada. Contacta con {marca} para reactivarla.
 Preencha o e-mail e a senha para entrar.|Enter your email and password to sign in.|Introduce tu correo y contraseña para entrar.
 Cadastro realizado com sucesso! Agora você já pode entrar.|Registration successful! You can now sign in.|¡Registro completado! Ya puedes entrar.
 Digite um endereço de e-mail válido.|Enter a valid email address.|Introduce una dirección de correo válida.
@@ -609,7 +607,7 @@ O plano selecionado não está disponível. Escolha outro plano.|The selected pl
 A senha precisa ter pelo menos 8 caracteres.|The password must have at least 8 characters.|La contraseña debe tener al menos 8 caracteres.
 Digite um CPF válido com 11 números.|Enter a valid 11-digit CPF.|Introduce un CPF válido de 11 dígitos.
 Não foi possível registrar o pagamento. Tente novamente.|Could not record payment. Try again.|No se pudo registrar el pago. Inténtalo de nuevo.
-Para se matricular na One Fit, é necessário ter ao menos 18 anos de idade ou 12 com autorização dos pais ou responsáveis.|To join One Fit you must be at least 18, or 12 with permission from a parent or guardian.|Para inscribirte en One Fit debes tener al menos 18 años, o 12 con autorización de tus padres o tutores.
+Para se matricular na {marca}, é necessário ter ao menos 18 anos de idade ou 12 com autorização dos pais ou responsáveis.|To join {marca} you must be at least 18, or 12 with permission from a parent or guardian.|Para inscribirte en {marca} debes tener al menos 18 años, o 12 con autorización de tus padres o tutores.
 Informe uma data de nascimento válida.|Enter a valid date of birth.|Introduce una fecha de nacimiento válida.
 Digite um telefone válido com DDD.|Enter a valid phone number with area code.|Introduce un teléfono válido con código de área.
 Selecione uma cidade válida para o estado informado.|Select a valid city for the selected state.|Selecciona una ciudad válida para el estado indicado.
@@ -651,3 +649,746 @@ Opções da foto de perfil|Profile photo options|Opciones de foto de perfil
 Ver foto de perfil|View profile photo|Ver foto de perfil
 Alterar foto de perfil|Change profile photo|Cambiar foto de perfil
 Todas as notificações foram marcadas como lidas.|All notifications marked as read.|Todas las notificaciones fueron marcadas como leídas.
+Treine com propósito. Evolua com método. Mais perto da sua melhor versão, todos os dias.|Train with purpose. Make steady progress. Closer to your best self, every day.|Entrena con propósito. Progresa con método. Más cerca de tu mejor versión, cada día.
+Espaço de treino e equipamentos da academia|Gym training space and equipment|Espacio de entrenamiento y equipamiento del gimnasio
+Conheça o espaço|Explore the gym|Conoce el espacio
+05h—23h|5 am–11 pm|05:00–23:00
+Sala de musculação|Weight training room|Sala de musculación
+Treino de força com halteres|Strength training with dumbbells|Entrenamiento de fuerza con mancuernas
+Área de halteres|Dumbbell area|Zona de mancuernas
+Estúdio de spinning|Indoor cycling studio|Sala de ciclismo indoor
+Localização|Location|Ubicación
+Venha treinar|Come train|Ven a entrenar
+perto de você|close to home|cerca de ti
+Estamos no Jardim das Indústrias, em São José dos Campos — fácil acesso e estacionamento por perto.|Find us in Jardim das Indústrias, São José dos Campos, with easy access and nearby parking.|Estamos en Jardim das Indústrias, São José dos Campos, con fácil acceso y aparcamiento cercano.
+Mapa - Jardim das Indústrias, São José dos Campos|Map – Jardim das Indústrias, São José dos Campos|Mapa – Jardim das Indústrias, São José dos Campos
+Total do pedido:|Order total:|Total del pedido:
+Cashback:|Cashback:|Reembolso:
+Diminuir quantidade|Decrease quantity|Reducir cantidad
+Aumentar quantidade|Increase quantity|Aumentar cantidad
+Remover item|Remove item|Eliminar artículo
+Checkout {marca}|{marca} checkout|Finalizar compra en {marca}
+Fechar checkout|Close checkout|Cerrar proceso de compra
+Subtotal|Subtotal|Subtotal
+Total|Total|Total
+Excluir endereço|Delete address|Eliminar dirección
+Máximo permitido nesta compra:|Maximum allowed for this purchase:|Máximo permitido en esta compra:
+Validade (MM/AA)|Expiry (MM/YY)|Vencimiento (MM/AA)
+Casa, trabalho...|Home, work…|Casa, trabajo…
+Finalizando...|Completing your order…|Finalizando la compra…
+cartão|card|tarjeta
+Chave copiada!|Key copied!|¡Clave copiada!
+Preencha a senha atual, a nova senha e a confirmação.|Enter your current password, new password and confirmation.|Introduce la contraseña actual, la nueva contraseña y la confirmación.
+A nova senha precisa ter pelo menos 8 caracteres.|Your new password must contain at least 8 characters.|La nueva contraseña debe tener al menos 8 caracteres.
+A confirmação não bate com a nova senha.|The confirmation does not match the new password.|La confirmación no coincide con la nueva contraseña.
+A senha atual informada está incorreta.|The current password is incorrect.|La contraseña actual es incorrecta.
+Não foi possível alterar a senha neste momento. Tente novamente.|We couldn't change your password. Please try again.|No se pudo cambiar la contraseña. Inténtalo de nuevo.
+Senha alterada com sucesso!|Password changed successfully!|¡Contraseña cambiada correctamente!
+Motivo da devolução|Reason for return|Motivo de la devolución
+Rastreio:|Tracking:|Seguimiento:
+Abrir menu|Open menu|Abrir menú
+Resultados da pesquisa|Search results|Resultados de búsqueda
+Abrir notificações|Open notifications|Abrir notificaciones
+MM/AA|MM/YY|MM/AA
+este mês|this month|este mes
+Ano|Year|Año
+· Semana|· Week|· Semana
+· Dia|· Day|· Día
+% da base|% of users|% de usuarios
+pendentes de contrato|awaiting a contract|pendientes de contrato
+Buscar por ID, nome e email|Search by ID, name or email|Buscar por ID, nombre o correo
+Buscar por ID|Search by ID|Buscar por ID
+Cashbacks|Cashback transactions|Reembolsos
+Comentários|Comments|Comentarios
+Aprove ou reprove os depoimentos enviados pelos alunos e controle quais aparecem na home.|Approve or reject student testimonials and choose which appear on the home page.|Aprueba o rechaza los testimonios de los alumnos y elige cuáles aparecen en la página de inicio.
+Comentário|Comment|Comentario
+Visível na home|Visible on the home page|Visible en la página de inicio
+Reprovar|Reject|Rechazar
+Nenhum comentário enviado ainda.|No comments submitted yet.|Aún no se han enviado comentarios.
+Buscar por nome ou ID|Search by name or ID|Buscar por nombre o ID
+Cashback|Cashback|Reembolso
+Buscar por produto, vendedor, comprador ou rastreio|Search by product, seller, buyer or tracking code|Buscar por producto, vendedor, comprador o código de seguimiento
+Remover faixa|Remove range|Eliminar rango
+Motivo da recusa|Reason for rejection|Motivo del rechazo
+Buscar por plano ou ID|Search by plan or ID|Buscar por plan o ID
+Buscar por ID, nome, função ou doc|Search by ID, name, role or document|Buscar por ID, nombre, función o documento
+Clique num dia com horários disponíveis para agendar com um profissional.|Select a day with available times to book an appointment with a professional.|Selecciona un día con horarios disponibles para reservar una cita con un profesional.
+Mês anterior|Previous month|Mes anterior
+Próximo mês|Next month|Mes siguiente
+Livre|Available|Disponible
+Eventos incluídos automaticamente quando você agenda aulas ou avaliações.|Events appear automatically when you book classes or assessments.|Los eventos aparecen automáticamente al reservar clases o evaluaciones.
+Horários disponíveis em|Available times on|Horarios disponibles el
+Nenhum horário disponível nesse dia.|No available times on this day.|No hay horarios disponibles ese día.
+Horários de demonstração com profissionais cadastrados. A confirmação será salva na sua agenda.|Sample times with registered professionals. Your confirmed appointment will be saved in your calendar.|Horarios de demostración con profesionales registrados. La cita confirmada se guardará en tu agenda.
+Tipo de agendamento|Appointment type|Tipo de cita
+Horários disponíveis|Available times|Horarios disponibles
+Nenhum horário disponível para esta seleção.|No available times for this selection.|No hay horarios disponibles para esta selección.
+Confirmar agendamento|Confirm appointment|Confirmar cita
+Ative o JavaScript para selecionar o atendimento e o horário.|Enable JavaScript to select a service and time.|Activa JavaScript para seleccionar el servicio y el horario.
+Meus agendamentos|My appointments|Mis citas
+Você ainda não tem agendamentos confirmados.|You have no confirmed appointments yet.|Aún no tienes citas confirmadas.
+Status:|Status:|Estado:
+Tem certeza que deseja cancelar este agendamento?|Are you sure you want to cancel this appointment?|¿Seguro que quieres cancelar esta cita?
+Confirmar cancelamento|Confirm cancellation|Confirmar cancelación
+Buscar por produto ou ID da transação|Search by product or transaction ID|Buscar por producto o ID de transacción
+Buscar por produto, ID da transação ou pedido|Search by product, transaction ID or order|Buscar por producto, ID de transacción o pedido
+Status da compra|Purchase status|Estado de la compra
+ID: #|ID: #|ID: #
+Gênero:|Gender:|Género:
+Escolher tema|Choose a theme|Elegir tema
+Os indicadores serão preenchidos assim que a leitura do banco de dados for integrada.|Metrics will appear once database integration is complete.|Los indicadores aparecerán cuando se complete la integración con la base de datos.
+Aguardando dados reais|Waiting for data|Esperando datos
+Não mostramos números de exemplo. Quando o banco estiver conectado, os indicadores e gráficos aparecerão aqui.|No sample figures are shown. Metrics and charts will appear here once the database is connected.|No se muestran cifras de ejemplo. Los indicadores y gráficos aparecerán aquí cuando se conecte la base de datos.
+Esta área está pronta para receber os dados reais do banco.|This area is ready to display data from the database.|Esta sección está lista para mostrar datos de la base de datos.
+Buscar aluno|Search students|Buscar alumno
+Excluir vínculo|Remove association|Eliminar vínculo
+Remover|Remove|Eliminar
+Personal|Personal training|Entrenamiento personal
+Saldo disponível:|Available balance:|Saldo disponible:
+Editar vínculo|Edit association|Editar vínculo
+Conexão com o banco indisponível.|Database connection unavailable.|Conexión con la base de datos no disponible.
+O usuário conectado não possui cadastro de profissional.|Your account has no professional profile.|Tu cuenta no tiene un perfil profesional.
+Não foi possível preparar os vínculos de alunos.|Student associations could not be loaded.|No se pudieron cargar los vínculos de alumnos.
+Não foi possível preparar os horários disponíveis.|Available times could not be loaded.|No se pudieron cargar los horarios disponibles.
+A sessão expirou. Atualize a página e tente novamente.|Your session has expired. Refresh the page and try again.|Tu sesión ha caducado. Actualiza la página e inténtalo de nuevo.
+Selecione um aluno válido.|Select a valid student.|Selecciona un alumno válido.
+Aluno não encontrado.|Student not found.|Alumno no encontrado.
+Não foi possível vincular o aluno.|The student could not be associated.|No se pudo vincular al alumno.
+Dados do vínculo inválidos.|Invalid association details.|Datos del vínculo no válidos.
+Vínculo não encontrado ou sem alterações.|Association not found or no changes made.|Vínculo no encontrado o sin cambios.
+Vínculo inválido.|Invalid association.|Vínculo no válido.
+Vínculo não encontrado.|Association not found.|Vínculo no encontrado.
+Preencha corretamente a modalidade, a data e os horários.|Enter a valid activity, date and times.|Introduce una actividad, fecha y horarios válidos.
+Já existe um horário disponível nesse período.|There is already an available slot in this period.|Ya existe un horario disponible en ese período.
+Não foi possível cadastrar o horário.|The time slot could not be added.|No se pudo registrar el horario.
+Horário inválido.|Invalid time slot.|Horario no válido.
+Horário não encontrado.|Time slot not found.|Horario no encontrado.
+Formulário já utilizado ou expirado. Abra um novo agendamento.|This form has already been used or has expired. Start a new appointment.|Este formulario ya se ha usado o ha caducado. Abre una nueva cita.
+Preencha corretamente os dados do agendamento.|Enter valid appointment details.|Introduce datos válidos para la cita.
+Selecione um aluno vinculado e ativo.|Select an active student associated with your account.|Selecciona un alumno vinculado y activo.
+Já existe um agendamento nesse horário.|There is already an appointment at this time.|Ya existe una cita en ese horario.
+Não foi possível criar o agendamento.|The appointment could not be created.|No se pudo crear la cita.
+Agendamento inválido.|Invalid appointment.|Cita no válida.
+Agendamento não encontrado.|Appointment not found.|Cita no encontrada.
+Agendamento não encontrado ou já encerrado.|Appointment not found or already closed.|Cita no encontrada o ya finalizada.
+Saldo de cashback insuficiente.|Insufficient cashback balance.|Saldo de reembolso insuficiente.
+Não foi possível utilizar o cashback.|Cashback could not be applied.|No se pudo aplicar el reembolso.
+Aluno vinculado com sucesso.|Student associated successfully.|Alumno vinculado correctamente.
+Vínculo atualizado com sucesso.|Association updated successfully.|Vínculo actualizado correctamente.
+Aluno removido da lista. O cadastro dele foi preservado.|Student removed from the list. Their account was preserved.|Alumno eliminado de la lista. Su cuenta se ha conservado.
+Horário disponível cadastrado.|Available time slot added.|Horario disponible registrado.
+Horário disponível removido.|Available time slot removed.|Horario disponible eliminado.
+Agendamento criado com sucesso.|Appointment created successfully.|Cita creada correctamente.
+Agendamento cancelado.|Appointment cancelled.|Cita cancelada.
+Cashback utilizado com sucesso.|Cashback applied successfully.|Reembolso aplicado correctamente.
+Esta seção está no roteiro do backoffice e será implementada em uma próxima etapa.|This section is planned for a future update.|Esta sección está prevista para una próxima actualización.
+Excluir|Delete|Eliminar
+Sem exercícios cadastrados neste dia.|No exercises added for this day.|No hay ejercicios registrados para este día.
+Comente aqui|Share your experience|Comparte tu experiencia
+Status atual|Current status|Estado actual
+Escreva aqui seu testemunho... Conte como foi sua experiência, o que mudou na sua vida e o que você mais gostou.|Write your testimonial here… Tell us about your experience, what changed in your life and what you enjoyed most.|Escribe tu testimonio aquí… Cuéntanos tu experiencia, qué cambió en tu vida y qué fue lo que más te gustó.
+caracteres|characters|caracteres
+Enviar comentário|Submit comment|Enviar comentario
+Seu depoimento poderá ser exibido na nossa página inicial, para inspirar outras pessoas.|Your testimonial may appear on our home page to inspire others.|Tu testimonio puede aparecer en nuestra página de inicio para inspirar a otras personas.
+Agenda ocupada. Tente novamente.|The calendar is busy. Please try again.|La agenda está ocupada. Inténtalo de nuevo.
+Este agendamento não pode ser cancelado.|This appointment cannot be cancelled.|Esta cita no se puede cancelar.
+Esse horário não está mais disponível. Escolha outro horário.|This time is no longer available. Please choose another.|Ese horario ya no está disponible. Elige otro.
+Esse horário acabou de ser reservado.|This time was just booked.|Ese horario acaba de reservarse.
+Filtros inválidos.|Invalid filters.|Filtros no válidos.
+Não foi possível carregar as compras. Tente novamente.|Purchases could not be loaded. Please try again.|No se pudieron cargar las compras. Inténtalo de nuevo.
+Transação inválida.|Invalid transaction.|Transacción no válida.
+Transação excluída.|Transaction deleted.|Transacción eliminada.
+Preencha data e valor.|Enter a date and amount.|Introduce una fecha y un importe.
+Preencha data, tipo, valor e um ID de usuário válido.|Enter a date, type, amount and valid user ID.|Introduce una fecha, un tipo, un importe y un ID de usuario válido.
+Usuário não encontrado.|User not found.|Usuario no encontrado.
+Cashback lançado.|Cashback recorded.|Reembolso registrado.
+Categoria inválida.|Invalid category.|Categoría no válida.
+Categoria excluída.|Category deleted.|Categoría eliminada.
+Informe o nome da categoria.|Enter the category name.|Introduce el nombre de la categoría.
+Já existe uma categoria com este nome.|A category with this name already exists.|Ya existe una categoría con este nombre.
+Categoria atualizada.|Category updated.|Categoría actualizada.
+Categoria criada.|Category created.|Categoría creada.
+Solicitação inválida.|Invalid request.|Solicitud no válida.
+Devolução aprovada.|Return approved.|Devolución aprobada.
+Informe o motivo da recusa.|Enter the reason for rejection.|Indica el motivo del rechazo.
+Devolução recusada.|Return rejected.|Devolución rechazada.
+Não foi possível concluir a devolução.|The return could not be completed.|No se pudo completar la devolución.
+Devolução concluída e valor creditado ao comprador.|Return completed and the amount credited to the buyer.|Devolución completada e importe abonado al comprador.
+Função inválida.|Invalid role.|Función no válida.
+Não é possível excluir: esta função está em uso em uma ou mais permissões.|This role cannot be deleted because it is used by one or more permissions.|No se puede eliminar esta función porque está en uso en uno o más permisos.
+Função excluída.|Role deleted.|Función eliminada.
+Informe o nome da função.|Enter the role name.|Introduce el nombre de la función.
+Já existe uma função com este nome.|A role with this name already exists.|Ya existe una función con este nombre.
+Função atualizada.|Role updated.|Función actualizada.
+Função criada.|Role created.|Función creada.
+Pedido inválido ou ainda não entregue.|Invalid order or not yet delivered.|Pedido no válido o aún no entregado.
+Entrega confirmada. Obrigado!|Delivery confirmed. Thank you!|¡Entrega confirmada! Gracias.
+Informe o motivo da devolução.|Enter the reason for the return.|Indica el motivo de la devolución.
+Este pedido não pode ser devolvido no momento.|This order cannot be returned at this time.|Este pedido no se puede devolver en este momento.
+Já existe uma solicitação de devolução para este pedido.|A return has already been requested for this order.|Ya existe una solicitud de devolución para este pedido.
+Devolução solicitada. Você será avisado quando for analisada.|Return requested. You will be notified when it has been reviewed.|Devolución solicitada. Recibirás un aviso cuando se revise.
+Modalidade inválida.|Invalid activity.|Actividad no válida.
+Status da modalidade atualizado.|Activity status updated.|Estado de la actividad actualizado.
+Modalidade excluída.|Activity deleted.|Actividad eliminada.
+Informe o nome da modalidade.|Enter the activity name.|Introduce el nombre de la actividad.
+Já existe uma modalidade com este nome.|An activity with this name already exists.|Ya existe una actividad con este nombre.
+Modalidade atualizada.|Activity updated.|Actividad actualizada.
+Modalidade criada.|Activity created.|Actividad creada.
+Pagamento inválido.|Invalid payment.|Pago no válido.
+Pagamento excluído.|Payment deleted.|Pago eliminado.
+Preencha data, valor e um ID de usuário válido.|Enter a date, amount and valid user ID.|Introduce una fecha, un importe y un ID de usuario válido.
+A data do pagamento não pode ser posterior a hoje.|The payment date cannot be in the future.|La fecha del pago no puede ser posterior a hoy.
+Este usuário não possui matrícula para vincular o pagamento.|This user has no membership to associate with the payment.|Este usuario no tiene una inscripción a la que vincular el pago.
+Pagamento atualizado.|Payment updated.|Pago actualizado.
+Pagamento registrado.|Payment recorded.|Pago registrado.
+Nenhuma matrícula encontrada para o seu usuário.|No membership found for your account.|No se encontró ninguna inscripción para tu cuenta.
+Pagamento registrado com sucesso.|Payment recorded successfully.|Pago registrado correctamente.
+Permissão inválida.|Invalid permission.|Permiso no válido.
+Permissão removida.|Permission removed.|Permiso eliminado.
+Selecione uma função válida.|Select a valid role.|Selecciona una función válida.
+Função não encontrada.|Role not found.|Función no encontrada.
+Permissão salva.|Permission saved.|Permiso guardado.
+Nenhum usuário encontrado com este e-mail.|No user found with this email address.|No se encontró ningún usuario con este correo.
+Este usuário já possui uma permissão cadastrada. Edite a existente.|This user already has a permission. Edit the existing one.|Este usuario ya tiene un permiso registrado. Edita el existente.
+Permissão cadastrada.|Permission added.|Permiso registrado.
+Plano inválido.|Invalid plan.|Plan no válido.
+Status do plano atualizado.|Plan status updated.|Estado del plan actualizado.
+Preencha nome e um valor válido.|Enter a name and valid amount.|Introduce un nombre y un importe válido.
+Plano atualizado.|Plan updated.|Plan actualizado.
+Plano criado.|Plan created.|Plan creado.
+Produto inválido.|Invalid product.|Producto no válido.
+Status do produto atualizado.|Product status updated.|Estado del producto actualizado.
+Produto excluído.|Product deleted.|Producto eliminado.
+Não é possível excluir: este produto já tem pedidos ou avaliações vinculadas. Inative-o em vez de excluir.|This product has linked orders or reviews and cannot be deleted. Deactivate it instead.|Este producto tiene pedidos o reseñas vinculados y no se puede eliminar. Desactívalo en su lugar.
+Preencha nome e um preço válido.|Enter a name and valid price.|Introduce un nombre y un precio válido.
+Produto atualizado.|Product updated.|Producto actualizado.
+Produto criado.|Product created.|Producto creado.
+Profissional inválido.|Invalid professional.|Profesional no válido.
+Profissional excluído.|Professional deleted.|Profesional eliminado.
+Não é possível excluir: este profissional possui agendamentos vinculados. Inative-o em vez de excluir.|This professional has linked appointments and cannot be deleted. Deactivate them instead.|Este profesional tiene citas vinculadas y no se puede eliminar. Desactívalo en su lugar.
+Preencha nome, e-mail e celular.|Enter a name, email address and mobile number.|Introduce un nombre, correo y número de móvil.
+Já existe outro profissional com este e-mail.|Another professional already uses this email address.|Otro profesional ya utiliza este correo.
+Profissional atualizado.|Professional updated.|Profesional actualizado.
+Já existe um profissional com este e-mail.|A professional with this email address already exists.|Ya existe un profesional con este correo.
+Profissional criado.|Professional created.|Profesional creado.
+Escreva seu comentário antes de salvar.|Write your comment before saving.|Escribe tu comentario antes de guardar.
+Comentário enviado para aprovação. Obrigado por compartilhar!|Comment submitted for approval. Thank you for sharing!|Comentario enviado para su aprobación. ¡Gracias por compartir!
+Comentário inválido.|Invalid comment.|Comentario no válido.
+Comentário excluído.|Comment deleted.|Comentario eliminado.
+Comentário aprovado e liberado para a home.|Comment approved for the home page.|Comentario aprobado para la página de inicio.
+Comentário reprovado.|Comment rejected.|Comentario rechazado.
+Visibilidade do comentário atualizada.|Comment visibility updated.|Visibilidad del comentario actualizada.
+Transportadora inválida.|Invalid carrier.|Transportista no válido.
+Status da transportadora atualizado.|Carrier status updated.|Estado del transportista actualizado.
+Transportadora excluída.|Carrier deleted.|Transportista eliminado.
+Não é possível excluir: esta transportadora já tem vendas vinculadas. Inative-a em vez de excluir.|This carrier has linked sales and cannot be deleted. Deactivate it instead.|Este transportista tiene ventas vinculadas y no se puede eliminar. Desactívalo en su lugar.
+Faixa de CEP inválida.|Invalid postal code range.|Rango de códigos postales no válido.
+Faixa de CEP removida.|Postal code range removed.|Rango de códigos postales eliminado.
+Preencha a faixa de CEP corretamente (CEP inicial menor ou igual ao final).|Enter a valid postal code range, with the starting code no greater than the ending code.|Introduce un rango válido de códigos postales: el inicial debe ser menor o igual al final.
+Faixa de CEP cadastrada.|Postal code range added.|Rango de códigos postales registrado.
+Preencha nome e tipo válidos.|Enter a valid name and type.|Introduce un nombre y un tipo válidos.
+Transportadora atualizada.|Carrier updated.|Transportista actualizado.
+Transportadora cadastrada.|Carrier added.|Transportista registrado.
+Entre como aluno para acessar o treino.|Sign in as a student to access your workout.|Inicia sesión como alumno para acceder al entrenamiento.
+Sua sessão expirou. Atualize a página.|Your session has expired. Refresh the page.|Tu sesión ha caducado. Actualiza la página.
+Não foi possível salvar o treino. Tente novamente.|Your workout could not be saved. Please try again.|No se pudo guardar el entrenamiento. Inténtalo de nuevo.
+Usuário inválido.|Invalid user.|Usuario no válido.
+Status do usuário atualizado.|User status updated.|Estado del usuario actualizado.
+Usuário excluído.|User deleted.|Usuario eliminado.
+Não é possível excluir: este usuário possui matrícula, pagamentos ou outros registros vinculados.|This user cannot be deleted because they have a membership, payments or other linked records.|No se puede eliminar este usuario porque tiene una inscripción, pagos u otros registros vinculados.
+Preencha nome, e-mail e um CPF válido (11 números).|Enter a name, email address and valid 11-digit CPF.|Introduce un nombre, correo y CPF válido de 11 dígitos.
+O CPF ou e-mail informado já pertence a outro usuário.|This CPF or email address belongs to another user.|Este CPF o correo pertenece a otro usuario.
+Usuário atualizado.|User updated.|Usuario actualizado.
+Defina uma senha com pelo menos 6 caracteres.|Choose a password with at least 6 characters.|Elige una contraseña de al menos 6 caracteres.
+Preencha nascimento, gênero, celular, nacionalidade, endereço, cidade e estado.|Enter a date of birth, gender, mobile number, nationality, address, city and state.|Introduce la fecha de nacimiento, género, móvil, nacionalidad, dirección, ciudad y estado.
+Já existe um usuário com este CPF ou e-mail.|A user with this CPF or email address already exists.|Ya existe un usuario con este CPF o correo.
+Usuário criado.|User created.|Usuario creado.
+Venda ou status inválido.|Invalid sale or status.|Venta o estado no válido.
+Venda inválida.|Invalid sale.|Venta no válida.
+Não foi possível atualizar a venda.|The sale could not be updated.|No se pudo actualizar la venta.
+Status da venda atualizado.|Sale status updated.|Estado de la venta actualizado.
+Cashback (R$)|Cashback (R$)|Reembolso (R$)
+Não foi possível receber a foto. Selecione o arquivo novamente.|The photo could not be uploaded. Select the file again.|No se pudo cargar la foto. Selecciona el archivo de nuevo.
+Envie uma imagem JPG, PNG ou WEBP válida, de até 3 MB e 40 megapixels.|Upload a valid JPG, PNG or WEBP image up to 3 MB and 40 megapixels.|Sube una imagen JPG, PNG o WEBP válida de hasta 3 MB y 40 megapíxeles.
+Não foi possível salvar a foto. Tente novamente.|The photo could not be saved. Please try again.|No se pudo guardar la foto. Inténtalo de nuevo.
+Entre novamente para acessar o treino.|Sign in again to access your workout.|Inicia sesión de nuevo para acceder al entrenamiento.
+Exercício inválido.|Invalid exercise.|Ejercicio no válido.
+Selecione um dia da semana.|Select a day of the week.|Selecciona un día de la semana.
+Selecione um exercício.|Select an exercise.|Selecciona un ejercicio.
+Selecione de 1 a 10 séries.|Select between 1 and 10 sets.|Selecciona entre 1 y 10 series.
+Selecione de 1 a 50 repetições.|Select between 1 and 50 repetitions.|Selecciona entre 1 y 50 repeticiones.
+Selecione uma carga de 0 a 300 kg.|Select a weight between 0 and 300 kg.|Selecciona un peso entre 0 y 300 kg.
+Reabra o formulário e tente novamente.|Reopen the form and try again.|Abre el formulario de nuevo e inténtalo otra vez.
+Erro 404|Error 404|Error 404
+Marketplace ·|Shop ·|Tienda ·
+· Marketplace|· Shop|· Tienda
+Favoritos|Favorites|Favoritos
+Marketplace|Shop|Tienda
+% OFF|% OFF|% de descuento
+Ganhe cashback:|Earn cashback:|Recibe un reembolso:
+em estoque|in stock|en stock
+Remover dos favoritos|Remove from favorites|Eliminar de favoritos
+Seu nome|Your name|Tu nombre
+Mínimo de 8 caracteres|At least 8 characters|Mínimo de 8 caracteres
+Repita sua senha|Repeat your password|Repite tu contraseña
+Rua, avenida...|Street, avenue…|Calle, avenida…
+Nº|No.|N.º
+Apto, bloco... (opcional)|Apartment, building… (optional)|Piso, bloque… (opcional)
+Como está no cartão|As shown on your card|Como aparece en la tarjeta
+Converse com a One...|Chat with us…|Habla con nosotros…
+© 2026 Desenvolvido por Grupo 1|© 2026 Developed by Grupo 1|© 2026 Desarrollado por Grupo 1
+Não foi possível carregar as notificações.|Notifications could not be loaded.|No se pudieron cargar las notificaciones.
+Não foi possível salvar a preferência.|Your preference could not be saved.|No se pudo guardar tu preferencia.
+Não foi possível confirmar a gravação. Atualize a página e tente novamente.|We couldn't confirm that your changes were saved. Refresh the page and try again.|No se pudo confirmar que se guardaran los cambios. Actualiza la página e inténtalo de nuevo.
+Administrador|Administrator|Administrador
+Clique novamente para confirmar|Click again to confirm|Haz clic de nuevo para confirmar
+Salvando...|Saving…|Guardando…
+Não foi possível atualizar o perfil.|Your profile could not be updated.|No se pudo actualizar el perfil.
+Gênero: {genero}|Gender: {genero}|Género: {genero}
+Alterações salvas.|Changes saved.|Cambios guardados.
+Abrir Marketplace|Open shop|Abrir tienda
+Página do painel|Dashboard page|Página del panel
+Páginas|Pages|Páginas
+Nenhum resultado encontrado|No results found|No se encontraron resultados
+Perfil profissional disponível no painel {marca}.|Professional profile available in the {marca} dashboard.|Perfil profesional disponible en el panel de {marca}.
+Esta tela ainda será detalhada para o perfil {perfil}.|This page is planned for the {perfil} role.|Esta página está prevista para el perfil {perfil}.
+Tem certeza que deseja excluir {nome}?|Are you sure you want to delete {nome}?|¿Seguro que quieres eliminar {nome}?
+Registro excluído.|Record deleted.|Registro eliminado.
+Tem certeza que deseja limpar todos os itens?|Are you sure you want to clear all items?|¿Seguro que quieres eliminar todos los elementos?
+Lista limpa.|List cleared.|Lista vaciada.
+Remover este horário?|Remove this time slot?|¿Eliminar este horario?
+Informe altura e peso.|Enter your height and weight.|Introduce tu altura y peso.
+Código Pix copiado.|Pix code copied.|Código Pix copiado.
+Exportação gerada.|Export created.|Exportación generada.
+Carregando compras…|Loading purchases…|Cargando compras…
+Não foi possível carregar as compras.|Purchases could not be loaded.|No se pudieron cargar las compras.
+{erro} Altere a busca ou o status para tentar novamente.|{erro} Change the search or status to try again.|{erro} Cambia la búsqueda o el estado para intentarlo de nuevo.
+Digite um CPF válido.|Enter a valid CPF.|Introduce un CPF válido.
+Digite um telefone com DDD válido.|Enter a valid phone number with area code.|Introduce un teléfono válido con código de área.
+Selecione uma cidade válida da lista.|Select a valid city from the list.|Selecciona una ciudad válida de la lista.
+As senhas não coincidem.|The passwords do not match.|Las contraseñas no coinciden.
+Precisamos do seu endereço para emitir sua matrícula.|We need your address to complete your membership.|Necesitamos tu dirección para completar la inscripción.
+Nenhuma cidade encontrada.|No cities found.|No se encontraron ciudades.
+Falha ao carregar municípios.|Cities could not be loaded.|No se pudieron cargar las ciudades.
+Não foi possível carregar as cidades|Cities could not be loaded|No se pudieron cargar las ciudades
+Não foi possível carregar as cidades.|Cities could not be loaded.|No se pudieron cargar las ciudades.
+Não foi possível carregar estados|States could not be loaded|No se pudieron cargar los estados
+Não foi possível carregar os estados.|States could not be loaded.|No se pudieron cargar los estados.
+Digite um CEP válido.|Enter a valid postal code.|Introduce un código postal válido.
+CEP não encontrado.|Postal code not found.|Código postal no encontrado.
+Não foi possível salvar o treino.|Your workout could not be saved.|No se pudo guardar el entrenamiento.
+Resposta inválida. Atualize a página e tente novamente.|Invalid response. Refresh the page and try again.|Respuesta no válida. Actualiza la página e inténtalo de nuevo.
+Editar exercício|Edit exercise|Editar ejercicio
+Excluir exercício|Delete exercise|Eliminar ejercicio
+Tem certeza que deseja limpar todo o treino de todos os dias?|Are you sure you want to clear the workout for every day?|¿Seguro que quieres borrar el entrenamiento de todos los días?
+Tem certeza que deseja excluir este exercício?|Are you sure you want to delete this exercise?|¿Seguro que quieres eliminar este ejercicio?
+{n} pedido encontrado.|{n} order found.|{n} pedido encontrado.
+{n} pedidos encontrados.|{n} orders found.|{n} pedidos encontrados.
+Pedido {pedido} registrado com sucesso! Status: Aguardando.|Order {pedido} placed successfully! Status: Pending.|¡Pedido {pedido} registrado correctamente! Estado: Pendiente.
+{valor} em cashback|{valor} in cashback|{valor} en reembolso
+Você ganhou {valor} de cashback nesta compra.|You earned {valor} in cashback on this purchase.|Ganaste {valor} en reembolso con esta compra.
+{n} dia|{n} day|{n} día
+{n} dias|{n} days|{n} días
+{n} evento|{n} event|{n} evento
+{n} eventos|{n} events|{n} eventos
+404 — Página não encontrada|404 — Page not found|404 — Página no encontrada
+Acesso à musculação|Gym access|Acceso a musculación
+2 modalidades por semana|2 activities per week|2 actividades por semana
+Avaliação física inicial|Initial fitness assessment|Evaluación física inicial
+DDD + número|Area code + number|Código de área + número
+Converse com a {marca} pelo WhatsApp (abre em nova aba)|Chat with {marca} on WhatsApp (opens in a new tab)|Habla con {marca} por WhatsApp (se abre en una pestaña nueva)
+Olá, {nome}!|Hello, {nome}!|¡Hola, {nome}!
+Seu cadastro na {marca} foi realizado. Para confirmar seu endereço de e-mail, clique no botão abaixo.|Your {marca} account has been created. Click the button below to confirm your email address.|Tu cuenta de {marca} ha sido creada. Haz clic en el botón de abajo para confirmar tu correo electrónico.
+Confirmar meu e-mail|Confirm my email|Confirmar mi correo electrónico
+Este link expira em 24 horas. Se você não realizou este cadastro, ignore este e-mail.|This link expires in 24 hours. If you did not create this account, ignore this email.|Este enlace caduca en 24 horas. Si no creaste esta cuenta, ignora este correo.
+Confirme seu e-mail - {marca}|Confirm your email - {marca}|Confirma tu correo electrónico - {marca}
+Recebemos uma solicitação para redefinir a senha da sua conta.|We received a request to reset your account password.|Recibimos una solicitud para restablecer la contraseña de tu cuenta.
+Redefinir minha senha|Reset my password|Restablecer mi contraseña
+Este link expira em 30 minutos. Se você não solicitou a alteração, ignore este e-mail. Sua senha permanecerá a mesma.|This link expires in 30 minutes. If you did not request this change, ignore this email. Your password will remain unchanged.|Este enlace caduca en 30 minutos. Si no solicitaste este cambio, ignora este correo. Tu contraseña seguirá siendo la misma.
+Redefinição de senha - {marca}|Password reset - {marca}|Restablecer contraseña - {marca}
+{mes} de {ano}|{mes} {ano}|{mes} de {ano}
+janeiro|January|enero
+fevereiro|February|febrero
+março|March|marzo
+abril|April|abril
+maio|May|mayo
+junho|June|junio
+julho|July|julio
+agosto|August|agosto
+setembro|September|septiembre
+outubro|October|octubre
+novembro|November|noviembre
+dezembro|December|diciembre
+Dom|Sun|Dom
+Seg|Mon|Lun
+Ter|Tue|Mar
+Qua|Wed|Mié
+Qui|Thu|Jue
+Sex|Fri|Vie
+Sáb|Sat|Sáb
+Voltar ao marketplace|Back to marketplace|Volver al marketplace
+Checkout|Checkout|Finalizar compra
+Cashback a utilizar|Cashback to use|Reembolso a utilizar
+Abrir menu do usuário|Open user menu|Abrir menú de usuario
+Código de rastreio|Tracking code|Código de seguimiento
+Carrinho|Cart|Carrito
+Favoritar|Add to favorites|Añadir a favoritos
+{n} ano|{n} year|{n} año
+{n} anos|{n} years|{n} años
+{n} mês|{n} month|{n} mes
+{n} meses|{n} months|{n} meses
+poucos dias|a few days|unos días
+Aluno há {tempo}|Member for {tempo}|Miembro desde hace {tempo}
+Mensalidade {plano}|Monthly fee: {plano}|Mensualidad: {plano}
+Entrei sem nunca ter pegado num peso na vida. Em oito meses, os professores me ensinaram tudo, sem pressa e sem julgamento.|I joined without ever having lifted a weight. Over eight months, the trainers taught me everything, without rushing or judging me.|Me inscribí sin haber levantado una pesa en mi vida. En ocho meses, los entrenadores me enseñaron todo, sin prisas ni juicios.
+O CrossTraining daqui é outro nível. Turmas pequenas, WOD sempre diferente, e o pessoal se ajuda muito entre si.|CrossTraining here is on another level. Small classes, a different workout every day, and everyone helps each other.|El CrossTraining de aquí es de otro nivel. Grupos pequeños, un entrenamiento diferente cada día y todos se ayudan entre sí.
+Troquei três vezes de academia antes da {marca}. Aqui o acompanhamento é de verdade, não é só entregar uma ficha e sumir.|I changed gyms three times before {marca}. Here, the support is real. They do more than hand you a workout plan and disappear.|Cambié de gimnasio tres veces antes de {marca}. Aquí el seguimiento es real: hacen más que darte una rutina y desaparecer.
+Peito|Chest|Pecho
+Costas|Back|Espalda
+Ombros|Shoulders|Hombros
+Bíceps|Biceps|Bíceps
+Tríceps|Triceps|Tríceps
+Pernas|Legs|Piernas
+Abdômen|Abs|Abdomen
+Supino reto|Flat bench press|Press de banca plano
+Supino inclinado|Incline bench press|Press de banca inclinado
+Crucifixo|Chest fly|Aperturas de pecho
+Crossover|Cable crossover|Cruce de poleas
+Puxada frontal|Lat pulldown|Jalón al pecho
+Remada baixa|Seated cable row|Remo en polea baja
+Remada curvada|Bent-over row|Remo inclinado
+Pulldown|Straight-arm pulldown|Jalón con brazos rectos
+Desenvolvimento|Shoulder press|Press de hombros
+Elevação lateral|Lateral raise|Elevación lateral
+Elevação frontal|Front raise|Elevación frontal
+Rosca direta|Barbell curl|Curl con barra
+Rosca alternada|Alternating dumbbell curl|Curl alterno con mancuernas
+Rosca martelo|Hammer curl|Curl martillo
+Tríceps pulley|Triceps pushdown|Extensión de tríceps en polea
+Tríceps testa|Lying triceps extension|Press francés tumbado
+Tríceps francês|Overhead triceps extension|Extensión de tríceps sobre la cabeza
+Agachamento|Squat|Sentadilla
+Leg press|Leg press|Prensa de piernas
+Cadeira extensora|Leg extension|Extensión de piernas
+Mesa flexora|Lying leg curl|Curl femoral tumbado
+Stiff|Stiff-legged deadlift|Peso muerto con piernas rígidas
+Panturrilha|Calf raise|Elevación de talones
+Abdominal tradicional|Crunch|Abdominal tradicional
+Prancha|Plank|Plancha
+Elevação de pernas|Leg raise|Elevación de piernas
+Escolha o plano que mais combina com seu objetivo.|Choose the plan that best fits your goals.|Elige el plan que mejor se adapte a tus objetivos.
+Falta pouco — escolha como prefere pagar.|Almost there — choose how you want to pay.|Ya casi está — elige cómo prefieres pagar.
+Aguarde o carregamento das cidades.|Please wait while cities load.|Espera mientras se cargan las ciudades.
+Remover este aluno da sua lista?|Remove this student from your list?|¿Eliminar a este alumno de tu lista?
+Cancelar este agendamento?|Cancel this appointment?|¿Cancelar esta cita?
+Remover este horário disponível?|Remove this available time slot?|¿Eliminar este horario disponible?
+Personal trainer|Personal trainer|Entrenador personal
+Consulta com nutricionista|Nutritionist appointment|Consulta con nutricionista
+Treino acompanhado|Supervised workout|Entrenamiento supervisado
+Reavaliação física|Fitness reassessment|Reevaluación física
+Agendamento realizado com sucesso! Data: {data} • Horário: {hora} • Atendimento: {atendimento} • Profissional: {profissional}|Appointment booked successfully! Date: {data} • Time: {hora} • Service: {atendimento} • Professional: {profissional}|¡Cita reservada correctamente! Fecha: {data} • Hora: {hora} • Servicio: {atendimento} • Profesional: {profissional}
+Se existir uma conta pendente para este e-mail, enviaremos uma nova confirmação em instantes.|If there is an account awaiting confirmation for this email address, we will send a new confirmation shortly.|Si hay una cuenta pendiente de confirmación para este correo, enviaremos una nueva confirmación en unos instantes.
+O link de confirmação é inválido, expirou ou já foi utilizado.|The confirmation link is invalid, has expired, or has already been used.|El enlace de confirmación no es válido, ha caducado o ya se ha utilizado.
+Informe o link completo de confirmação recebido por e-mail.|Use the complete confirmation link you received by email.|Utiliza el enlace de confirmación completo que recibiste por correo.
+Este link de confirmação expirou. Solicite um novo envio pela tela de login.|This confirmation link has expired. Request a new one on the login page.|Este enlace de confirmación ha caducado. Solicita uno nuevo en la página de inicio de sesión.
+E-mail confirmado com sucesso. Agora você já pode acessar sua conta.|Email confirmed successfully. You can now sign in to your account.|Correo confirmado correctamente. Ya puedes acceder a tu cuenta.
+Não foi possível confirmar o e-mail neste momento. Tente novamente mais tarde.|Unable to confirm your email right now. Please try again later.|No se pudo confirmar tu correo en este momento. Inténtalo de nuevo más tarde.
+Solicitação recebida! Se o e-mail informado estiver cadastrado, você receberá as instruções para redefinir sua senha em alguns instantes. Confira também sua caixa de spam.|Request received! If the email address is registered, you will receive password reset instructions shortly. Please also check your spam folder.|¡Solicitud recibida! Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña en unos instantes. Revisa también la carpeta de spam.
+Este link é inválido, expirou ou já foi utilizado.|This link is invalid, has expired, or has already been used.|Este enlace no es válido, ha caducado o ya se ha utilizado.
+Não foi possível validar este link agora. Tente novamente mais tarde.|Unable to validate this link right now. Please try again later.|No se pudo validar este enlace en este momento. Inténtalo de nuevo más tarde.
+A nova senha deve ter pelo menos 8 caracteres.|The new password must contain at least 8 characters.|La nueva contraseña debe tener al menos 8 caracteres.
+Senha alterada com sucesso.|Password changed successfully.|Contraseña cambiada correctamente.
+Preencha todos os campos.|Fill in all fields.|Completa todos los campos.
+A senha atual está incorreta.|The current password is incorrect.|La contraseña actual es incorrecta.
+Mensal|Monthly|Mensual
+Trimestral|Quarterly|Trimestral
+Semestral|Every six months|Semestral
+Anual|Yearly|Anual
+{titulo} com {profissional}|{titulo} with {profissional}|{titulo} con {profissional}
+{data} às {hora}|{data} at {hora}|{data} a las {hora}
+Cadastro realizado. Confirme seu e-mail para acessar sua conta.|Account created. Confirm your email to access your account.|Cuenta creada. Confirma tu correo para acceder a tu cuenta.
+Cadastro realizado, mas não foi possível enviar o e-mail de confirmação. Tente reenviar pela tela de login.|Account created, but the confirmation email could not be sent. Try resending it on the login page.|Cuenta creada, pero no se pudo enviar el correo de confirmación. Intenta reenviarlo desde la página de inicio de sesión.
+Máximo de {n} caracteres.|Maximum of {n} characters.|Máximo de {n} caracteres.
+O valor mínimo é {n}.|The minimum value is {n}.|El valor mínimo es {n}.
+O valor máximo é {n}.|The maximum value is {n}.|El valor máximo es {n}.
+Novo usuário|New user|Nuevo usuario
+Editar usuário|Edit user|Editar usuario
+Editar pagamento|Edit payment|Editar pago
+Registrar pagamento|Record payment|Registrar pago
+Editar categoria|Edit category|Editar categoría
+Nova categoria|New category|Nueva categoría
+Editar função|Edit role|Editar función
+Nova função|New role|Nueva función
+Editar modalidade|Edit activity|Editar actividad
+Nova modalidade|New activity|Nueva actividad
+Editar produto|Edit product|Editar producto
+Editar plano|Edit plan|Editar plan
+Editar profissional|Edit professional|Editar profesional
+Editar transportadora|Edit carrier|Editar transportista
+Novo transportador|New carrier|Nuevo transportista
+Halteres (Musculação)|Dumbbells (Weight training)|Mancuernas (Musculación)
+Raio (CrossTraining)|Lightning (CrossTraining)|Rayo (CrossTraining)
+Gota (Funcional)|Drop (Functional training)|Gota (Entrenamiento funcional)
+Relógio (Spinning)|Clock (Spinning)|Reloj (Spinning)
+Luva (Boxe)|Glove (Boxing)|Guante (Boxeo)
+Folha (Mobilidade & Yoga)|Leaf (Mobility & Yoga)|Hoja (Movilidad y yoga)
+Estrela (genérico)|Star (generic)|Estrella (genérico)
+Excluir {nome}?|Delete {nome}?|¿Eliminar {nome}?
+este registro|this record|este registro
+Afeganistão|Afghanistan|Afganistán
+Ilhas Aland|Åland Islands|Islas Aland
+Albânia|Albania|Albania
+Argélia|Algeria|Argelia
+Samoa Americana|American Samoa|Samoa Americana
+Andorra|Andorra|Andorra
+Angola|Angola|Angola
+Anguila|Anguilla|Anguila
+Antártida|Antarctica|Antártida
+Antígua e Barbuda|Antigua & Barbuda|Antigua y Barbuda
+Argentina|Argentina|Argentina
+Armênia|Armenia|Armenia
+Aruba|Aruba|Aruba
+Austrália|Australia|Australia
+Áustria|Austria|Austria
+Azerbaijão|Azerbaijan|Azerbaiyán
+Bahamas|Bahamas|Bahamas
+Barein|Bahrain|Baréin
+Bangladesh|Bangladesh|Bangladés
+Barbados|Barbados|Barbados
+Bielorrússia|Belarus|Bielorrusia
+Bélgica|Belgium|Bélgica
+Belize|Belize|Belice
+Benin|Benin|Benín
+Bermudas|Bermuda|Bermudas
+Butão|Bhutan|Bután
+Bolívia|Bolivia|Bolivia
+Países Baixos Caribenhos|Caribbean Netherlands|Caribe neerlandés
+Bósnia e Herzegovina|Bosnia & Herzegovina|Bosnia y Herzegovina
+Botsuana|Botswana|Botsuana
+Ilha Bouvet|Bouvet Island|Isla Bouvet
+Brasil|Brazil|Brasil
+Território Britânico do Oceano Índico|British Indian Ocean Territory|Territorio Británico del Océano Índico
+Brunei|Brunei|Brunéi
+Bulgária|Bulgaria|Bulgaria
+Burquina Faso|Burkina Faso|Burkina Faso
+Burundi|Burundi|Burundi
+Cabo Verde|Cape Verde|Cabo Verde
+Camboja|Cambodia|Camboya
+Camarões|Cameroon|Camerún
+Canadá|Canada|Canadá
+Ilhas Cayman|Cayman Islands|Islas Caimán
+República Centro-Africana|Central African Republic|República Centroafricana
+Chade|Chad|Chad
+Chile|Chile|Chile
+China|China|China
+Ilha Christmas|Christmas Island|Isla de Navidad
+Ilhas Cocos (Keeling)|Cocos (Keeling) Islands|Islas Cocos
+Colômbia|Colombia|Colombia
+Comores|Comoros|Comoras
+República do Congo|Congo - Brazzaville|Congo
+Congo - Kinshasa|Congo - Kinshasa|República Democrática del Congo
+Ilhas Cook|Cook Islands|Islas Cook
+Costa Rica|Costa Rica|Costa Rica
+Costa do Marfim|Côte d’Ivoire|Côte d’Ivoire
+Croácia|Croatia|Croacia
+Cuba|Cuba|Cuba
+Curaçao|Curaçao|Curazao
+Chipre|Cyprus|Chipre
+Tchéquia|Czechia|Chequia
+Dinamarca|Denmark|Dinamarca
+Djibuti|Djibouti|Yibuti
+Dominica|Dominica|Dominica
+República Dominicana|Dominican Republic|República Dominicana
+Equador|Ecuador|Ecuador
+Egito|Egypt|Egipto
+El Salvador|El Salvador|El Salvador
+Guiné Equatorial|Equatorial Guinea|Guinea Ecuatorial
+Eritreia|Eritrea|Eritrea
+Estônia|Estonia|Estonia
+Essuatíni|Eswatini|Esuatini
+Etiópia|Ethiopia|Etiopía
+Ilhas Malvinas|Falkland Islands|Islas Malvinas
+Ilhas Faroé|Faroe Islands|Islas Feroe
+Fiji|Fiji|Fiyi
+Finlândia|Finland|Finlandia
+França|France|Francia
+Guiana Francesa|French Guiana|Guayana Francesa
+Polinésia Francesa|French Polynesia|Polinesia Francesa
+Territórios Franceses do Sul|French Southern Territories|Territorios Australes Franceses
+Gabão|Gabon|Gabón
+Gâmbia|Gambia|Gambia
+Geórgia|Georgia|Georgia
+Alemanha|Germany|Alemania
+Gana|Ghana|Ghana
+Gibraltar|Gibraltar|Gibraltar
+Grécia|Greece|Grecia
+Groenlândia|Greenland|Groenlandia
+Granada|Grenada|Granada
+Guadalupe|Guadeloupe|Guadalupe
+Guam|Guam|Guam
+Guatemala|Guatemala|Guatemala
+Guernsey|Guernsey|Guernesey
+Guiné|Guinea|Guinea
+Guiné-Bissau|Guinea-Bissau|Guinea-Bisáu
+Guiana|Guyana|Guyana
+Haiti|Haiti|Haití
+Ilhas Heard e McDonald|Heard & McDonald Islands|Islas Heard y McDonald
+Cidade do Vaticano|Vatican City|Ciudad del Vaticano
+Honduras|Honduras|Honduras
+Hong Kong, RAE da China|Hong Kong SAR China|RAE de Hong Kong (China)
+Hungria|Hungary|Hungría
+Islândia|Iceland|Islandia
+Índia|India|India
+Indonésia|Indonesia|Indonesia
+Irã|Iran|Irán
+Iraque|Iraq|Irak
+Irlanda|Ireland|Irlanda
+Ilha de Man|Isle of Man|Isla de Man
+Israel|Israel|Israel
+Itália|Italy|Italia
+Jamaica|Jamaica|Jamaica
+Japão|Japan|Japón
+Jersey|Jersey|Jersey
+Jordânia|Jordan|Jordania
+Cazaquistão|Kazakhstan|Kazajistán
+Quênia|Kenya|Kenia
+Quiribati|Kiribati|Kiribati
+Coreia do Norte|North Korea|Corea del Norte
+Coreia do Sul|South Korea|Corea del Sur
+Kuwait|Kuwait|Kuwait
+Quirguistão|Kyrgyzstan|Kirguistán
+Laos|Laos|Laos
+Letônia|Latvia|Letonia
+Líbano|Lebanon|Líbano
+Lesoto|Lesotho|Lesoto
+Libéria|Liberia|Liberia
+Líbia|Libya|Libia
+Liechtenstein|Liechtenstein|Liechtenstein
+Lituânia|Lithuania|Lituania
+Luxemburgo|Luxembourg|Luxemburgo
+Macau, RAE da China|Macao SAR China|RAE de Macao (China)
+Madagascar|Madagascar|Madagascar
+Malaui|Malawi|Malaui
+Malásia|Malaysia|Malasia
+Maldivas|Maldives|Maldivas
+Mali|Mali|Mali
+Malta|Malta|Malta
+Ilhas Marshall|Marshall Islands|Islas Marshall
+Martinica|Martinique|Martinica
+Mauritânia|Mauritania|Mauritania
+Maurício|Mauritius|Mauricio
+Mayotte|Mayotte|Mayotte
+México|Mexico|México
+Micronésia|Micronesia|Micronesia
+Moldávia|Moldova|Moldavia
+Mônaco|Monaco|Mónaco
+Mongólia|Mongolia|Mongolia
+Montenegro|Montenegro|Montenegro
+Montserrat|Montserrat|Montserrat
+Marrocos|Morocco|Marruecos
+Moçambique|Mozambique|Mozambique
+Mianmar (Birmânia)|Myanmar (Burma)|Myanmar (Birmania)
+Namíbia|Namibia|Namibia
+Nauru|Nauru|Nauru
+Nepal|Nepal|Nepal
+Países Baixos|Netherlands|Países Bajos
+Nova Caledônia|New Caledonia|Nueva Caledonia
+Nova Zelândia|New Zealand|Nueva Zelanda
+Nicarágua|Nicaragua|Nicaragua
+Níger|Niger|Níger
+Nigéria|Nigeria|Nigeria
+Niue|Niue|Niue
+Ilha Norfolk|Norfolk Island|Isla Norfolk
+Macedônia do Norte|North Macedonia|Macedonia del Norte
+Ilhas Marianas do Norte|Northern Mariana Islands|Islas Marianas del Norte
+Noruega|Norway|Noruega
+Omã|Oman|Omán
+Paquistão|Pakistan|Pakistán
+Palau|Palau|Palaos
+Territórios palestinos|Palestinian Territories|Territorios Palestinos
+Panamá|Panama|Panamá
+Papua-Nova Guiné|Papua New Guinea|Papúa Nueva Guinea
+Paraguai|Paraguay|Paraguay
+Peru|Peru|Perú
+Filipinas|Philippines|Filipinas
+Ilhas Pitcairn|Pitcairn Islands|Islas Pitcairn
+Polônia|Poland|Polonia
+Portugal|Portugal|Portugal
+Porto Rico|Puerto Rico|Puerto Rico
+Catar|Qatar|Catar
+Romênia|Romania|Rumanía
+Rússia|Russia|Rusia
+Ruanda|Rwanda|Ruanda
+São Bartolomeu|St. Barthélemy|San Bartolomé
+Santa Helena|St. Helena|Santa Elena
+São Cristóvão e Névis|St. Kitts & Nevis|San Cristóbal y Nieves
+Santa Lúcia|St. Lucia|Santa Lucía
+São Martinho|St. Martin|San Martín
+São Pedro e Miquelão|St. Pierre & Miquelon|San Pedro y Miquelón
+São Vicente e Granadinas|St. Vincent & Grenadines|San Vicente y las Granadinas
+Samoa|Samoa|Samoa
+San Marino|San Marino|San Marino
+São Tomé e Príncipe|São Tomé & Príncipe|Santo Tomé y Príncipe
+Arábia Saudita|Saudi Arabia|Arabia Saudí
+Senegal|Senegal|Senegal
+Sérvia|Serbia|Serbia
+Seicheles|Seychelles|Seychelles
+Serra Leoa|Sierra Leone|Sierra Leona
+Singapura|Singapore|Singapur
+Sint Maarten|Sint Maarten|Sint Maarten
+Eslováquia|Slovakia|Eslovaquia
+Eslovênia|Slovenia|Eslovenia
+Ilhas Salomão|Solomon Islands|Islas Salomón
+Somália|Somalia|Somalia
+África do Sul|South Africa|Sudáfrica
+Ilhas Geórgia do Sul e Sandwich do Sul|South Georgia & South Sandwich Islands|Islas Georgia del Sur y Sandwich del Sur
+Sudão do Sul|South Sudan|Sudán del Sur
+Espanha|Spain|España
+Sri Lanka|Sri Lanka|Sri Lanka
+Sudão|Sudan|Sudán
+Suriname|Suriname|Surinam
+Svalbard e Jan Mayen|Svalbard & Jan Mayen|Svalbard y Jan Mayen
+Suécia|Sweden|Suecia
+Suíça|Switzerland|Suiza
+Síria|Syria|Siria
+Taiwan|Taiwan|Taiwán
+Tadjiquistão|Tajikistan|Tayikistán
+Tanzânia|Tanzania|Tanzania
+Tailândia|Thailand|Tailandia
+Timor-Leste|Timor-Leste|Timor-Leste
+Togo|Togo|Togo
+Tokelau|Tokelau|Tokelau
+Tonga|Tonga|Tonga
+Trinidad e Tobago|Trinidad & Tobago|Trinidad y Tobago
+Tunísia|Tunisia|Túnez
+Turquia|Türkiye|Turquía
+Turcomenistão|Turkmenistan|Turkmenistán
+Ilhas Turcas e Caicos|Turks & Caicos Islands|Islas Turcas y Caicos
+Tuvalu|Tuvalu|Tuvalu
+Uganda|Uganda|Uganda
+Ucrânia|Ukraine|Ucrania
+Emirados Árabes Unidos|United Arab Emirates|Emiratos Árabes Unidos
+Reino Unido|United Kingdom|Reino Unido
+Estados Unidos|United States|Estados Unidos
+Ilhas Menores Distantes dos EUA|U.S. Outlying Islands|Islas menores alejadas de EE. UU.
+Uruguai|Uruguay|Uruguay
+Uzbequistão|Uzbekistan|Uzbekistán
+Vanuatu|Vanuatu|Vanuatu
+Venezuela|Venezuela|Venezuela
+Vietnã|Vietnam|Vietnam
+Ilhas Virgens Britânicas|British Virgin Islands|Islas Vírgenes Británicas
+Ilhas Virgens Americanas|U.S. Virgin Islands|Islas Vírgenes de EE. UU.
+Wallis e Futuna|Wallis & Futuna|Wallis y Futuna
+Saara Ocidental|Western Sahara|Sáhara Occidental
+Iêmen|Yemen|Yemen
+Zâmbia|Zambia|Zambia
+Zimbábue|Zimbabwe|Zimbabue
+Valor a utilizar|Amount to use|Importe a utilizar
+Novo plano|New plan|Nuevo plan
+URL da foto|Photo URL|URL de la foto
+Carga (kg)|Weight (kg)|Carga (kg)
+Dados da sua conta|Your account details|Datos de tu cuenta
+dd/mm/aaaa hh:mm|dd/mm/yyyy hh:mm|dd/mm/aaaa hh:mm
+Confirmado|Confirmed|Confirmado
+Concluído|Completed|Completado
+Não compareceu|No-show|No asistió

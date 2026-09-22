@@ -60,7 +60,7 @@ $devolucaoStatusLabel = bo_status_devolucao_labels();
                             <td>
                                 <?php foreach ($ped['itens'] as $it): ?>
                                     <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?></div>
-                                    <?php if ($it['codigoRastreio']): ?><div><small>Rastreio: <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
+                                    <?php if ($it['codigoRastreio']): ?><div><small><?php echo of_t('Rastreio:'); ?> <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
                                 <?php endforeach; ?>
                             </td>
                             <td>
@@ -119,7 +119,7 @@ $devolucaoStatusLabel = bo_status_devolucao_labels();
                             <td>
                                 <?php foreach ($ped['itens'] as $it): ?>
                                     <div><?php echo (int) $it['quantidade']; ?>x <?php echo htmlspecialchars($it['produto']); ?></div>
-                                    <?php if ($it['codigoRastreio']): ?><div><small>Rastreio: <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
+                                    <?php if ($it['codigoRastreio']): ?><div><small><?php echo of_t('Rastreio:'); ?> <?php echo htmlspecialchars($it['codigoRastreio']); ?></small></div><?php endif; ?>
                                 <?php endforeach; ?>
                             </td>
                             <td><span class="bo-badge bo-compra-<?php echo $ped['statusBanco']; ?>"><?php echo $ped['status']; ?></span></td>

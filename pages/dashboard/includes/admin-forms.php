@@ -57,7 +57,7 @@ function bo_modal_usuario(?array $u, string $secao, array $planos = []): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $titulo; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($titulo); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('usuarios.php'); ?>">
@@ -258,7 +258,7 @@ function bo_modal_pagamento(?array $p, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar pagamento' : 'Registrar pagamento'; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar pagamento' : 'Registrar pagamento'); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('pagamentos.php'); ?>">
@@ -275,7 +275,7 @@ function bo_modal_pagamento(?array $p, string $secao): void
                             <label class="form-label"><?php echo of_t('Tipo'); ?></label>
                             <select class="form-select" name="tipo">
                                 <option value="PIX" <?php echo ($p['tipo'] ?? 'PIX') === 'PIX' ? 'selected' : ''; ?>>PIX</option>
-                                <option value="Cartão" <?php echo ($p['tipo'] ?? '') === onefitTraduzir('Cartão') ? 'selected' : ''; ?>><?php echo of_t('Cartão'); ?></option>
+                                <option value="Cartão" <?php echo ($p['tipo'] ?? '') === 'Cartão' ? 'selected' : ''; ?>><?php echo of_t('Cartão'); ?></option>
                             </select>
                         </div>
                         <div class="col-6">
@@ -401,7 +401,7 @@ function bo_modal_categoria(?array $c, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar categoria' : 'Nova categoria'; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar categoria' : 'Nova categoria'); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('categorias.php'); ?>">
@@ -438,7 +438,7 @@ function bo_modal_funcao(?array $f, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar função' : 'Nova função'; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar função' : 'Nova função'); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('funcoes.php'); ?>">
@@ -496,7 +496,7 @@ function bo_modal_modalidade(?array $m, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar modalidade' : 'Nova modalidade'; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar modalidade' : 'Nova modalidade'); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('modalidades.php'); ?>">
@@ -517,7 +517,7 @@ function bo_modal_modalidade(?array $m, string $secao): void
                             <label class="form-label"><?php echo of_t('Ícone (exibido na home)'); ?></label>
                             <select class="form-select" name="icone">
                                 <?php foreach (bo_icones_modalidade_options() as $chave => $rotulo): ?>
-                                    <option value="<?php echo $chave; ?>" <?php echo $iconeAtual === $chave ? 'selected' : ''; ?>><?php echo $rotulo; ?></option>
+                                    <option value="<?php echo $chave; ?>" <?php echo $iconeAtual === $chave ? 'selected' : ''; ?>><?php echo of_t($rotulo); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -545,7 +545,7 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar produto' : onefitTraduzir('Cadastro de Produto'); ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar produto' : onefitTraduzir('Cadastro de Produto')); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('produtos.php'); ?>" enctype="multipart/form-data">
@@ -576,7 +576,7 @@ function bo_modal_produto(?array $p, string $secao, array $categoriasOptions): v
                             <input type="number" step="0.01" min="0" max="100" class="form-control" name="desconto" value="<?php echo bo_val($p['desconto'] ?? '0'); ?>">
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Cashback (R$)</label>
+                            <label class="form-label"><?php echo of_t('Cashback (R$)'); ?></label>
                             <input type="number" step="0.01" min="0" class="form-control" name="cashback" value="<?php echo bo_val($p['cashback'] ?? '0'); ?>">
                         </div>
                         <div class="col-6">
@@ -615,7 +615,7 @@ function bo_modal_plano(?array $p, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar plano' : onefitTraduzir('Novo Plano'); ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar plano' : onefitTraduzir('Novo Plano')); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('planos.php'); ?>">
@@ -636,7 +636,7 @@ function bo_modal_plano(?array $p, string $secao): void
                             <label class="form-label"><?php echo of_t('Ciclo'); ?></label>
                             <select class="form-select" name="ciclo">
                                 <?php foreach (['Mensal', 'Trimestral', 'Semestral', 'Anual'] as $ciclo): ?>
-                                    <option value="<?php echo $ciclo; ?>" <?php echo ($p['ciclo'] ?? 'Mensal') === $ciclo ? 'selected' : ''; ?>><?php echo $ciclo; ?></option>
+                                    <option value="<?php echo $ciclo; ?>" <?php echo ($p['ciclo'] ?? 'Mensal') === $ciclo ? 'selected' : ''; ?>><?php echo of_t($ciclo); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -653,7 +653,7 @@ function bo_modal_plano(?array $p, string $secao): void
                         </div>
                         <div class="col-12">
                             <label class="form-label"><?php echo of_t('Benefícios (um por linha, exibidos no card do site)'); ?></label>
-                            <textarea class="form-control" name="beneficios" rows="4" placeholder="Acesso à musculação&#10;2 modalidades por semana&#10;Avaliação física inicial"><?php echo bo_val($p['beneficios'] ?? ''); ?></textarea>
+                            <textarea class="form-control" name="beneficios" rows="4" placeholder="<?php echo of_t('Acesso à musculação') . '&#10;' . of_t('2 modalidades por semana') . '&#10;' . of_t('Avaliação física inicial'); ?>"><?php echo bo_val($p['beneficios'] ?? ''); ?></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -679,7 +679,7 @@ function bo_modal_profissional(?array $p, string $secao, array $modalidadesOptio
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar profissional' : onefitTraduzir('Novo Profissional'); ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar profissional' : onefitTraduzir('Novo Profissional')); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('profissionais.php'); ?>" enctype="multipart/form-data">
@@ -728,7 +728,7 @@ function bo_modal_profissional(?array $p, string $secao, array $modalidadesOptio
                         </div>
                         <div class="col-6">
                             <label class="form-label"><?php echo of_t('Celular'); ?></label>
-                            <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>" placeholder="DDD + número" required>
+                            <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>" placeholder="<?php echo of_t('DDD + número'); ?>" required>
                         </div>
                         <div class="col-12">
                             <label class="form-label"><?php echo of_t('Foto'); ?></label>
@@ -781,7 +781,7 @@ function bo_modal_perfil_editar(array $u, int $idUsuario): void
                         </div>
                         <div class="col-6">
                             <label class="form-label"><?php echo of_t('Telefone/Celular'); ?></label>
-                            <input type="text" class="form-control" name="telefone" value="<?php echo bo_val($u['telefone'] ?? ''); ?>" placeholder="DDD + número" required>
+                            <input type="text" class="form-control" name="telefone" value="<?php echo bo_val($u['telefone'] ?? ''); ?>" placeholder="<?php echo of_t('DDD + número'); ?>" required>
                         </div>
                         <div class="col-6">
                             <label class="form-label" for="perfil-nacionalidade"><?php echo of_t('Nacionalidade'); ?></label>
@@ -881,7 +881,7 @@ function bo_modal_senha_alterar(): void
 function bo_botao_excluir(string $recurso, $id): string
 {
     $modalId = 'modalExcluir' . $recurso . $id;
-    return '<button type="button" class="btn-bo-icon danger" title="Excluir" data-bs-toggle="modal" data-bs-target="#' . $modalId . '"><i class="bi bi-trash"></i></button>';
+    return '<button type="button" class="btn-bo-icon danger" title="' . of_t('Excluir') . '" data-bs-toggle="modal" data-bs-target="#' . $modalId . '"><i class="bi bi-trash"></i></button>';
 }
 
 /**
@@ -897,7 +897,7 @@ function bo_modal_confirmar_exclusao(string $recurso, $id, string $nome, string 
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Excluir <?php echo bo_val($nome); ?>?</h5>
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> <?php echo of_t('Excluir {nome}?', ['{nome}' => $nome]); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action($recurso . '.php'); ?>">
@@ -954,7 +954,7 @@ function bo_modal_transportadora(?array $t, string $secao): void
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo $isEdit ? 'Editar transportadora' : 'Novo transportador'; ?></h5>
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar transportadora' : 'Novo transportador'); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('transportadoras.php'); ?>">
@@ -971,7 +971,7 @@ function bo_modal_transportadora(?array $t, string $secao): void
                             <label class="form-label"><?php echo of_t('Tipo de envio'); ?></label>
                             <select class="form-select" name="tipo">
                                 <?php foreach ($tipos as $valor => $label): ?>
-                                    <option value="<?php echo $valor; ?>" <?php echo ($t['tipo'] ?? '') === $valor ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                                    <option value="<?php echo $valor; ?>" <?php echo ($t['tipo'] ?? '') === $valor ? 'selected' : ''; ?>><?php echo of_t($label); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>

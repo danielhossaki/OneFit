@@ -1,6 +1,10 @@
 <?php
 /** Shared presentation settings. No writes or schema changes during requests. */
 function onefitIdiomas(): array { return ['pt-BR', 'en', 'es']; }
+function onefitNormalizarIdioma(?string $locale): string {
+    if ($locale === 'pt') return 'pt-BR';
+    return in_array($locale, onefitIdiomas(), true) ? $locale : 'pt-BR';
+}
 function onefitIdentidades(): array {
     return [
         'dourado' => ['name' => 'One Fit', 'logo' => 'logo_onefit.webp'],
@@ -51,13 +55,27 @@ function onefitBrandNameHtml(): string {
 }
 function onefitIdioma(): string {
     $value = $_SESSION['idioma'] ?? 'pt-BR';
-    return in_array($value, onefitIdiomas(), true) ? $value : 'pt-BR';
+    return onefitNormalizarIdioma($value);
 }
 function onefitTraduzir(string $text, array $values = [], ?string $locale = null): string {
     static $catalogs = [];
-    $locale = $locale === null ? onefitIdioma() : (in_array($locale, onefitIdiomas(), true) ? $locale : 'pt-BR');
+    $locale = $locale === null ? onefitIdioma() : onefitNormalizarIdioma($locale);
     if (!isset($catalogs[$locale])) $catalogs[$locale] = require __DIR__ . '/locales/' . $locale . '.php';
-    return strtr($catalogs[$locale][$text] ?? $text, $values);
+    foreach (onefitIdentidades() as $brand) if ($text === $brand['name']) return $text;
+    return strtr($catalogs[$locale][$text] ?? $text, $values + ['{marca}' => onefitMarca()['name']]);
+}
+/** Format display values only; stored values and form values stay unchanged. */
+function onefitNumero(float $value, int $decimals = 2, ?string $locale = null): string {
+    $locale = onefitNormalizarIdioma($locale ?? onefitIdioma());
+    return number_format($value, $decimals, $locale === 'en' ? '.' : ',', $locale === 'en' ? ',' : '.');
+}
+function onefitMoeda(float $value, ?string $locale = null): string {
+    return 'R$ ' . onefitNumero($value, 2, $locale);
+}
+function onefitData(string $format, int $timestamp, ?string $locale = null): string {
+    $locale = onefitNormalizarIdioma($locale ?? onefitIdioma());
+    if ($locale === 'en') $format = str_replace('d/m/Y', 'm/d/Y', $format);
+    return date($format, $timestamp);
 }
 function of_t(string $text, array $values = []): string {
     return htmlspecialchars(onefitTraduzir($text, $values), ENT_QUOTES, 'UTF-8');
@@ -74,7 +92,7 @@ function onefitCarregarInterface(mysqli $db): void {
             $stmt->bind_param('i', $_SESSION['id_usuario']);
             $stmt->execute();
             $value = $stmt->get_result()->fetch_assoc()['idioma'] ?? 'pt-BR';
-            $_SESSION['idioma'] = in_array($value, onefitIdiomas(), true) ? $value : 'pt-BR';
+            $_SESSION['idioma'] = onefitNormalizarIdioma($value);
             $stmt->close();
         } catch (Throwable $e) { $_SESSION['idioma'] = 'pt-BR'; }
     }

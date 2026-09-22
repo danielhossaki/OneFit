@@ -23,12 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const body = bodies[exercise.dia_semana];
             if (!body) return;
             const row = body.insertRow();
-            [exercise.nome, exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
+            [ofT(exercise.nome), exercise.series, exercise.repeticoes, `${exercise.carga} kg`].forEach(value => {
                 row.insertCell().textContent = value;
             });
             const actions = document.createElement('div');
             actions.className = 'bo-table-actions';
-            [['editar', ofT('Editar'), 'bi-pencil'], ['excluir', 'Excluir', 'bi-trash']].forEach(([action, title, icon]) => {
+            [['editar', ofT('Editar'), 'bi-pencil'], ['excluir', ofT('Excluir'), 'bi-trash']].forEach(([action, title, icon]) => {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'btn-bo-icon' + (action === 'excluir' ? ' danger' : '');
@@ -60,12 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
             data.set('csrf_token', section.dataset.csrf);
             const response = await fetch(section.dataset.endpoint, { method: 'POST', body: data, credentials: 'same-origin' });
             const result = await response.json();
-            if (!response.ok || !result.ok) throw new Error(result.error || 'Não foi possível salvar o treino.');
+            if (!response.ok || !result.ok) throw new Error(result.error || ofT('Não foi possível salvar o treino.'));
             exercises = result.exercicios;
             render();
             onSuccess();
         } catch (failure) {
-            errorElement.textContent = failure instanceof SyntaxError ? 'Resposta inválida. Atualize a página e tente novamente.' : failure.message;
+            errorElement.textContent = failure instanceof SyntaxError ? ofT('Resposta inválida. Atualize a página e tente novamente.') : failure.message;
             errorElement.hidden = false;
         } finally {
             busy = false;
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const diaAba = painelAtivo ? painelAtivo.id.replace('boTreinoDiaTab-', '') : '';
         form.elements.dia_semana.value = exercise ? (exercise.dia_semana || '') : (diaAba || 'segunda');
         if (exercise) ['nome', 'series', 'repeticoes', 'carga'].forEach(key => { form.elements[key].value = exercise[key]; });
-        document.getElementById('boTreinoTitulo').textContent = exercise ? 'Editar exercício' : ofT('Adicionar exercício');
+        document.getElementById('boTreinoTitulo').textContent = exercise ? ofT('Editar exercício') : ofT('Adicionar exercício');
         modal.show();
     }
     form.addEventListener('submit', event => {
@@ -108,10 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!remove && !clear) return;
         pending = { acao: clear ? 'limpar' : 'excluir', id: clear ? '0' : remove.dataset.treinoExcluir };
         confirmError.hidden = true;
-        document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? ofT('Limpar treino') : 'Excluir exercício';
+        document.getElementById('boTreinoConfirmarTitulo').textContent = clear ? ofT('Limpar treino') : ofT('Excluir exercício');
         confirmElement.querySelector('[data-treino-pergunta]').textContent = clear
-            ? 'Tem certeza que deseja limpar todo o treino de todos os dias?' : 'Tem certeza que deseja excluir este exercício?';
-        confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? ofT('Limpar treino') : 'Excluir';
+            ? ofT('Tem certeza que deseja limpar todo o treino de todos os dias?') : ofT('Tem certeza que deseja excluir este exercício?');
+        confirmElement.querySelector('[data-treino-confirmar]').textContent = clear ? ofT('Limpar treino') : ofT('Excluir');
         confirmModal.show();
     });
     confirmElement.querySelector('[data-treino-confirmar]').addEventListener('click', () => {

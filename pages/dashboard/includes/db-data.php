@@ -25,13 +25,13 @@ function bo_label_status_pagamento(string $status): string
         'cancelado' => 'Cancelado',
         'atrasado' => 'Atrasado',
     ];
-    return $labels[$status] ?? ucfirst($status);
+    return onefitTraduzir($labels[$status] ?? ucfirst($status));
 }
 
 function bo_label_forma_pagamento(string $forma): string
 {
     $labels = ['pix' => 'PIX', 'cartao' => 'Cartão', 'cashback' => 'Cashback'];
-    return $labels[$forma] ?? ucfirst($forma);
+    return onefitTraduzir($labels[$forma] ?? ucfirst($forma));
 }
 
 function bo_ciclo_por_duracao(?int $dias): string
@@ -379,7 +379,7 @@ if ($perfilLogado === 'profissional') {
     $stmt->close();
     $idProfissional = $cadProf['id_profissional'] ?? null;
 
-    $profContrato = ['status' => $cadProf ? ucfirst($cadProf['status']) : '—', 'validade' => '—', 'saldoCashback' => 0];
+    $profContrato = ['status' => $cadProf ? onefitTraduzir(ucfirst($cadProf['status'])) : '—', 'validade' => '—', 'saldoCashback' => 0];
 
     $stmt = $conn->prepare("SELECT
             SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo
@@ -443,7 +443,7 @@ if ($perfilLogado === 'profissional') {
             $profAgendados[] = [
                 'aluno' => $row['nome'],
                 'contato' => $row['celular'],
-                'data' => date('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5),
+                'data' => onefitData('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5),
                 'modalidade' => $row['titulo'] ?: ucfirst($row['tipo']),
             ];
         }
@@ -458,7 +458,7 @@ if ($perfilLogado === 'profissional') {
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
         $profCashbackHistorico[] = [
-            'data' => date('d/m/Y', strtotime($row['data_criacao'])),
+            'data' => onefitData('d/m/Y', strtotime($row['data_criacao'])),
             'descricao' => $row['descricao'],
             'valor' => (float) $row['valor'],
         ];
@@ -492,11 +492,11 @@ if ($perfilLogado === 'aluno') {
         'nome' => $usuarioBanco['nome'],
         'email' => $usuarioBanco['email'],
         'plano' => $matriculaAtual['plano'] ?? '—',
-        'status' => $statusLabel[$matriculaAtual['status'] ?? ''] ?? '—',
+        'status' => onefitTraduzir($statusLabel[$matriculaAtual['status'] ?? ''] ?? '—'),
         'documento' => $usuarioBanco['cpf'],
         'telefone' => $usuarioBanco['celular'],
-        'dataCadastro' => $usuarioBanco['data_cadastro'] ? date('d/m/Y', strtotime($usuarioBanco['data_cadastro'] ?? '')) : '—',
-        'nascimento' => $usuarioBanco['data_nascimento'] ? date('d/m/Y', strtotime($usuarioBanco['data_nascimento'])) : '—',
+        'dataCadastro' => $usuarioBanco['data_cadastro'] ? onefitData('d/m/Y', strtotime($usuarioBanco['data_cadastro'] ?? '')) : '—',
+        'nascimento' => $usuarioBanco['data_nascimento'] ? onefitData('d/m/Y', strtotime($usuarioBanco['data_nascimento'])) : '—',
         'altura' => (float) $usuarioBanco['altura'],
         'peso' => (float) $usuarioBanco['peso'],
         'objetivo' => $usuarioBanco['objetivo'] ?: '',
@@ -545,8 +545,8 @@ if ($perfilLogado === 'aluno') {
         $cb = $stmt2->get_result()->fetch_assoc();
         $stmt2->close();
         $alunoHistorico[] = [
-            'data' => date('d/m/Y H:i', strtotime($dataRef)),
-            'descricao' => 'Mensalidade ' . ($row['plano'] ?? ''),
+            'data' => onefitData('d/m/Y H:i', strtotime($dataRef)),
+            'descricao' => onefitTraduzir('Mensalidade {plano}', ['{plano}' => $row['plano'] ?? '']),
             'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
             'status' => bo_label_status_pagamento($row['status']),
             'valor' => (float) $row['valor'],
@@ -572,7 +572,7 @@ if ($perfilLogado === 'aluno') {
     $res = $stmt->get_result();
     while ($row = $res->fetch_assoc()) {
         $alunoCashbackHistorico[] = [
-            'data' => date('d/m/Y', strtotime($row['data_criacao'])),
+            'data' => onefitData('d/m/Y', strtotime($row['data_criacao'])),
             'tipo' => $row['tipo'],
             'descricao' => $row['descricao'],
             'valor' => (float) $row['valor'],
@@ -793,9 +793,9 @@ function bo_carregar_vendas_vendedor(mysqli $conn, ?int $idVendedor): array
             'transportadora' => $row['transportadora_nome'] ?? '—',
             'statusPedido' => $row['status_pedido'],
             'statusLogistica' => $row['status_logistica'],
-            'statusLogisticaLabel' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+            'statusLogisticaLabel' => onefitTraduzir($statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica'])),
             'codigoRastreio' => $row['codigo_rastreio'],
-            'data' => date('d/m/Y H:i', strtotime($row['data_pedido'])),
+            'data' => onefitData('d/m/Y H:i', strtotime($row['data_pedido'])),
         ];
     }
     $stmt->close();
@@ -830,9 +830,9 @@ function bo_carregar_devolucoes(mysqli $conn): array
             'motivo' => $row['motivo'],
             'observacao' => $row['observacao'],
             'status' => $row['status'],
-            'dataSolicitacao' => date('d/m/Y H:i', strtotime($row['data_solicitacao'])),
-            'dataAnalise' => $row['data_analise'] ? date('d/m/Y H:i', strtotime($row['data_analise'])) : null,
-            'dataConclusao' => $row['data_conclusao'] ? date('d/m/Y H:i', strtotime($row['data_conclusao'])) : null,
+            'dataSolicitacao' => onefitData('d/m/Y H:i', strtotime($row['data_solicitacao'])),
+            'dataAnalise' => $row['data_analise'] ? onefitData('d/m/Y H:i', strtotime($row['data_analise'])) : null,
+            'dataConclusao' => $row['data_conclusao'] ? onefitData('d/m/Y H:i', strtotime($row['data_conclusao'])) : null,
         ];
     }
 

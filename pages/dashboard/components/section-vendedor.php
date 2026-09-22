@@ -66,7 +66,7 @@ $vendasStatusLabel = [
             </div>
 
             <div class="bo-filters">
-                <input type="text" class="form-control" style="max-width:280px" placeholder="Buscar por nome ou ID"
+                <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por nome ou ID'); ?>"
                     data-bo-filter="search" data-bo-target="vendedorProdutos">
                 <select class="form-select" style="max-width:200px" data-bo-filter="status" data-bo-target="vendedorProdutos">
                     <option value=""><?php echo of_t('Todos'); ?></option>
@@ -137,7 +137,7 @@ $vendasStatusLabel = [
                 <select class="form-select" style="max-width:220px" data-bo-filter="status" data-bo-target="vendedorVendas">
                     <option value=""><?php echo of_t('Todos os status'); ?></option>
                     <?php foreach ($vendasStatusLabel as $valor => $label): ?>
-                        <option value="<?php echo $valor; ?>"><?php echo $label; ?></option>
+                        <option value="<?php echo $valor; ?>"><?php echo of_t($label); ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -175,10 +175,10 @@ $vendasStatusLabel = [
                                             <?php echo bo_hidden('id', $v['id']); ?>
                                             <select class="form-select form-select-sm" name="status_logistica" style="min-width:150px">
                                                 <?php foreach ($vendasStatusLabel as $valor => $label): ?>
-                                                    <option value="<?php echo $valor; ?>" <?php echo $v['statusLogistica'] === $valor ? 'selected' : ''; ?>><?php echo $label; ?></option>
+                                                    <option value="<?php echo $valor; ?>" <?php echo $v['statusLogistica'] === $valor ? 'selected' : ''; ?>><?php echo of_t($label); ?></option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="Código de rastreio" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
+                                            <input type="text" class="form-control form-control-sm mt-1" name="codigo_rastreio" placeholder="<?php echo of_t('Código de rastreio'); ?>" value="<?php echo htmlspecialchars($v['codigoRastreio'] ?? ''); ?>">
                                             <button type="submit" class="btn-bo-outline btn-sm mt-1"><?php echo of_t('Salvar'); ?></button>
                                         </form>
                                     </td>

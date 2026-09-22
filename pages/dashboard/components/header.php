@@ -17,7 +17,7 @@ if ($perfilLogado === 'aluno') {
 ?>
 <header class="bo-header">
     <div class="d-flex align-items-center gap-2">
-        <button class="bo-sidebar-toggle d-lg-none" id="boSidebarToggle" aria-label="Abrir menu">
+        <button class="bo-sidebar-toggle d-lg-none" id="boSidebarToggle" aria-label="<?php echo of_t('Abrir menu'); ?>">
             <i class="bi bi-list"></i>
         </button>
         <div class="bo-header-search-wrap" id="boHeaderSearchWrap">
@@ -26,13 +26,13 @@ if ($perfilLogado === 'aluno') {
                 <input id="boHeaderSearch" type="search" placeholder="<?php echo of_t('Pesquisar no painel'); ?>" aria-label="<?php echo of_t('Pesquisar no painel'); ?>" autocomplete="off" aria-autocomplete="list" aria-controls="boSearchResults" aria-expanded="false">
                 <kbd>Ctrl K</kbd>
             </label>
-            <div class="bo-search-results" id="boSearchResults" role="listbox" aria-label="Resultados da pesquisa" hidden></div>
+            <div class="bo-search-results" id="boSearchResults" role="listbox" aria-label="<?php echo of_t('Resultados da pesquisa'); ?>" hidden></div>
         </div>
     </div>
 
     <div class="bo-user">
         <div class="bo-notifications-wrap" id="boNotificationsWrap" data-url="<?php echo htmlspecialchars(BASE_URL . 'pages/dashboard/actions/notificacoes.php', ENT_QUOTES, 'UTF-8'); ?>">
-            <button class="bo-avatar bo-notifications-toggle" id="boNotificationsToggle" type="button" aria-label="Abrir notificações" aria-expanded="false" aria-controls="boNotificationsPanel">
+            <button class="bo-avatar bo-notifications-toggle" id="boNotificationsToggle" type="button" aria-label="<?php echo of_t('Abrir notificações'); ?>" aria-expanded="false" aria-controls="boNotificationsPanel">
                 <i class="bi bi-bell" aria-hidden="true"></i>
                 <span class="bo-notifications-count" id="boNotificationsCount" aria-hidden="true" hidden></span>
             </button>
@@ -49,7 +49,7 @@ if ($perfilLogado === 'aluno') {
             </section>
         </div>
         <div class="bo-user-menu-wrap" id="boUserMenuWrap">
-            <button class="bo-avatar<?php echo $perfilLogado === 'aluno' ? ' bo-student-avatar' : ''; ?>" id="boAvatar" type="button" aria-label="Abrir menu do usuário" aria-expanded="false" aria-controls="boUserMenu">
+            <button class="bo-avatar<?php echo $perfilLogado === 'aluno' ? ' bo-student-avatar' : ''; ?>" id="boAvatar" type="button" aria-label="<?php echo of_t('Abrir menu do usuário'); ?>" aria-expanded="false" aria-controls="boUserMenu">
                 <?php echo htmlspecialchars(strtoupper(substr($_SESSION['nome'] ?? $perfilLogado, 0, 1)), ENT_QUOTES, 'UTF-8'); ?>
                 <?php if ($fotoAvatarAluno): ?>
                     <img src="<?php echo htmlspecialchars($fotoAvatarAluno, ENT_QUOTES, 'UTF-8'); ?>" alt="" data-student-photo>

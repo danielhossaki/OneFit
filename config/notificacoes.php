@@ -78,6 +78,7 @@ function buscarNotificacoes(int $usuarioId): array
     $itens = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     foreach ($itens as &$item) {
         $item['id'] = (int) $item['id'];
+        $item = localizarNotificacaoSistema($conn, $usuarioId, $item);
         try { $item['link'] = notificacaoLinkSeguro($item['link']); }
         catch (InvalidArgumentException $erro) { $item['link'] = null; }
     }
@@ -89,6 +90,33 @@ function buscarNotificacoes(int $usuarioId): array
     $naoLidas = (int) $stmt->get_result()->fetch_row()[0];
     $stmt->close();
     return ['notificacoes' => $itens, 'nao_lidas' => $naoLidas];
+}
+
+/** Only a claimed system event is localized. Free-form notifications remain intact. */
+function localizarNotificacaoSistema(mysqli $db, int $usuarioId, array $item): array
+{
+    $titles = array_map(fn($locale) => onefitTraduzir('Novo pedido no marketplace', [], $locale), onefitIdiomas());
+    if ($item['tipo'] !== 'info' || !in_array($item['titulo'], $titles, true)) return $item;
+    $parts = parse_url($item['link'] ?? '');
+    if (!is_array($parts) || !str_ends_with($parts['path'] ?? '', '/pages/dashboard/dashboard.php')) return $item;
+    parse_str($parts['query'] ?? '', $query);
+    if (($query['section'] ?? '') !== 'vendas' || !ctype_digit((string) ($query['pedido'] ?? ''))) return $item;
+    $pedidoId = (int) $query['pedido'];
+    $event = 'marketplace.pedido.' . $pedidoId;
+    $stmt = $db->prepare('SELECT p.valor_total, p.data_pedido, u.tipo_usuario FROM pedido p JOIN usuarios u ON u.id_usuario = p.id_usuario WHERE p.id_pedido = ? AND EXISTS (SELECT 1 FROM notificacoes_eventos e WHERE e.evento = ? AND e.usuario_id = ?)');
+    $stmt->bind_param('isi', $pedidoId, $event, $usuarioId);
+    $stmt->execute();
+    $pedido = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$pedido) return $item;
+    $item['titulo'] = onefitTraduzir('Novo pedido no marketplace');
+    $item['mensagem'] = onefitTraduzir('{tipo} · Pedido #{pedido} · R$ {valor} · {data}', [
+        '{tipo}' => onefitTraduzir($pedido['tipo_usuario'] === 'profissional' ? 'Profissional' : 'Aluno'),
+        '{pedido}' => (string) $pedidoId,
+        '{valor}' => onefitNumero((float) $pedido['valor_total']),
+        '{data}' => onefitData('d/m/Y H:i', strtotime($pedido['data_pedido'])),
+    ]);
+    return $item;
 }
 
 function marcarNotificacoesComoLidas(int $usuarioId): void
@@ -141,8 +169,8 @@ function notificarCompraBackoffice(mysqli $db, int $pedidoId): int
             $type = onefitTraduzir($pedido['tipo_usuario'] === 'profissional' ? 'Profissional' : 'Aluno', [], $locale);
             $message = onefitTraduzir('{tipo} · Pedido #{pedido} · R$ {valor} · {data}', [
                 '{tipo}' => $type, '{pedido}' => (string) $pedidoId,
-                '{valor}' => number_format((float) $pedido['valor_total'], 2, ',', '.'),
-                '{data}' => date('d/m/Y H:i', strtotime($pedido['data_pedido'])),
+                '{valor}' => onefitNumero((float) $pedido['valor_total'], 2, $locale),
+                '{data}' => onefitData('d/m/Y H:i', strtotime($pedido['data_pedido']), $locale),
             ], $locale);
             $path = rtrim((string) parse_url(defined('BASE_URL') ? BASE_URL : onefitEnv('APP_URL'), PHP_URL_PATH), '/');
             $link = notificacaoLinkSeguro($path . '/pages/dashboard/dashboard.php?section=vendas&pedido=' . $pedidoId);

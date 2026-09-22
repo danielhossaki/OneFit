@@ -15,6 +15,7 @@ if (!is_string($csrf) || !$csrf || !hash_equals($_SESSION['csrf_token'] ?? '', $
 $key = $_POST['configuracao'] ?? null;
 $value = $_POST['valor'] ?? null;
 if (!is_string($value)) interfaceFalha(422, onefitTraduzir('Preferência inválida.'));
+if ($key === 'idioma' && $value === 'pt') $value = 'pt-BR';
 try {
     if ($key === 'idioma' && in_array($value, onefitIdiomas(), true)) {
         $stmt = $conn->prepare('INSERT INTO preferencias_usuario (id_usuario, idioma) VALUES (?, ?) ON DUPLICATE KEY UPDATE idioma = VALUES(idioma)');

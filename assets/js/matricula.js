@@ -47,13 +47,13 @@ var ofT = globalThis.ofT || (text => text);
     if (!input.value.trim()) return '';
 
     if (input.id === 'cpf' && !isValidCpf(input.value)) {
-      return 'Digite um CPF válido.';
+      return ofT('Digite um CPF válido.');
     }
 
     if (input.id === 'telefone') {
       const digits = onlyDigits(input.value);
       if (digits.length < 10 || digits.length > 11) {
-        return 'Digite um telefone com DDD válido.';
+        return ofT('Digite um telefone com DDD válido.');
       }
     }
 
@@ -62,13 +62,13 @@ var ofT = globalThis.ofT || (text => text);
     }
 
     if (input.id === 'cidade' && input.dataset.citySelected !== input.value) {
-      return 'Selecione uma cidade válida da lista.';
+      return ofT('Selecione uma cidade válida da lista.');
     }
 
     if (input.id === 'confirmar-senha') {
       const senha = document.getElementById('password');
       if (senha?.value && input.value !== senha.value) {
-        return 'As senhas não coincidem.';
+        return ofT('As senhas não coincidem.');
       }
     }
 
@@ -83,9 +83,9 @@ var ofT = globalThis.ofT || (text => text);
 
   const subtitles = {
     1: ofT('Preencha seus dados para começar a treinar com a gente.'),
-    2: 'Precisamos do seu endereço para emitir sua matrícula.',
-    3: 'Escolha o plano que mais combina com seu objetivo.',
-    4: 'Falta pouco — escolha como prefere pagar.',
+    2: ofT('Precisamos do seu endereço para emitir sua matrícula.'),
+    3: ofT('Escolha o plano que mais combina com seu objetivo.'),
+    4: ofT('Falta pouco — escolha como prefere pagar.'),
   };
 
   let current = 1;
@@ -191,7 +191,7 @@ var ofT = globalThis.ofT || (text => text);
       const senha = document.getElementById('password');
       const confirmar = document.getElementById('confirmar-senha');
       if (senha.value && confirmar.value && senha.value !== confirmar.value) {
-        setFieldState(confirmar, false, 'As senhas não coincidem.');
+        setFieldState(confirmar, false, ofT('As senhas não coincidem.'));
         valid = false;
       }
     }
@@ -201,7 +201,7 @@ var ofT = globalThis.ofT || (text => text);
       const cidade = document.getElementById('cidade');
       const estado = document.getElementById('estado');
       if (estado?.value && cidade?.disabled) {
-        setFieldState(cidade, false, cidade.dataset.cityError || 'Aguarde o carregamento das cidades.');
+        setFieldState(cidade, false, cidade.dataset.cityError || ofT('Aguarde o carregamento das cidades.'));
         valid = false;
       }
     }
@@ -397,7 +397,7 @@ var ofT = globalThis.ofT || (text => text);
     if (!resultados.length) {
       const vazio = document.createElement('div');
       vazio.className = 'city-suggestion-empty';
-      vazio.textContent = 'Nenhuma cidade encontrada.';
+      vazio.textContent = ofT('Nenhuma cidade encontrada.');
       cidadeSugestoes.appendChild(vazio);
     } else {
       resultados.forEach((nome) => {
@@ -426,7 +426,7 @@ var ofT = globalThis.ofT || (text => text);
         `${ibgeApi}/estados/${encodeURIComponent(uf)}/municipios?orderBy=nome`,
         { signal: buscaCidadesController.signal }
       );
-      if (!resposta.ok) throw new Error('Falha ao carregar municípios.');
+      if (!resposta.ok) throw new Error(ofT('Falha ao carregar municípios.'));
 
       const municipios = await resposta.json();
       cidades = municipios
@@ -444,9 +444,9 @@ var ofT = globalThis.ofT || (text => text);
       cidadePendenteDoCep = '';
     } catch (erro) {
       if (erro.name === 'AbortError') return;
-      limparCidade('Não foi possível carregar as cidades', {
+      limparCidade(ofT('Não foi possível carregar as cidades'), {
         disabled: true,
-        error: 'Não foi possível carregar as cidades.',
+        error: ofT('Não foi possível carregar as cidades.'),
       });
       setFieldState(cidadeInput, false, cidadeInput.dataset.cityError);
     }
@@ -491,10 +491,10 @@ var ofT = globalThis.ofT || (text => text);
       estadoInput.replaceChildren();
       const falha = document.createElement('option');
       falha.value = '';
-      falha.textContent = 'Não foi possível carregar estados';
+      falha.textContent = ofT('Não foi possível carregar estados');
       estadoInput.appendChild(falha);
       estadoInput.disabled = true;
-      setFieldState(estadoInput, false, 'Não foi possível carregar os estados.');
+      setFieldState(estadoInput, false, ofT('Não foi possível carregar os estados.'));
     }
   }
 
@@ -548,7 +548,7 @@ var ofT = globalThis.ofT || (text => text);
       const cep = onlyDigits(cepInput.value);
 
       if (cep.length !== 8) {
-        setFieldState(cepInput, false, 'Digite um CEP válido.');
+        setFieldState(cepInput, false, ofT('Digite um CEP válido.'));
         cepInput.focus();
         return;
       }
@@ -561,7 +561,7 @@ var ofT = globalThis.ofT || (text => text);
         const data = await res.json();
 
         if (data.erro) {
-          setFieldState(cepInput, false, 'CEP não encontrado.');
+          setFieldState(cepInput, false, ofT('CEP não encontrado.'));
         } else {
           setFieldState(cepInput, true);
           document.getElementById('endereco').value = data.logradouro || '';

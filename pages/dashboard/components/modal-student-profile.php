@@ -33,7 +33,7 @@ function bo_modal_aluno_editar(array $u, int $idUsuario): void
                         </div>
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="student-telefone"><?php echo of_t('Telefone/Celular'); ?></label>
-                            <input id="student-telefone" type="text" class="form-control" name="telefone" value="<?php echo bo_val($u['telefone'] ?? ''); ?>" placeholder="DDD + número" required>
+                            <input id="student-telefone" type="text" class="form-control" name="telefone" value="<?php echo bo_val($u['telefone'] ?? ''); ?>" placeholder="<?php echo of_t('DDD + número'); ?>" required>
                         </div>
                         <div class="col-12 col-sm-6">
                             <label class="form-label" for="student-nacionalidade"><?php echo of_t('Nacionalidade'); ?></label>
