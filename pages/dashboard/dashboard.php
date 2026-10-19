@@ -206,6 +206,7 @@ if ($perfilLogado === 'admin') {
             require __DIR__ . '/components/section-admin.php';
         } elseif ($perfilLogado === 'profissional') {
             require __DIR__ . '/components/section-profissional.php';
+            require __DIR__ . '/components/section-fotos-faciais.php';
         } elseif ($perfilLogado === 'vendedor') {
             require __DIR__ . '/components/section-vendedor.php';
         } else {
@@ -259,6 +260,9 @@ if ($perfilLogado === 'admin') {
     </script>
 
     <script src="<?php echo BASE_URL; ?>assets/js/dashboard.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/dashboard.js'); ?>"></script>
+    <?php if (in_array($perfilLogado, ['admin', 'profissional'], true)): ?>
+        <script src="<?php echo BASE_URL; ?>assets/js/fotos-faciais.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/fotos-faciais.js'); ?>"></script>
+    <?php endif; ?>
 
 </body>
 

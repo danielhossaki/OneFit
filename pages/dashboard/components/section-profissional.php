@@ -28,9 +28,52 @@ try {
     $stmt->close();
 
     if (!$ofCadastroProfissional) {
-        throw new RuntimeException('O usuário conectado não possui cadastro de profissional.');
+        $stmt = $conn->prepare(
+            "SELECT cp.id_profissional
+             FROM cadastro_profissional cp
+             JOIN usuarios u ON u.email = cp.email
+             WHERE u.id_usuario = ? AND u.tipo_usuario = 'profissional'
+               AND cp.id_usuario IS NULL
+             LIMIT 1"
+        );
+        $stmt->bind_param('i', $ofIdUsuario);
+        $stmt->execute();
+        $cadastroPorEmail = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if ($cadastroPorEmail) {
+            $idCadastroPorEmail = (int) $cadastroPorEmail['id_profissional'];
+            $stmt = $conn->prepare(
+                'UPDATE cadastro_profissional SET id_usuario = ? WHERE id_profissional = ? AND id_usuario IS NULL'
+            );
+            $stmt->bind_param('ii', $ofIdUsuario, $idCadastroPorEmail);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $conn->prepare('SELECT id_profissional FROM cadastro_profissional WHERE id_usuario = ? LIMIT 1');
+            $stmt->bind_param('i', $ofIdUsuario);
+            $stmt->execute();
+            $ofCadastroProfissional = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+        }
     }
-    $ofIdProfissional = (int) $ofCadastroProfissional['id_profissional'];
+
+    if (!$ofCadastroProfissional) {
+        $ofFeedback = ['type' => 'warning', 'message' => 'Não encontramos um cadastro profissional com o e-mail desta conta. Peça ao administrador para conferir o cadastro e o e-mail.'];
+        $ofIdProfissional = 0;
+    } else {
+        $ofIdProfissional = (int) $ofCadastroProfissional['id_profissional'];
+    }
+
+    if ($ofIdProfissional === 0) {
+        $ofAlunosDisponiveis = [];
+        $ofAlunosVinculados = [];
+        $profContrato = ['saldoCashback' => 0.0];
+        $profHistorico = [];
+        $profAgendados = [];
+        $profDisponiveis = [];
+        $profCashbackHistorico = [];
+    } else {
 
     // Relações ausentes no dump original. IF NOT EXISTS torna a preparação
     // segura para ser executada novamente sem apagar ou duplicar dados.
@@ -459,6 +502,7 @@ try {
         ];
     }
     $stmt->close();
+    }
 } catch (Throwable $e) {
     $ofFeedback = ['type' => 'danger', 'message' => $e->getMessage()];
 }

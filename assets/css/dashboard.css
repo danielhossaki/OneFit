@@ -2265,6 +2265,42 @@ html .dashboard-page .bo-header > .d-flex { min-width: 0; }
 @media (max-width: 560px) {
     html .dashboard-page .bo-header > .d-flex { flex: 1; }
 }html .dashboard-page .bo-notifications-list .bo-notifications-item { padding-right: 60px; }
+/* Cadastro facial */
+html .dashboard-page .bo-face-layout { display: grid; grid-template-columns: minmax(260px, .85fr) minmax(320px, 1.4fr); gap: 20px; }
+html .dashboard-page .bo-face-steps { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; padding: 0; list-style: none; }
+html .dashboard-page .bo-face-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; color: var(--text-muted); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; font-size: 12px; font-weight: 700; }
+html .dashboard-page .bo-face-steps li span { display: grid; place-items: center; width: 22px; height: 22px; color: var(--surface); background: var(--gold); border-radius: 50%; }
+html .dashboard-page .bo-face-panel { min-width: 0; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; }
+html .dashboard-page .bo-face-panel h2 { margin: 0 0 16px; font-size: 16px; font-weight: 800; }
+html .dashboard-page .bo-face-selected h3 { margin: 0; font-size: 15px; font-weight: 800; }
+html .dashboard-page .bo-face-search { margin-bottom: 12px; }
+html .dashboard-page .bo-face-list { display: grid; gap: 8px; max-height: 430px; overflow: auto; }
+html .dashboard-page .bo-face-person { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; text-align: left; color: var(--text); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; }
+html .dashboard-page .bo-face-person:hover, html .dashboard-page .bo-face-person.is-selected { border-color: var(--gold); background: var(--theme-hover); }
+html .dashboard-page .bo-face-person:disabled { opacity: .65; cursor: not-allowed; }
+html .dashboard-page .bo-face-person-name { font-weight: 700; }
+html .dashboard-page .bo-face-person-meta, html .dashboard-page .bo-face-muted { color: var(--text-muted); font-size: 12px; }
+html .dashboard-page .bo-face-person-state { flex: 0 0 auto; font-size: 11px; }
+html .dashboard-page .bo-face-person-action { flex: 0 0 auto; color: var(--gold); font-size: 11px; font-weight: 800; }
+html .dashboard-page .bo-face-camera { display: grid; place-items: center; min-height: 260px; overflow: hidden; background: #101012; border: 1px solid var(--border); border-radius: 12px; }
+html .dashboard-page .bo-face-camera video, html .dashboard-page .bo-face-camera img { display: block; width: 100%; max-height: 480px; object-fit: contain; }
+html .dashboard-page .bo-face-camera video[hidden], html .dashboard-page .bo-face-camera img[hidden] { display: none; }
+html .dashboard-page .bo-face-placeholder { max-width: 360px; padding: 24px; color: #c9c5c4; text-align: center; }
+html .dashboard-page .bo-face-placeholder i { display: block; margin-bottom: 12px; color: var(--gold); font-size: 38px; }
+html .dashboard-page .bo-face-selected { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+html .dashboard-page .bo-face-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+html .dashboard-page .bo-face-feedback { margin-top: 14px; }
+html .dashboard-page .bo-face-feedback:empty { display: none; }
+html .dashboard-page .bo-face-confirmation { margin: 14px 0 0; padding: 12px 14px; color: var(--text); background: var(--theme-hover); border: 1px solid var(--gold); border-radius: 10px; font-weight: 800; }
+@media (max-width: 760px) {
+    html .dashboard-page .bo-face-layout { grid-template-columns: 1fr; }
+    html .dashboard-page .bo-face-list { max-height: 260px; }
+    html .dashboard-page .bo-face-camera { min-height: 220px; }
+}
+@media (max-width: 480px) {
+    html .dashboard-page .bo-face-panel { padding: 16px; }
+    html .dashboard-page .bo-face-person { align-items: flex-start; flex-wrap: wrap; }
+}
 html .dashboard-page .bo-notifications-delete { border-radius: var(--ui-radius-control); }
 html .dashboard-page .bo-notifications-delete:is(:hover, :focus-visible) { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); outline-color: var(--danger); }
 html .dashboard-page .bo-confirm-actions { flex-wrap: wrap; }/* Seta nativa do select segue color-scheme e permanece visível em todos os temas. */

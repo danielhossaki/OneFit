@@ -12,6 +12,7 @@
  *   $profissionaisAdm
  * e das funções de includes/helpers.php: bo_badge(), bo_money(), bo_json()
  */
+require __DIR__ . '/section-fotos-faciais.php';
 ?>
 
 <!-- ===== ADMIN · Visão Geral (dashboard com indicadores gerais) ===== -->
