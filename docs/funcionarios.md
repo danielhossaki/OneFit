@@ -69,6 +69,7 @@ powershell -File tests/funcionarios-preparar.ps1     # banco novo + cópia sint�
 php tests/funcionarios.php                            # regras, vínculos, auditoria, falhas
 powershell -File tests/papeis-http.ps1 -Script funcionarios-http.php
 powershell -File tests/papeis-http.ps1                # regras de cargo e sessão (Etapa 1)
+powershell -File tests/papeis-http.ps1 -Script permissoes-http.php   # cada rota do painel x cada cargo sem permissão
 php tests/papeis.php
 ```
 
