@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../config/localidades.php';
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/email-auth.php');
+require_once __DIR__ . '/../dashboard/includes/matriculas.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
   session_start();
@@ -332,47 +333,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $tokenVerificacao = onefitCriarToken($conn, 'verificacao_email_tokens', $id_usuario, '+24 hours');
 
-    // Cria a matrícula pendente com o valor atual do plano.
-    $stmtMatricula = $conn->prepare(
-      "INSERT INTO matricula (id_usuario, id_plano, data_matricula, data_inicio, status, valor_contratado)
-      VALUES (?, ?, CURDATE(), CURDATE(), 'pendente', ?)"
-    );
-    $stmtMatricula->bind_param("iid", $id_usuario, $id_plano, $valor_contratado);
-
-    if (!$stmtMatricula->execute()) {
-      $conn->rollback();
-      header("Location: matricula.php?msg=2");
-      exit;
-    }
-    $id_matricula = $conn->insert_id;
-    $stmtMatricula->close();
+    // Matrícula e cobrança pendentes (includes/matriculas.php). Só uma confirmação
+    // de pagamento confiável ativa a matrícula; até lá a catraca nega a entrada.
+    $id_matricula = bo_matricula_inserir_pendente($conn, (int) $id_usuario, (int) $id_plano, (float) $valor_contratado);
 
     // Cria a cobrança pendente sem armazenar os dados sensíveis do cartão.
-    $data_vencimento = date('Y-m-d');
-    $codigo_transacao = 'MAT-' . $id_matricula . '-' . strtoupper(bin2hex(random_bytes(6)));
-
     $etapaPersistencia = 'pagamento';
-    $stmtPagamento = $conn->prepare(
-      "INSERT INTO pagamento
-        (id_matricula, valor, data_vencimento, forma_pagamento, status, codigo_transacao)
-       VALUES (?, ?, ?, ?, 'pendente', ?)"
-    );
-    $stmtPagamento->bind_param(
-      "idsss",
-      $id_matricula,
-      $valor_contratado,
-      $data_vencimento,
-      $forma_pagamento,
-      $codigo_transacao
-    );
-
-    if (!$stmtPagamento->execute()) {
-      $stmtPagamento->close();
-      $conn->rollback();
-      header("Location: matricula.php?msg=9");
-      exit;
-    }
-    $stmtPagamento->close();
+    bo_pagamento_inserir_inscricao($conn, $id_matricula, (float) $valor_contratado, $forma_pagamento);
 
     $conn->commit();
     $emailEnviado = onefitEnviarVerificacaoEmail($email, $nome, $tokenVerificacao);

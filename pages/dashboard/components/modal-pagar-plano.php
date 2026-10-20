@@ -24,6 +24,12 @@
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                 <input type="hidden" name="secao" value="historico">
 
+                <!-- Sem gateway integrado: nada aqui confirma pagamento (ver funcionalidades/pagar-plano.php). -->
+                <div class="bo-notice mb-3">
+                    <i class="bi bi-info-circle"></i>
+                    <div><span><?php echo of_t('O pagamento online ainda não está disponível. O código Pix abaixo é apenas demonstrativo e nenhuma cobrança é confirmada por esta tela: a confirmação do pagamento é feita pela academia.'); ?></span></div>
+                </div>
+
                 <!-- Resumo do plano atual (somente leitura) -->
                 <div class="row g-3 mb-3">
                     <div class="col-6">
