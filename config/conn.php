@@ -12,7 +12,13 @@ if (!$host || !$user || !$dbname || $password === null) {
     throw new RuntimeException('A configuração do banco de dados está incompleta.');
 }
 
-$conn = new mysqli($host, $user, $password, $dbname);
+// A exceção original traz usuário e host; registra só o código e falha com mensagem genérica.
+try {
+    $conn = new mysqli($host, $user, $password, $dbname);
+} catch (mysqli_sql_exception $erro) {
+    error_log('OneFit: falha ao conectar ao banco de dados (código ' . $erro->getCode() . ').');
+    throw new RuntimeException('Não foi possível conectar ao banco de dados.');
+}
 if ($conn->connect_error) {
     throw new RuntimeException('Não foi possível conectar ao banco de dados.');
 }
