@@ -9,6 +9,7 @@ $fixture = json_decode(file_get_contents($pasta . '/database.json'), true, 512, 
 if (!preg_match('/^onefit_interface_test_\d{8}_\d{6}_[a-f0-9]{4}$/D', $fixture['database'])) {
     throw new RuntimeException('Unsafe fixture target');
 }
+require __DIR__ . '/../pages/dashboard/includes/matriculas.php';
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 $db = new mysqli('127.0.0.1', 'root', '', $fixture['database']);
 $db->set_charset('utf8mb4');
@@ -63,6 +64,46 @@ $id = $pessoa('aluno'); $matricula($id, 'vencida', -60, -31); $matricula($id, 'a
 foreach (['inativo', 'bloqueado'] as $status) {
     $id = $pessoa('aluno', $status); $matricula($id, 'ativa', -10, 20); $caso($id, false, 'conta inativa ou bloqueada', "aluno $status com matrícula vigente");
 }
+// Ponta a ponta com as rotinas reais de inscrição e confirmação (includes/matriculas.php).
+$inscrever = static function (int $id) use ($db, $plano): int {
+    $db->begin_transaction();
+    $m = bo_matricula_inserir_pendente($db, $id, $plano, 100.00);
+    [$p] = bo_pagamento_inserir_inscricao($db, $m, 100.00, 'pix');
+    $db->commit();
+    return $p;
+};
+$id = $pessoa('aluno'); $inscrever($id); $caso($id, false, $semMatricula, 'inscrição com cobrança pendente');
+$id = $pessoa('aluno'); $p = $inscrever($id);
+bo_matricula_confirmar_pagamento($db, $p, 100.00, 'gateway'); $caso($id, true, 'ok', 'inscrição confirmada');
+$id = $pessoa('aluno'); $p = $inscrever($id);
+foreach ([1, 2, 3] as $vez) { bo_matricula_confirmar_pagamento($db, $p, 100.00, 'gateway'); }
+$caso($id, true, 'ok', 'inscrição confirmada com callback repetido');
+$id = $pessoa('aluno'); $p = $inscrever($id);
+$db->query("UPDATE pagamento SET status = 'recusado' WHERE id_pagamento = $p");
+try { bo_matricula_confirmar_pagamento($db, $p, 100.00, 'gateway'); } catch (MatriculaRecusada $recusa) { /* esperado */ }
+$caso($id, false, $semMatricula, 'inscrição com cobrança recusada');
+// Como o antigo "Pagar" deixava: status 'ativa' com data_fim 0000-00-00.
+$id = $pessoa('aluno'); $p = $inscrever($id);
+$db->query("SET SESSION sql_mode = ''");
+$db->query("UPDATE matricula SET status = 'ativa', data_fim = '0000-00-00' WHERE id_usuario = $id");
+$db->query('SET SESSION sql_mode = DEFAULT');
+$caso($id, false, $semMatricula, "matrícula 'ativa' com data_fim zerada");
+// Datas que o MySQL remoto (sem modo estrito) aceita: zeradas, com mês ou dia zero, período invertido.
+$datas = static function (string $rotulo, string $inicio, string $fim, ?string $status = 'ativa') use ($db, $pessoa, $matricula, $caso, $semMatricula): void {
+    $id = $pessoa('aluno'); $matricula($id, 'ativa', -10, 20);
+    $db->query("SET SESSION sql_mode = ''");
+    $stmt = $db->prepare("UPDATE matricula SET data_inicio = $inicio, data_fim = $fim, status = ? WHERE id_usuario = ?");
+    $stmt->bind_param('si', $status, $id);
+    $stmt->execute();
+    $db->query('SET SESSION sql_mode = DEFAULT');
+    $caso($id, false, $semMatricula, $rotulo);
+};
+$datas("data_inicio zerada e data_fim futura", "'0000-00-00'", 'DATE_ADD(CURDATE(), INTERVAL 20 DAY)');
+$datas('data_inicio com mês zero', "CONCAT(YEAR(CURDATE()), '-00-01')", 'DATE_ADD(CURDATE(), INTERVAL 20 DAY)');
+$datas('data_inicio com dia zero', "CONCAT(YEAR(CURDATE()), '-01-00')", 'DATE_ADD(CURDATE(), INTERVAL 20 DAY)');
+$datas('data_fim com mês zero no ano seguinte', 'DATE_SUB(CURDATE(), INTERVAL 10 DAY)', "CONCAT(YEAR(CURDATE()) + 1, '-00-15')");
+$datas('período invertido (início depois do fim)', 'DATE_ADD(CURDATE(), INTERVAL 20 DAY)', 'DATE_SUB(CURDATE(), INTERVAL 10 DAY)');
+$datas('status nulo no período', 'DATE_SUB(CURDATE(), INTERVAL 10 DAY)', 'DATE_ADD(CURDATE(), INTERVAL 20 DAY)', null);
 // Professor (e o legado profissional): cadastro_profissional ativo.
 $id = $pessoa('professor'); $cadastro($id, 'ativo'); $caso($id, true, 'ok', 'professor com cadastro ativo');
 $id = $pessoa('professor'); $cadastro($id, 'inativo'); $caso($id, false, 'cadastro profissional inativo', 'professor com cadastro inativo');

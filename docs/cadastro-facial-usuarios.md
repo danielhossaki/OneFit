@@ -36,12 +36,12 @@ O servidor precisa da extensão PHP GD para decodificar a imagem. Se o PHP do Ap
 
 O reconhecimento facial só identifica a pessoa; a entrada é decidida por `AutorizacaoCatraca.cs`, com as regras de `config/papeis.php`:
 
-- **Aluno:** conta ativa e matrícula `ativa` com a data de hoje entre `data_inicio` e `data_fim`.
+- **Aluno:** conta ativa e matrícula `ativa` com datas válidas e a data de hoje entre `data_inicio` e `data_fim`.
 - **Professor** (e `profissional`): conta ativa e `cadastro_profissional.status = 'ativo'`.
 - **Admin, recepcionista, vendedor e faxineira:** conta ativa, sem matrícula.
 - **Pessoa inexistente, conta inativa ou bloqueada, cargo desconhecido ou falha no banco:** negado.
 
-A catraca está em **modo de validação**: só exibe a decisão (`[Validação] Acesso autorizado/negado`), sem acionar nenhuma liberação física. Ela só lê `usuarios`, `matricula` e `cadastro_profissional` e **não grava fotos**: o antigo botão "Cadastrar foto no banco" agora orienta a usar esta tela, que aplica as permissões e o limite de fotos.
+A catraca está em **modo de validação**: só exibe a decisão (`[Validação] Acesso autorizado/negado`), sem acionar nenhuma liberação física. Ela só lê `usuarios`, `matricula` e `cadastro_profissional` e **não grava fotos**: o antigo botão "Cadastrar foto no banco" agora orienta a usar esta tela, que aplica as permissões e o limite de fotos. Detalhes, limites do reconhecimento e o roteiro da demonstração estão em [catraca.md](catraca.md).
 
 ## Testes (somente banco descartável)
 
