@@ -42,6 +42,14 @@ body {
     padding: 0 24px;
 }
 
+/* Botão "Voltar" no canto esquerdo, seguido da logo. */
+.mkt-header-start {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
 .mkt-logo {
     display: flex;
     align-items: center;

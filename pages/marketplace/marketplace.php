@@ -161,15 +161,17 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
 <body>
 
     <header class="mkt-header">
-        <div class="mkt-logo">
-            <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
-            <span><span data-brand-name><?php echo onefitBrandNameHtml(); ?></span> <?php echo of_t('· Marketplace'); ?></span>
-        </div>
-
-        <div class="mkt-header-actions">
+        <div class="mkt-header-start">
             <a class="mkt-icon-btn" href="<?php echo htmlspecialchars($mktVoltarUrl, ENT_QUOTES, 'UTF-8'); ?>" aria-label="<?php echo of_t('Voltar'); ?>" title="<?php echo of_t('Voltar'); ?>">
                 <i class="bi bi-arrow-left"></i>
             </a>
+            <div class="mkt-logo">
+                <img data-brand-logo src="<?php echo onefitLogo(); ?>" alt="Logo <?php echo onefitNomeMarca(); ?>">
+                <span><span data-brand-name><?php echo onefitBrandNameHtml(); ?></span> <?php echo of_t('· Marketplace'); ?></span>
+            </div>
+        </div>
+
+        <div class="mkt-header-actions">
             <button type="button" class="mkt-icon-btn" aria-label="<?php echo of_t('Favoritos'); ?>" title="<?php echo of_t('Favoritos'); ?>" data-bs-toggle="offcanvas" data-bs-target="#mktFavoritosOffcanvas">
                 <i class="bi bi-star-fill"></i>
                 <span class="mkt-icon-badge"><?php echo (int) $favoritosCount; ?></span>
