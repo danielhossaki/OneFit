@@ -176,31 +176,7 @@ if ($perfilLogado === 'admin') {
         }
     }
 
-    // Tela "Funções" — tabela `funcao`
-    $funcoes = [];
-    if ($r = $conn->query('SELECT id_funcao, nome FROM funcao ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $funcoes[] = ['id' => (int) $row['id_funcao'], 'nome' => $row['nome']];
-        }
-    }
-
-    // Tela "Permissões" — tabela `permissoes` (email + função concedida)
-    $permissoes = [];
-    $sql = "SELECT pe.id_permissao, pe.nome, pe.email, pe.funcao AS id_funcao, f.nome AS funcaoLabel
-            FROM permissoes pe
-            LEFT JOIN funcao f ON f.id_funcao = pe.funcao
-            ORDER BY pe.nome";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $permissoes[] = [
-                'id' => (int) $row['id_permissao'],
-                'nome' => $row['nome'],
-                'email' => $row['email'],
-                'id_funcao' => (int) $row['id_funcao'],
-                'funcaoLabel' => $row['funcaoLabel'] ?? '—',
-            ];
-        }
-    }
+    // As telas "Funções" e "Permissões" foram desativadas (config/papeis.php).
 
     // Tela "Pagamentos"
     $pagamentos = [];

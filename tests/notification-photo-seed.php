@@ -1,4 +1,5 @@
 <?php
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // Only the disposable localhost fixture; never load the application's configured connection.
 $fixture = json_decode(file_get_contents(sys_get_temp_dir() . '/onefit-interface-fixture/database.json'), true);
 if (!preg_match('/^onefit_interface_test_[a-zA-Z0-9_]+$/', $fixture['database'] ?? '')) exit(1);

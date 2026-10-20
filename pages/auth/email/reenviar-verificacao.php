@@ -18,13 +18,16 @@ $email = trim((string) ($_POST['email'] ?? ''));
 $mensagem = 'Se existir uma conta pendente para este e-mail, enviaremos uma nova confirmação em instantes.';
 
 if (filter_var($email, FILTER_VALIDATE_EMAIL) && onefitPodeEnviarEmail('verificacao', $email)) {
-    $stmt = $conn->prepare('SELECT id_usuario, nome, email_verificado FROM usuarios WHERE email = ? LIMIT 1');
+    $stmt = $conn->prepare('SELECT id_usuario, nome, email_verificado, tipo_usuario, status FROM usuarios WHERE email = ? LIMIT 1');
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $usuario = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if ($usuario && (int) $usuario['email_verificado'] !== 1) {
+    // Só contas ativas que podem entrar no painel recebem a confirmação; a
+    // resposta abaixo é a mesma em todos os casos.
+    if ($usuario && (int) $usuario['email_verificado'] !== 1
+        && $usuario['status'] === 'ativo' && onefitPainelDoPapel($usuario['tipo_usuario']) !== null) {
         try {
             $conn->begin_transaction();
             $token = onefitCriarToken($conn, 'verificacao_email_tokens', (int) $usuario['id_usuario'], '+24 hours');

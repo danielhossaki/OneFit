@@ -11,7 +11,8 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
-if (($_SESSION['tipo_usuario'] ?? '') !== 'admin') {
+// conn.php já revalidou cargo e status no banco nesta requisição.
+if (!onefitPapelPermitido($_SESSION['tipo_usuario'] ?? null, ['admin'])) {
     header('Location: ' . BASE_URL . 'pages/dashboard/dashboard.php');
     exit;
 }
@@ -24,7 +25,6 @@ if (empty($_SESSION['csrf_token'])) {
 // qualquer handler.php arbitrário) e o rótulo da mensagem/ação no rodapé.
 $recursosPermitidos = [
     'usuarios' => 'usuarios.php',
-    'permissoes' => 'permissoes.php',
     'pagamentos' => 'pagamentos.php',
     'cashbacks' => 'cashbacks.php',
     'categorias' => 'categorias.php',

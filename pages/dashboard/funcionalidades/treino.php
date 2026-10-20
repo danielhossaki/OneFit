@@ -22,6 +22,12 @@ if (!is_string($token) || $token === '' || !hash_equals($_SESSION['csrf_token'] 
 }
 try {
     require __DIR__ . '/../../../config/conn.php';
+    // conn.php revalida cargo e status; confere de novo depois disso.
+    if (empty($_SESSION['id_usuario']) || !onefitPapelPermitido($_SESSION['tipo_usuario'] ?? null, ['aluno'])) {
+        http_response_code(403);
+        echo json_encode(['error' => onefitTraduzir('Entre como aluno para acessar o treino.')]);
+        exit;
+    }
     require __DIR__ . '/../includes/treino.php';
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     bo_treino_alterar($conn, (int) $_SESSION['id_usuario'], $_POST);

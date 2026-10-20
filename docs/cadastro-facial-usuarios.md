@@ -1,10 +1,10 @@
 # Cadastro facial de usuários
 
-A seção **Cadastro facial** fica disponível no painel de administradores e profissionais. O operador pesquisa e escolhe explicitamente uma conta ativa de aluno, profissional ou administrador, confere o tipo e o ID e captura a imagem da pessoa diante da webcam. O ID selecionado é enviado ao endpoint e validado novamente no servidor; o ID da conta operadora não é usado automaticamente como titular.
+A seção **Cadastro facial** fica disponível no painel de administradores. O operador pesquisa e escolhe explicitamente uma conta ativa de aluno, profissional ou administrador, confere o tipo e o ID e captura a imagem da pessoa diante da webcam. O ID selecionado é enviado ao endpoint e validado novamente no servidor; o ID da conta operadora não é usado automaticamente como titular.
 
 ## Acesso e seleção
 
-- O endpoint autoriza operadores com conta `admin` ativa ou conta `profissional` ativa, segundo as regras de autenticação existentes. O esquema atual não define um papel `recepcionista` separado.
+- Quem pode operar a tela vem da política central de cargos (`config/papeis.php`, regra `opera_cadastro_facial`), conferida no banco a cada requisição. Hoje opera apenas `admin` ativo; professores (`profissional` no banco) não operam. `recepcionista` já está na política, mas ainda não existe no ENUM nem tem painel.
 - A busca lista contas ativas de `usuarios` com `tipo_usuario` igual a `aluno`, `profissional` ou `admin`. Nome, CPF e ID são pesquisáveis; o CPF não é enviado à interface.
 - Contas de outros tipos, como vendedor, não são elegíveis para cadastro facial por este fluxo.
 - A câmera exige HTTPS ou `localhost` e permissão concedida no navegador.

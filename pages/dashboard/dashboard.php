@@ -29,18 +29,15 @@ if (!isset($_SESSION['id_usuario'])) {
     exit;
 }
 
-// Perfil de verdade (não é mais escolhido pelo usuário): vem da coluna
-// usuarios.tipo_usuario, gravada na sessão no momento do login.
-// Ajuste os 3 valores abaixo se os nomes do ENUM no banco forem diferentes.
-$perfilLogado = $_SESSION['tipo_usuario'] ?? 'aluno';
-// Revoked administrative access must also invalidate an existing session.
-if ($perfilLogado === 'admin' && !onefitAdminAutorizado($conn, (int) $_SESSION['id_usuario'])) {
+// Perfil de verdade (não é escolhido pelo usuário): vem de usuarios.tipo_usuario,
+// relido do banco a cada requisição por config/conn.php (config/papeis.php).
+// Cargo desconhecido ou sem painel não vira aluno: encerra a sessão.
+$perfilLogado = onefitPainelDoPapel($_SESSION['tipo_usuario'] ?? null);
+if ($perfilLogado === null) {
     header('Location: ' . BASE_URL . 'config/logout.php');
     exit;
 }
-if (!in_array($perfilLogado, ['admin', 'profissional', 'aluno', 'vendedor'], true)) {
-    $perfilLogado = 'aluno'; // valor desconhecido -> cai no perfil mais restrito
-}
+$perfilOperaCadastroFacial = onefitPapelOperaCadastroFacial($_SESSION['tipo_usuario'] ?? null);
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -206,7 +203,6 @@ if ($perfilLogado === 'admin') {
             require __DIR__ . '/components/section-admin.php';
         } elseif ($perfilLogado === 'profissional') {
             require __DIR__ . '/components/section-profissional.php';
-            require __DIR__ . '/components/section-fotos-faciais.php';
         } elseif ($perfilLogado === 'vendedor') {
             require __DIR__ . '/components/section-vendedor.php';
         } else {
@@ -260,7 +256,7 @@ if ($perfilLogado === 'admin') {
     </script>
 
     <script src="<?php echo BASE_URL; ?>assets/js/dashboard.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/dashboard.js'); ?>"></script>
-    <?php if (in_array($perfilLogado, ['admin', 'profissional'], true)): ?>
+    <?php if ($perfilOperaCadastroFacial): ?>
         <script src="<?php echo BASE_URL; ?>assets/js/fotos-faciais.js?v=<?php echo filemtime($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/assets/js/fotos-faciais.js'); ?>"></script>
     <?php endif; ?>
 

@@ -1,4 +1,5 @@
 <?php
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // Verificação somente de leitura sobre os pedidos existentes. Não cria compras.
 require __DIR__ . '/../config/conn.php';
 require __DIR__ . '/../pages/dashboard/includes/compras.php';

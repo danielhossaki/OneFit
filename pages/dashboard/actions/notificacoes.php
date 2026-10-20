@@ -30,6 +30,10 @@ session_write_close();
 try {
     require_once __DIR__ . '/../../../config/conn.php';
     require_once __DIR__ . '/../../../config/notificacoes.php';
+    // conn.php revalida a sessão; conta inativa ou sem painel perde o id aqui.
+    if (empty($_SESSION['id_usuario'])) {
+        notificacoesResponder(['ok' => false, 'message' => onefitTraduzir('Sua sessão expirou. Entre novamente.')], 401);
+    }
     if ($metodo === 'POST') {
         $acao = $_POST['acao'] ?? 'marcar_lidas';
         if (!is_string($acao) || !in_array($acao, ['marcar_lidas', 'apagar', 'apagar_todas'], true)) {

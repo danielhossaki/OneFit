@@ -5,3 +5,20 @@ Options -MultiViews
 # Apache, evitando um novo redirecionamento caso a própria página de erro
 # falhe.
 ErrorDocument 404 /AN25/OneFit/pages/errors/404.php
+
+# O projeto fica dentro do htdocs: bloqueia (403, sem executar nada) o que
+# não faz parte do site público.
+#  - arquivos ocultos, como .env (credenciais) e .gitignore;
+#  - metadados do Git, dependências, scripts de banco, testes e documentação;
+#  - arquivos internos de config/, exceto logout.php, acessado por link;
+#  - logs gravados por pages/errors/404.php (URLs, referers e IPs);
+#  - qualquer caminho com "~", que no Windows alcança nomes curtos 8.3
+#    (ex.: ENV~1 para .env, GIT~1 para .git).
+# (?i): o sistema de arquivos do Windows não diferencia maiúsculas.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+RedirectMatch 403 (?i)^/AN25/OneFit/(\.git|vendor|database|tests|docs)(/|$)
+RedirectMatch 403 (?i)^/AN25/OneFit/config/(?!logout\.php$)
+RedirectMatch 403 (?i)^/AN25/OneFit/pages/errors/storage(/|$)
+RedirectMatch 403 (?i)^/AN25/OneFit/.*~

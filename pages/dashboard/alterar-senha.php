@@ -4,6 +4,12 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 
+// conn.php revalida a sessão; conta inativa ou sem painel perde o id aqui.
+if (empty($_SESSION['id_usuario'])) {
+    header('Location: ' . BASE_URL . 'pages/login/login.php');
+    exit;
+}
+
 $erro = '';
 $sucesso = '';
 

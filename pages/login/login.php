@@ -10,6 +10,7 @@ $mensagensLogin = [
   '3' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Preencha o e-mail e a senha para entrar.')],
   '4' => ['tipo' => 'sucesso', 'texto' => onefitTraduzir('Cadastro realizado com sucesso! Agora você já pode entrar.')],
   '5' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Digite um endereço de e-mail válido.')],
+  '6' => ['tipo' => 'erro', 'texto' => onefitTraduzir('Esta conta não tem acesso ao painel. Fale com a administração da {marca}.')],
 ];
 
 $mensagemLogin = $mensagensLogin[(string) ($_GET['msg'] ?? '')] ?? null;
@@ -52,6 +53,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Usa uma mensagem única para não revelar se o e-mail está cadastrado.
     if (!$usuario || !password_verify($senha, $usuario['senha'])) {
       header("Location: login.php?msg=1");
+      exit;
+    }
+
+    // Cargo sem painel (ex.: faxineira) ou desconhecido não entra no sistema.
+    if (onefitPainelDoPapel($usuario['tipo_usuario']) === null) {
+      header("Location: login.php?msg=6");
       exit;
     }
 

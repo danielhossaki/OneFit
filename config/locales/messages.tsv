@@ -1392,3 +1392,7 @@ dd/mm/aaaa hh:mm|dd/mm/yyyy hh:mm|dd/mm/aaaa hh:mm
 Confirmado|Confirmed|Confirmado
 Concluído|Completed|Completado
 Não compareceu|No-show|No asistió
+Sua sessão foi encerrada. Entre novamente para continuar.|Your session has ended. Sign in again to continue.|Tu sesión ha finalizado. Vuelve a entrar para continuar.
+Esta conta não tem acesso ao painel. Fale com a administração da {marca}.|This account does not have access to the dashboard. Contact {marca} management.|Esta cuenta no tiene acceso al panel. Habla con la administración de {marca}.
+As telas Permissões e Funções foram desativadas e não alteram mais cargos.|The Permissions and Roles screens have been disabled and no longer change roles.|Las pantallas Permisos y Funciones se desactivaron y ya no cambian cargos.
+Contas de administrador não podem ser alteradas nesta tela.|Administrator accounts cannot be changed on this screen.|Las cuentas de administrador no se pueden modificar en esta pantalla.

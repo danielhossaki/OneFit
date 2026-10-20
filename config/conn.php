@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/env.php';
+require_once __DIR__ . '/papeis.php';
 
 $host = onefitEnv('DB_HOST');
 $user = onefitEnv('DB_USER');
@@ -18,3 +19,5 @@ if ($conn->connect_error) {
 
 $conn->set_charset('utf8mb4');
 if (function_exists('onefitCarregarInterface')) onefitCarregarInterface($conn);
+// Cargo e status vêm do banco a cada requisição, não só do login.
+onefitSessaoRevalidar($conn);

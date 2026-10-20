@@ -18,13 +18,15 @@ $email = trim((string) ($_POST['email'] ?? ''));
 $mensagem = 'Solicitação recebida! Se o e-mail informado estiver cadastrado, você receberá as instruções para redefinir sua senha em alguns instantes. Confira também sua caixa de spam.';
 
 if (filter_var($email, FILTER_VALIDATE_EMAIL) && onefitPodeEnviarEmail('recuperacao-senha', $email)) {
-    $stmt = $conn->prepare('SELECT id_usuario, nome, email FROM usuarios WHERE email = ? LIMIT 1');
+    $stmt = $conn->prepare('SELECT id_usuario, nome, email, tipo_usuario, status FROM usuarios WHERE email = ? LIMIT 1');
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $usuario = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if ($usuario) {
+    // Só contas ativas que podem entrar no painel recebem o link; a resposta
+    // abaixo é a mesma em todos os casos para não revelar a situação da conta.
+    if ($usuario && $usuario['status'] === 'ativo' && onefitPainelDoPapel($usuario['tipo_usuario']) !== null) {
         try {
             $conn->begin_transaction();
             $token = onefitCriarToken($conn, 'recuperacao_senha_tokens', (int) $usuario['id_usuario'], '+30 minutes');

@@ -7,7 +7,7 @@
  * precisa bater com a "key" do menu para o JS conseguir exibir a tela certa).
  *
  * Depende das variáveis vindas de includes/db-data.php:
- *   $usuarios, $permissoes, $funcoes, $pagamentos, $cashbackResumo,
+ *   $usuarios, $pagamentos, $cashbackResumo,
  *   $cashbackTransacoes, $categorias, $produtosResumo, $produtos, $planos,
  *   $profissionaisAdm
  * e das funções de includes/helpers.php: bo_badge(), bo_money(), bo_json()
@@ -152,90 +152,9 @@ require __DIR__ . '/section-fotos-faciais.php';
     <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Permissões (usuários com função administrativa) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="permissoes">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Permissões'); ?></h1>
-            <p><?php echo of_t('Controle os níveis de acesso concedidos aos usuários.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPermissaoNova">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Cadastrar Permissão'); ?>
-        </button>
-    </div>
-    <?php bo_modal_permissao_nova('permissoes', $funcoes); ?>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table" data-bo-table="permissoes">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th><?php echo of_t('Nome'); ?></th>
-                        <th><?php echo of_t('E-mail'); ?></th>
-                        <th><?php echo of_t('Tipo de função'); ?></th>
-                        <th><?php echo of_t('Ações'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($permissoes as $p): ?>
-                        <tr data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id'] . ' ' . $p['nome'] . ' ' . $p['email']); ?>">
-                            <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo $p['nome']; ?></td>
-                            <td><?php echo $p['email']; ?></td>
-                            <td><?php echo $p['funcaoLabel']; ?></td>
-                            <td>
-                                <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalPermissaoEditar<?php echo $p['id']; ?>">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <?php echo bo_botao_excluir('permissoes', $p['id']); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <tr class="bo-empty-row" style="display:none">
-                        <td colspan="5"><?php echo of_t('Nenhuma permissão encontrada.'); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php foreach ($permissoes as $p): ?>
-        <?php bo_modal_permissao_editar($p, 'permissoes', $funcoes); ?>
-        <?php bo_modal_confirmar_exclusao('permissoes', $p['id'], 'a permissão de ' . $p['nome'], 'permissoes'); ?>
-    <?php endforeach; ?>
-</section>
-
-<!-- ===== ADMIN · Funções (tabela `funcao`, usada pela tela "Permissões") ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="funcoes">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Funções'); ?></h1>
-            <p><?php echo of_t('Gerencie as funções disponíveis para conceder permissões aos usuários.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalFuncaoNova">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Nova Função'); ?>
-        </button>
-    </div>
-    <?php bo_modal_funcao(null, 'funcoes'); ?>
-
-    <div class="bo-list">
-        <?php foreach ($funcoes as $f): ?>
-            <div class="bo-list-item">
-                <div class="bo-list-title"><?php echo $f['nome']; ?></div>
-                <div class="bo-table-actions">
-                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalFuncaoEditar<?php echo $f['id']; ?>">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <?php echo bo_botao_excluir('funcoes', $f['id']); ?>
-                </div>
-            </div>
-            <?php bo_modal_funcao($f, 'funcoes'); ?>
-            <?php bo_modal_confirmar_exclusao('funcoes', $f['id'], 'a função ' . $f['nome'], 'funcoes'); ?>
-        <?php endforeach; ?>
-    </div>
-</section>
+<!-- Permissões e Funções foram desativadas: o cargo vem apenas de
+     usuarios.tipo_usuario (config/papeis.php). As tabelas `permissoes` e
+     `funcao` continuam no banco, sem alteração. -->
 
 <!-- ===== ADMIN · Pagamentos (recebimentos de mensalidade/produtos/taxas) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="pagamentos">

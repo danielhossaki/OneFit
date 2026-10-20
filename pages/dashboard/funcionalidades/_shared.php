@@ -19,8 +19,10 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require __DIR__ . '/../includes/helpers.php';
 
+// conn.php já revalidou cargo e status no banco nesta requisição; cargo
+// desconhecido ou conta inativa chegam aqui sem sessão e são recusados.
 $bo_papeis_permitidos = $bo_papeis_permitidos ?? ['admin'];
-if (!in_array($_SESSION['tipo_usuario'] ?? '', $bo_papeis_permitidos, true)) {
+if (empty($_SESSION['id_usuario']) || !onefitPapelPermitido($_SESSION['tipo_usuario'] ?? null, $bo_papeis_permitidos)) {
     header('Location: ' . BASE_URL . 'pages/dashboard/dashboard.php');
     exit;
 }

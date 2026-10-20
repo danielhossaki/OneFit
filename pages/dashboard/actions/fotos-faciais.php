@@ -13,65 +13,55 @@ function fotos_faciais_responder(bool $ok, string $mensagem, int $status = 200, 
     exit;
 }
 
-$idOperador = (int) ($_SESSION['id_usuario'] ?? 0);
-$papelOperador = (string) ($_SESSION['tipo_usuario'] ?? '');
-if ($idOperador <= 0) {
+if (empty($_SESSION['id_usuario'])) {
     fotos_faciais_responder(false, onefitTraduzir('Sua sessão expirou. Entre novamente.'), 401);
 }
 
 try {
     require_once __DIR__ . '/../../../config/conn.php';
-    $adminAutorizado = $papelOperador === 'admin' && onefitAdminAutorizado($conn, $idOperador);
-    $profissionalAutorizado = false;
-    if ($papelOperador === 'profissional') {
-        $stmtOperador = $conn->prepare(
-            "SELECT id_usuario FROM usuarios
-             WHERE id_usuario = ? AND tipo_usuario = 'profissional' AND status = 'ativo' LIMIT 1"
-        );
-        $stmtOperador->bind_param('i', $idOperador);
-        $stmtOperador->execute();
-        $profissionalAutorizado = (bool) $stmtOperador->get_result()->fetch_assoc();
-        $stmtOperador->close();
+    // conn.php revalidou a sessão; a permissão do operador é conferida no banco
+    // pela política central (config/papeis.php), nunca pelo que a tela exibe.
+    $idOperador = (int) ($_SESSION['id_usuario'] ?? 0);
+    if ($idOperador <= 0) {
+        fotos_faciais_responder(false, onefitTraduzir('Sua sessão expirou. Entre novamente.'), 401);
     }
-    if (!$adminAutorizado && !$profissionalAutorizado) {
+    if (!onefitExigirPapel($conn, $idOperador, onefitPapeisCom('opera_cadastro_facial'))) {
         fotos_faciais_responder(false, onefitTraduzir('Você não tem permissão para gerenciar fotos faciais.'), 403);
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        if ($adminAutorizado || $profissionalAutorizado) {
-            $termo = trim((string) ($_GET['q'] ?? ''));
-            $termo = mb_substr($termo, 0, 100, 'UTF-8');
-            $busca = '%' . $termo . '%';
-            $stmt = $conn->prepare(
-                "SELECT u.id_usuario, u.nome,
-                        u.tipo_usuario,
-                        EXISTS (
-                            SELECT 1 FROM usuarios_fotos_faciais f
-                            WHERE f.id_usuario = u.id_usuario AND f.ativo = 1
-                              AND f.imagem_blob IS NOT NULL
-                        ) AS foto_cadastrada
-                 FROM usuarios u
-                 WHERE u.tipo_usuario IN ('aluno', 'profissional', 'admin')
-                   AND u.status = 'ativo'
-                   AND (? = '' OR u.nome LIKE ? OR u.cpf LIKE ?
-                        OR CAST(u.id_usuario AS CHAR) LIKE ?)
-                 ORDER BY u.nome, u.id_usuario"
-            );
-            $stmt->bind_param('ssss', $termo, $busca, $busca, $busca);
-            $stmt->execute();
-            $resultado = $stmt->get_result();
-            $pessoas = [];
-            while ($row = $resultado->fetch_assoc()) {
-                $pessoas[] = [
-                    'id' => (int) $row['id_usuario'],
-                    'nome' => $row['nome'],
-                    'tipo_usuario' => $row['tipo_usuario'],
-                    'foto_cadastrada' => (bool) $row['foto_cadastrada'],
-                ];
-            }
-            $stmt->close();
-            fotos_faciais_responder(true, '', 200, ['pessoas' => $pessoas]);
+        $termo = trim((string) ($_GET['q'] ?? ''));
+        $termo = mb_substr($termo, 0, 100, 'UTF-8');
+        $busca = '%' . $termo . '%';
+        $stmt = $conn->prepare(
+            "SELECT u.id_usuario, u.nome,
+                    u.tipo_usuario,
+                    EXISTS (
+                        SELECT 1 FROM usuarios_fotos_faciais f
+                        WHERE f.id_usuario = u.id_usuario AND f.ativo = 1
+                          AND f.imagem_blob IS NOT NULL
+                    ) AS foto_cadastrada
+             FROM usuarios u
+             WHERE u.tipo_usuario IN ('aluno', 'profissional', 'admin')
+               AND u.status = 'ativo'
+               AND (? = '' OR u.nome LIKE ? OR u.cpf LIKE ?
+                    OR CAST(u.id_usuario AS CHAR) LIKE ?)
+             ORDER BY u.nome, u.id_usuario"
+        );
+        $stmt->bind_param('ssss', $termo, $busca, $busca, $busca);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+        $pessoas = [];
+        while ($row = $resultado->fetch_assoc()) {
+            $pessoas[] = [
+                'id' => (int) $row['id_usuario'],
+                'nome' => $row['nome'],
+                'tipo_usuario' => $row['tipo_usuario'],
+                'foto_cadastrada' => (bool) $row['foto_cadastrada'],
+            ];
         }
+        $stmt->close();
+        fotos_faciais_responder(true, '', 200, ['pessoas' => $pessoas]);
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -84,12 +74,9 @@ try {
         fotos_faciais_responder(false, onefitTraduzir('Sua sessão expirou. Atualize a página e tente novamente.'), 403);
     }
 
-    $idUsuarioSelecionado = null;
-    if ($adminAutorizado || $profissionalAutorizado) {
-        $idUsuarioSelecionado = filter_var($_POST['id_usuario'] ?? null, FILTER_VALIDATE_INT);
-        if (!$idUsuarioSelecionado || $idUsuarioSelecionado < 1) {
-            fotos_faciais_responder(false, onefitTraduzir('Selecione uma pessoa válida.'), 422);
-        }
+    $idUsuarioSelecionado = filter_var($_POST['id_usuario'] ?? null, FILTER_VALIDATE_INT);
+    if (!$idUsuarioSelecionado || $idUsuarioSelecionado < 1) {
+        fotos_faciais_responder(false, onefitTraduzir('Selecione uma pessoa válida.'), 422);
     }
 
     $arquivo = $_FILES['imagem'] ?? null;

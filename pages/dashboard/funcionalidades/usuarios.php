@@ -12,6 +12,25 @@ $acao = bo_str('acao');
 $id = (int) bo_str('id');
 $secao = bo_secao_atual();
 
+/**
+ * Contas de administrador (inclusive a do próprio operador) só podem ser
+ * alteradas pelos administradores da lista restrita, fluxo que ainda não
+ * existe. Até lá, esta tela recusa status, dados, e-mail e exclusão delas.
+ */
+function bo_usuario_alvo_protegido(mysqli $conn, int $id): bool
+{
+    if ($id === (int) ($_SESSION['id_usuario'] ?? 0)) {
+        return true;
+    }
+    $alvo = onefitBuscarSituacaoUsuario($conn, $id);
+    return $alvo !== null && onefitPapelPermitido($alvo['tipo_usuario'], ['admin']);
+}
+
+if ($id && in_array($acao, ['toggle-status', 'delete', 'update'], true) && bo_usuario_alvo_protegido($conn, $id)) {
+    bo_flash('error', 'Contas de administrador não podem ser alteradas nesta tela.');
+    bo_redirect($secao);
+}
+
 if ($acao === 'toggle-status') {
     if (!$id) {
         bo_flash('error', 'Usuário inválido.');

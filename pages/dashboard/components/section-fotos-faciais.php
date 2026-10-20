@@ -1,8 +1,5 @@
-<?php
-$faceProfessionalMode = ($perfilLogado ?? '') === 'profissional';
-?>
 <section class="bo-content-section"
-    data-perfil="<?php echo $faceProfessionalMode ? 'profissional' : 'admin'; ?>"
+    data-perfil="<?php echo htmlspecialchars((string) ($perfilLogado ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
     data-section="cadastro-facial">
     <div class="bo-page-title">
         <div>

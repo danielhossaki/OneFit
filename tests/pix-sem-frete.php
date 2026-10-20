@@ -1,4 +1,5 @@
 <?php
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // SQL real em tabelas TEMPORARY privadas desta conexão. Nenhuma compra,
 // alteração de estoque ou lançamento de cashback persiste na base de uso.
 require __DIR__ . '/../config/conn.php';

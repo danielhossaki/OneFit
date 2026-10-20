@@ -1,4 +1,5 @@
 <?php
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 // Creates synthetic data only; never connects to the application's configured database.
 require __DIR__ . '/prepare-interface-fixture.php';
 $fixture = json_decode(file_get_contents(sys_get_temp_dir() . '/onefit-interface-fixture/database.json'), true);

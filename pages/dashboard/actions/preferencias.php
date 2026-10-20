@@ -42,6 +42,10 @@ if (!is_string($chave) || !is_string($valor)) {
 
 try {
     require_once __DIR__ . '/../../../config/conn.php';
+    // conn.php revalida a sessão; conta inativa ou sem painel perde o id aqui.
+    if (empty($_SESSION['id_usuario'])) {
+        preferencias_responder(false, onefitTraduzir('Sua sessão expirou. Entre novamente.'), 401);
+    }
     if ($chave === 'tema') {
         if (!in_array($valor, ['light', 'dark', 'system'], true)) {
             preferencias_responder(false, onefitTraduzir('Tema inválido.'), 422);

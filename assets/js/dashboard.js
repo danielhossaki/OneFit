@@ -199,8 +199,7 @@ const BO_PERFIS = {
         menus: [
             { key: 'dashboard', label: ofT('Visão Geral'), icon: 'bi-speedometer2' },
             { key: 'usuarios', label: ofT('Usuários'), icon: 'bi-people' },
-            { key: 'permissoes', label: ofT('Permissões'), icon: 'bi-shield-lock' },
-            { key: 'funcoes', label: ofT('Funções'), icon: 'bi-diagram-3' },
+            // Permissões e Funções foram desativadas: cargos vêm só de usuarios.tipo_usuario.
             { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
             { key: 'cashbacks', label: ofT('Cashbacks'), icon: 'bi-wallet2' },
             { key: 'comentarios', label: ofT('Comentários'), icon: 'bi-chat-quote' },
@@ -229,7 +228,6 @@ const BO_PERFIS = {
             { key: 'historico', label: ofT('Histórico'), icon: 'bi-clock-history' },
             { key: 'alunos', label: ofT('Alunos'), icon: 'bi-people' },
             { key: 'agenda', label: ofT('Agenda'), icon: 'bi-calendar3' },
-            { key: 'cadastro-facial', label: ofT('Cadastro facial'), icon: 'bi-camera' },
             { key: 'cashback', label: ofT('Meu cashback'), icon: 'bi-wallet2' },
             { key: 'compras', label: ofT('Minhas compras'), icon: 'bi-bag-check' },
             { key: 'marketplace', label: ofT('Marketplace'), icon: 'bi-shop', href: BO_MARKETPLACE_URL },

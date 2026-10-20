@@ -27,6 +27,12 @@ if (!is_string($busca) || !is_string($status) || strlen($busca) > 600
 $bufferLevel = ob_get_level();
 try {
     require __DIR__ . '/../../../config/conn.php';
+    // conn.php revalida a sessão; conta inativa ou sem painel perde o id aqui.
+    if (empty($_SESSION['id_usuario'])) {
+        http_response_code(401);
+        echo json_encode(['error' => onefitTraduzir('Sua sessão expirou. Entre novamente.')]);
+        exit;
+    }
     require __DIR__ . '/../includes/helpers.php';
     require __DIR__ . '/../includes/admin-forms.php';
     require __DIR__ . '/../includes/compras.php';

@@ -165,88 +165,6 @@ function bo_modal_usuario(?array $u, string $secao, array $planos = []): void
 }
 
 /* =======================================================================
- * PERMISSÕES
- * ===================================================================== */
-function bo_modal_permissao_nova(string $secao, array $funcoes): void
-{
-    ?>
-    <div class="modal fade bo-modal" id="modalPermissaoNova" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><?php echo of_t('Cadastrar permissão'); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
-                </div>
-                <form method="POST" action="<?php echo bo_form_action('permissoes.php'); ?>">
-                    <div class="modal-body row g-3">
-                        <?php echo bo_csrf_field(); ?>
-                        <?php echo bo_hidden('secao', $secao); ?>
-                        <?php echo bo_hidden('acao', 'create'); ?>
-                        <div class="col-12">
-                            <label class="form-label"><?php echo of_t('E-mail do usuário'); ?></label>
-                            <input type="email" class="form-control" name="email" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label"><?php echo of_t('Tipo de função'); ?></label>
-                            <select class="form-select" name="funcao" required>
-                                <?php foreach ($funcoes as $f): ?>
-                                    <option value="<?php echo (int) $f['id']; ?>"><?php echo bo_val($f['nome']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
-                        <button type="submit" class="btn-bo-gold"><?php echo of_t('Salvar'); ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php
-}
-
-function bo_modal_permissao_editar(array $p, string $secao, array $funcoes): void
-{
-    $modalId = 'modalPermissaoEditar' . $p['id'];
-    ?>
-    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><?php echo of_t('Editar permissão'); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
-                </div>
-                <form method="POST" action="<?php echo bo_form_action('permissoes.php'); ?>">
-                    <div class="modal-body row g-3">
-                        <?php echo bo_csrf_field(); ?>
-                        <?php echo bo_hidden('secao', $secao); ?>
-                        <?php echo bo_hidden('acao', 'update'); ?>
-                        <?php echo bo_hidden('id', $p['id']); ?>
-                        <div class="col-12">
-                            <p class="mb-0"><strong><?php echo bo_val($p['nome']); ?></strong> · <?php echo bo_val($p['email']); ?></p>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label"><?php echo of_t('Tipo de função'); ?></label>
-                            <select class="form-select" name="funcao" required>
-                                <?php foreach ($funcoes as $f): ?>
-                                    <option value="<?php echo (int) $f['id']; ?>" <?php echo (int) $p['id_funcao'] === (int) $f['id'] ? 'selected' : ''; ?>><?php echo bo_val($f['nome']); ?></option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
-                        <button type="submit" class="btn-bo-gold"><?php echo of_t('Salvar'); ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php
-}
-
-/* =======================================================================
  * PAGAMENTOS
  * ===================================================================== */
 function bo_modal_pagamento(?array $p, string $secao): void
@@ -413,43 +331,6 @@ function bo_modal_categoria(?array $c, string $secao): void
                         <div class="col-12">
                             <label class="form-label"><?php echo of_t('Nome da categoria'); ?></label>
                             <input type="text" class="form-control" name="nome" value="<?php echo bo_val($c['nome'] ?? ''); ?>" required>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
-                        <button type="submit" class="btn-bo-gold"><?php echo of_t('Salvar'); ?></button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    <?php
-}
-
-/* =======================================================================
- * FUNÇÕES
- * ===================================================================== */
-function bo_modal_funcao(?array $f, string $secao): void
-{
-    $isEdit = $f !== null;
-    $modalId = $isEdit ? 'modalFuncaoEditar' . $f['id'] : 'modalFuncaoNova';
-    ?>
-    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar função' : 'Nova função'); ?></h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
-                </div>
-                <form method="POST" action="<?php echo bo_form_action('funcoes.php'); ?>">
-                    <div class="modal-body row g-3">
-                        <?php echo bo_csrf_field(); ?>
-                        <?php echo bo_hidden('secao', $secao); ?>
-                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
-                        <?php if ($isEdit): ?><?php echo bo_hidden('id', $f['id']); ?><?php endif; ?>
-                        <div class="col-12">
-                            <label class="form-label"><?php echo of_t('Nome da função'); ?></label>
-                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($f['nome'] ?? ''); ?>" required>
                         </div>
                     </div>
                     <div class="modal-footer">

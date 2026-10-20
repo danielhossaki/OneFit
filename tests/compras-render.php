@@ -1,4 +1,5 @@
 <?php
+if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 require __DIR__ . '/../config/conn.php';
 require __DIR__ . '/../pages/dashboard/includes/compras.php';
 require __DIR__ . '/../pages/dashboard/includes/helpers.php';

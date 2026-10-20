@@ -12,6 +12,7 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/auth.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require __DIR__ . '/../includes/helpers.php';
 
+// conn.php revalida a sessão no banco; conta inativa ou sem painel chega aqui sem id.
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: ' . BASE_URL . 'pages/login/login.php');
     exit;
