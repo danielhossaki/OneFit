@@ -140,6 +140,38 @@ function onefitSituacaoCatracaFuncionario(?string $papel, ?string $status, bool 
 }
 
 /**
+ * Cadastro facial (decisões D5 e D2/P6): quem cadastra ou substitui fotos de quem.
+ * Recebe as linhas atuais do banco (tipo_usuario, status) do operador e da
+ * pessoa fotografada; nunca o que a tela ou o formulário dizem.
+ *   - operador: conta ativa de cargo que opera o cadastro facial (admin, recepcionista);
+ *   - pessoa: conta ativa de cargo conhecido. A foto não libera a catraca, que segue a regra do cargo;
+ *   - contas admin (inclusive a do próprio operador): só administradores da lista
+ *     restrita. Enquanto a lista não existir (P1), ninguém (negar por padrão, P6);
+ *   - recepcionista: a si mesma, outras recepcionistas e os demais cargos não administrativos.
+ * Retorna ['permitido' => bool, 'motivo' => string].
+ */
+function onefitAvaliarCadastroFacial(?array $operador, ?array $pessoa, bool $operadorRestrito): array
+{
+    if (!$operador || ($operador['status'] ?? null) !== 'ativo' || !onefitPapelOperaCadastroFacial($operador['tipo_usuario'] ?? null)) {
+        return ['permitido' => false, 'motivo' => 'operador_sem_permissao'];
+    }
+    if (!$pessoa) {
+        return ['permitido' => false, 'motivo' => 'pessoa_inexistente'];
+    }
+    if (($pessoa['status'] ?? null) !== 'ativo') {
+        return ['permitido' => false, 'motivo' => 'pessoa_inativa'];
+    }
+    $papelPessoa = onefitPapelCanonico($pessoa['tipo_usuario'] ?? null);
+    if ($papelPessoa === null) {
+        return ['permitido' => false, 'motivo' => 'cargo_desconhecido'];
+    }
+    if ($papelPessoa === 'admin' && !($operadorRestrito && onefitPapelCanonico($operador['tipo_usuario']) === 'admin')) {
+        return ['permitido' => false, 'motivo' => 'conta_admin_restrita'];
+    }
+    return ['permitido' => true, 'motivo' => 'ok'];
+}
+
+/**
  * Decide, sem efeitos colaterais, se uma sessão continua válida a partir da
  * linha atual do usuário no banco.
  * Retorna ['valida' => bool, 'motivo' => string, 'papel' => ?string].

@@ -19,8 +19,9 @@ if (empty($_SESSION['id_usuario'])) {
 
 try {
     require_once __DIR__ . '/../../../config/conn.php';
-    // conn.php revalidou a sessão; a permissão do operador é conferida no banco
-    // pela política central (config/papeis.php), nunca pelo que a tela exibe.
+    require_once __DIR__ . '/../includes/fotos-faciais.php';
+    // conn.php revalidou a sessão; operador e pessoa são conferidos no banco pela
+    // política central (config/papeis.php) em cada operação, nunca pelo que a tela exibe.
     $idOperador = (int) ($_SESSION['id_usuario'] ?? 0);
     if ($idOperador <= 0) {
         fotos_faciais_responder(false, onefitTraduzir('Sua sessão expirou. Entre novamente.'), 401);
@@ -30,38 +31,7 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $termo = trim((string) ($_GET['q'] ?? ''));
-        $termo = mb_substr($termo, 0, 100, 'UTF-8');
-        $busca = '%' . $termo . '%';
-        $stmt = $conn->prepare(
-            "SELECT u.id_usuario, u.nome,
-                    u.tipo_usuario,
-                    EXISTS (
-                        SELECT 1 FROM usuarios_fotos_faciais f
-                        WHERE f.id_usuario = u.id_usuario AND f.ativo = 1
-                          AND f.imagem_blob IS NOT NULL
-                    ) AS foto_cadastrada
-             FROM usuarios u
-             WHERE u.tipo_usuario IN ('aluno', 'profissional', 'admin')
-               AND u.status = 'ativo'
-               AND (? = '' OR u.nome LIKE ? OR u.cpf LIKE ?
-                    OR CAST(u.id_usuario AS CHAR) LIKE ?)
-             ORDER BY u.nome, u.id_usuario"
-        );
-        $stmt->bind_param('ssss', $termo, $busca, $busca, $busca);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
-        $pessoas = [];
-        while ($row = $resultado->fetch_assoc()) {
-            $pessoas[] = [
-                'id' => (int) $row['id_usuario'],
-                'nome' => $row['nome'],
-                'tipo_usuario' => $row['tipo_usuario'],
-                'foto_cadastrada' => (bool) $row['foto_cadastrada'],
-            ];
-        }
-        $stmt->close();
-        fotos_faciais_responder(true, '', 200, ['pessoas' => $pessoas]);
+        fotos_faciais_responder(true, '', 200, ['pessoas' => bo_fotos_faciais_listar($conn, $idOperador, (string) ($_GET['q'] ?? ''))]);
     }
 
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -87,93 +57,27 @@ try {
         $status = in_array($arquivo['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true) ? 413 : 422;
         fotos_faciais_responder(false, onefitTraduzir('Não foi possível receber a imagem. Tente capturá-la novamente.'), $status);
     }
-    $limiteImagem = 5 * 1024 * 1024;
-    if ((int) $arquivo['size'] < 1 || (int) $arquivo['size'] > $limiteImagem || !is_uploaded_file($arquivo['tmp_name'])) {
+    if ((int) $arquivo['size'] < 1 || (int) $arquivo['size'] > BO_FOTOS_FACIAIS_MAX_BYTES || !is_uploaded_file($arquivo['tmp_name'])) {
         fotos_faciais_responder(false, onefitTraduzir('A imagem está vazia, excede 5 MB ou não foi enviada corretamente.'), 422);
     }
-
     $imagem = file_get_contents($arquivo['tmp_name']);
-    if ($imagem === false || strlen($imagem) > $limiteImagem) {
+    if ($imagem === false) {
         fotos_faciais_responder(false, onefitTraduzir('Não foi possível ler a imagem enviada.'), 422);
     }
-    $finfo = new finfo(FILEINFO_MIME_TYPE);
-    $mime = $finfo->buffer($imagem);
-    $infoImagem = getimagesizefromstring($imagem);
-    $tiposAceitos = ['image/jpeg' => IMAGETYPE_JPEG, 'image/png' => IMAGETYPE_PNG];
-    if (!is_array($infoImagem)
-        || !isset($tiposAceitos[$mime])
-        || $infoImagem[2] !== $tiposAceitos[$mime]
-        || $infoImagem[0] < 1
-        || $infoImagem[1] < 1
-        || $infoImagem[0] > 4096
-        || $infoImagem[1] > 4096
-        || $infoImagem[0] * $infoImagem[1] > 16777216) {
-        fotos_faciais_responder(false, onefitTraduzir('Formato de imagem inválido. Envie JPEG ou PNG de até 16 megapixels.'), 422);
-    }
-    if (!function_exists('imagecreatefromstring')) {
-        error_log('ONE FIT: extensão GD indisponível para validar imagens faciais.');
-        fotos_faciais_responder(false, onefitTraduzir('A validação de imagens está indisponível no servidor. Avise o administrador.'), 503);
-    }
-    $imagemDecodificada = @imagecreatefromstring($imagem);
-    if ($imagemDecodificada === false) {
-        fotos_faciais_responder(false, onefitTraduzir('A imagem não pôde ser decodificada. Capture outra foto.'), 422);
-    }
-    imagedestroy($imagemDecodificada);
 
-    if (!$conn->begin_transaction()) {
-        throw new RuntimeException('Could not start facial photo transaction.');
-    }
-
-    $stmt = $conn->prepare(
-        "SELECT id_usuario FROM usuarios
-         WHERE id_usuario = ?
-           AND tipo_usuario IN ('aluno', 'profissional', 'admin')
-           AND status = 'ativo'
-         LIMIT 1 FOR UPDATE"
-    );
-    $stmt->bind_param('i', $idUsuarioSelecionado);
-    if (!$stmt->execute()) {
-        throw new RuntimeException('Could not verify selected facial photo subject.');
-    }
-    $cadastro = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    if (!$cadastro) {
-        $conn->rollback();
-        fotos_faciais_responder(false, onefitTraduzir('Pessoa ativa não encontrada ou não permitida para cadastro facial.'), 404);
-    }
-    $idUsuario = (int) $cadastro['id_usuario'];
-
-    $stmt = $conn->prepare('UPDATE usuarios_fotos_faciais SET ativo = 0 WHERE id_usuario = ? AND ativo = 1');
-    $stmt->bind_param('i', $idUsuario);
-    if (!$stmt->execute()) {
-        throw new RuntimeException('Could not update previous facial photos.');
-    }
-    $stmt->close();
-
-    $blobVazio = '';
-    $stmt = $conn->prepare('INSERT INTO usuarios_fotos_faciais (id_usuario, imagem_blob, ativo) VALUES (?, ?, 1)');
-    $stmt->bind_param('ib', $idUsuario, $blobVazio);
-    if (!$stmt->send_long_data(1, $imagem) || !$stmt->execute()) {
-        throw new RuntimeException('Could not store facial photo bytes.');
-    }
-    $idFotoFacial = (int) $stmt->insert_id;
-    $stmt->close();
-
-    if (!$conn->commit()) {
-        throw new RuntimeException('Could not commit facial photo transaction.');
-    }
-    fotos_faciais_responder(true, onefitTraduzir('Foto facial cadastrada com sucesso.'), 200, [
+    // Só o valor exato '1' confirma a substituição da foto ativa mais antiga.
+    $substituir = ($_POST['substituir_mais_antiga'] ?? '') === '1';
+    $resultado = bo_foto_facial_cadastrar($conn, $idOperador, $idUsuarioSelecionado, $imagem, $substituir);
+    fotos_faciais_responder(true, $resultado['desativadas']
+        ? onefitTraduzir('Foto facial cadastrada. A foto ativa mais antiga foi desativada e mantida no histórico.')
+        : onefitTraduzir('Foto facial cadastrada com sucesso.'), 200, [
         'foto_cadastrada' => true,
-        'id_foto_facial' => $idFotoFacial,
+        'id_foto_facial' => $resultado['id_foto_facial'],
+        'fotos_ativas' => $resultado['fotos_ativas'],
     ]);
+} catch (FotoFacialRecusada $recusa) {
+    fotos_faciais_responder(false, $recusa->getMessage(), $recusa->status, $recusa->dados);
 } catch (Throwable $erro) {
-    if (isset($conn) && $conn instanceof mysqli) {
-        try {
-            $conn->rollback();
-        } catch (Throwable $erroRollback) {
-            error_log('ONE FIT: falha ao reverter gravação de foto facial.');
-        }
-    }
     error_log('ONE FIT: falha ao processar cadastro facial. Código: ' . $erro->getCode());
     fotos_faciais_responder(false, onefitTraduzir('Não foi possível processar a operação. Tente novamente.'), 500);
 }

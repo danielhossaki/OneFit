@@ -300,19 +300,32 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPeople();
         setFeedback(t('Enviando imagem…'));
 
-        const data = new FormData();
-        data.append('csrf_token', csrfToken);
-        data.append('id_usuario', String(targetId));
-        data.append('imagem', capturedImage, 'captura-facial.jpg');
-
-        try {
+        const send = async replaceOldest => {
+            const data = new FormData();
+            data.append('csrf_token', csrfToken);
+            data.append('id_usuario', String(targetId));
+            if (replaceOldest) data.append('substituir_mais_antiga', '1');
+            data.append('imagem', capturedImage, 'captura-facial.jpg');
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { Accept: 'application/json' },
                 body: data,
             });
-            const result = await response.json();
+            return { response, result: await response.json() };
+        };
+
+        try {
+            let { response, result } = await send(false);
+            // Limite de fotos ativas: a mais antiga só é desativada com confirmação explícita.
+            if (response.status === 409 && result.requer_confirmacao === true) {
+                if (!window.confirm(result.message)) {
+                    setFeedback(t('Nenhuma foto foi substituída.'));
+                    return;
+                }
+                setFeedback(t('Enviando imagem…'));
+                ({ response, result } = await send(true));
+            }
             if (!response.ok || result.ok !== true) {
                 throw new Error(result.message || t('Não foi possível salvar o cadastro facial.'));
             }

@@ -1499,3 +1499,6 @@ A pessoa perde o acesso ao painel na próxima ação e a catraca deixa de liber�
 A conta volta a valer para o painel (se o cargo tiver acesso) e para a catraca, conforme a regra do cargo.|The account becomes valid again for the dashboard (if the role has access) and for the turnstile, according to the role's rule.|La cuenta vuelve a valer para el panel (si el cargo tiene acceso) y para el torniquete, según la regla del cargo.
 Sim, inativar|Yes, deactivate|Sí, desactivar
 Sim, ativar|Yes, activate|Sí, activar
+Esta pessoa já tem {total} fotos faciais ativas. Para salvar a nova, a foto ativa mais antiga será desativada e mantida no histórico. Deseja continuar?|This person already has {total} active facial photos. To save the new one, the oldest active photo will be deactivated and kept in the history. Do you want to continue?|Esta persona ya tiene {total} fotos faciales activas. Para guardar la nueva, la foto activa más antigua se desactivará y se conservará en el historial. ¿Desea continuar?
+Foto facial cadastrada. A foto ativa mais antiga foi desativada e mantida no histórico.|Facial photo registered. The oldest active photo was deactivated and kept in the history.|Foto facial registrada. La foto activa más antigua se desactivó y se conservó en el historial.
+Nenhuma foto foi substituída.|No photo was replaced.|No se reemplazó ninguna foto.

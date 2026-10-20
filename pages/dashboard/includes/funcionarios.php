@@ -257,11 +257,11 @@ function bo_funcionario_alvo(mysqli $conn, int $idOperador, int $id): array
 }
 
 /** Auditoria sem senha, hash ou token. CPF entra mascarado. */
-function bo_auditoria_registrar(mysqli $conn, string $acao, int $idOperador, ?int $idAlvo, array $detalhes): void
+function bo_auditoria_registrar(mysqli $conn, string $acao, int $idOperador, ?int $idAlvo, array $detalhes, string $categoria = 'funcionario'): void
 {
     $json = json_encode($detalhes, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
-    $stmt = $conn->prepare("INSERT INTO auditoria_eventos (categoria, acao, id_operador, id_alvo, detalhes) VALUES ('funcionario', ?, ?, ?, ?)");
-    $stmt->bind_param('siis', $acao, $idOperador, $idAlvo, $json);
+    $stmt = $conn->prepare('INSERT INTO auditoria_eventos (categoria, acao, id_operador, id_alvo, detalhes) VALUES (?, ?, ?, ?, ?)');
+    $stmt->bind_param('ssiis', $categoria, $acao, $idOperador, $idAlvo, $json);
     $stmt->execute();
     $stmt->close();
 }

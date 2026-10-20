@@ -70,6 +70,35 @@ foreach ($catraca as [$cargo, $status, $cadastroAtivo, $liberado, $motivo]) {
     papeisCheck(onefitSituacaoCatracaFuncionario($cargo, $status, $cadastroAtivo) === ['liberado' => $liberado, 'motivo' => $motivo], 'Catraca prevista: ' . var_export($cargo, true) . "/$status");
 }
 
+// --- Cadastro facial: operador x pessoa (D5, D2/P6) ---------------------------
+$conta = static fn(?string $cargo, string $status = 'ativo'): array => ['tipo_usuario' => $cargo, 'status' => $status];
+$naoAdmins = ['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'faxineira'];
+foreach (['admin', 'recepcionista'] as $operador) {
+    foreach ($naoAdmins as $pessoa) {
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa), false) === ['permitido' => true, 'motivo' => 'ok'], "Facial: $operador fotografa $pessoa ativo");
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'inativo'), false)['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa inativo");
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'bloqueado'), false)['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa bloqueado");
+    }
+    // Contas admin só pela lista restrita, que ainda não existe (P1): ninguém, nem o próprio admin.
+    papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta('admin'), false)['motivo'] === 'conta_admin_restrita', "Facial: $operador não fotografa admin");
+    papeisCheck(onefitAvaliarCadastroFacial($conta($operador), null, false)['motivo'] === 'pessoa_inexistente', "Facial: $operador recusa pessoa inexistente");
+    foreach ([null, '', 'gerente', 'Admin'] as $desconhecido) {
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($desconhecido), false)['motivo'] === 'cargo_desconhecido', "Facial: $operador recusa cargo " . var_export($desconhecido, true));
+    }
+}
+papeisCheck(onefitAvaliarCadastroFacial($conta('admin'), $conta('admin'), true)['permitido'], 'Facial: admin da lista restrita fotografa admin');
+papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista'), $conta('admin'), true)['motivo'] === 'conta_admin_restrita', 'Facial: "restrito" não vale para recepcionista');
+foreach (['professor', 'profissional', 'aluno', 'vendedor', 'faxineira', 'gerente', '', null] as $semPermissao) {
+    papeisCheck(onefitAvaliarCadastroFacial($conta($semPermissao), $conta('aluno'), true)['motivo'] === 'operador_sem_permissao', 'Facial: ' . var_export($semPermissao, true) . ' não opera');
+}
+foreach (['inativo', 'bloqueado'] as $statusOperador) {
+    papeisCheck(onefitAvaliarCadastroFacial($conta('admin', $statusOperador), $conta('aluno'), false)['motivo'] === 'operador_sem_permissao', "Facial: admin $statusOperador não opera");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista', $statusOperador), $conta('recepcionista'), false)['motivo'] === 'operador_sem_permissao', "Facial: recepcionista $statusOperador não opera");
+}
+papeisCheck(onefitAvaliarCadastroFacial(null, $conta('aluno'), false)['motivo'] === 'operador_sem_permissao', 'Facial: sem operador');
+// A foto não muda a regra da catraca nem dá login: faxineira continua sem painel.
+papeisCheck(onefitPainelDoPapel('faxineira') === null && onefitPainelDoPapel('recepcionista') === null, 'Facial não concede painel');
+
 // --- Cargo desconhecido nunca vira aluno ------------------------------------
 foreach ([null, '', ' ', 'Aluno', 'ADMIN', ' admin', 'aluno ', 'superadmin', '0', 'root', 'funcionario'] as $desconhecido) {
     $rotulo = var_export($desconhecido, true);
