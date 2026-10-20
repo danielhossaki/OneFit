@@ -29,7 +29,11 @@ final class Navegador
         ]);
         if ($metodo === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post));
+            // Com arquivo (CURLFile) o corpo vai como multipart/form-data, como no navegador.
+            $multipart = (bool) array_filter($post, static fn($valor): bool => $valor instanceof CURLFile);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $multipart ? $post : http_build_query($post));
+        } elseif ($metodo !== 'GET') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $metodo);
         }
         $resposta = curl_exec($ch);
         if ($resposta === false) {

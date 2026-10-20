@@ -1,6 +1,17 @@
 <?php
 require_once __DIR__ . '/interface.php';
+require_once __DIR__ . '/papeis.php';
 /** Helpers internos: carregar após config/conn.php. Não são endpoints públicos. */
+
+/** Rótulo do comprador pela política de cargos (professor e o legado profissional são o mesmo); null = não notifica. */
+function notificacaoTipoComprador(?string $papel): ?string
+{
+    return match (onefitPainelDoPapel($papel)) {
+        'profissional' => 'Profissional',
+        'aluno' => 'Aluno',
+        default => null,
+    };
+}
 
 function notificacaoLinkSeguro(?string $link): ?string
 {
@@ -108,10 +119,11 @@ function localizarNotificacaoSistema(mysqli $db, int $usuarioId, array $item): a
     $stmt->execute();
     $pedido = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    if (!$pedido) return $item;
+    $tipoComprador = $pedido ? notificacaoTipoComprador($pedido['tipo_usuario']) : null;
+    if ($tipoComprador === null) return $item;
     $item['titulo'] = onefitTraduzir('Novo pedido no marketplace');
     $item['mensagem'] = onefitTraduzir('{tipo} · Pedido #{pedido} · R$ {valor} · {data}', [
-        '{tipo}' => onefitTraduzir($pedido['tipo_usuario'] === 'profissional' ? 'Profissional' : 'Aluno'),
+        '{tipo}' => onefitTraduzir($tipoComprador),
         '{pedido}' => (string) $pedidoId,
         '{valor}' => onefitNumero((float) $pedido['valor_total']),
         '{data}' => onefitData('d/m/Y H:i', strtotime($pedido['data_pedido'])),
@@ -134,12 +146,13 @@ function notificarCompraBackoffice(mysqli $db, int $pedidoId): int
     require_once __DIR__ . '/interface.php';
     $stmt = $db->prepare("SELECT p.id_pedido, p.valor_total, p.data_pedido, u.tipo_usuario
         FROM pedido p JOIN usuarios u ON u.id_usuario = p.id_usuario
-        WHERE p.id_pedido = ? AND u.tipo_usuario IN ('aluno', 'profissional')");
+        WHERE p.id_pedido = ? AND u.tipo_usuario IN ('aluno', 'profissional', 'professor')");
     $stmt->bind_param('i', $pedidoId);
     $stmt->execute();
     $pedido = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    if (!$pedido) return 0;
+    $tipoComprador = $pedido ? notificacaoTipoComprador($pedido['tipo_usuario']) : null;
+    if ($tipoComprador === null) return 0;
     $ids = $db->query("SELECT id_usuario FROM usuarios WHERE tipo_usuario = 'admin' AND status = 'ativo'")->fetch_all(MYSQLI_ASSOC);
     $count = 0;
     foreach ($ids as $admin) {
@@ -166,7 +179,7 @@ function notificarCompraBackoffice(mysqli $db, int $pedidoId): int
             $lang->bind_param('i', $id); $lang->execute();
             $locale = $lang->get_result()->fetch_assoc()['idioma'] ?? 'pt-BR'; $lang->close();
             $title = onefitTraduzir('Novo pedido no marketplace', [], $locale);
-            $type = onefitTraduzir($pedido['tipo_usuario'] === 'profissional' ? 'Profissional' : 'Aluno', [], $locale);
+            $type = onefitTraduzir($tipoComprador, [], $locale);
             $message = onefitTraduzir('{tipo} · Pedido #{pedido} · R$ {valor} · {data}', [
                 '{tipo}' => $type, '{pedido}' => (string) $pedidoId,
                 '{valor}' => onefitNumero((float) $pedido['valor_total'], 2, $locale),

@@ -475,7 +475,12 @@ try {
     $stmt->close();
     }
 } catch (Throwable $e) {
-    $ofFeedback = ['type' => 'danger', 'message' => $e->getMessage()];
+    // Mensagens próprias (RuntimeException) aparecem; erro de banco não expõe SQL nem tabelas.
+    $ehMensagemPropria = $e instanceof RuntimeException && !($e instanceof mysqli_sql_exception);
+    if (!$ehMensagemPropria) {
+        error_log('ONE FIT: falha no painel do profissional. Código: ' . $e->getCode());
+    }
+    $ofFeedback = ['type' => 'danger', 'message' => $ehMensagemPropria ? $e->getMessage() : 'Não foi possível concluir a operação. Tente novamente.'];
 }
 
 $ofCsrf = (string) ($_SESSION['csrf_token'] ?? '');

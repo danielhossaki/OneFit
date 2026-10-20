@@ -4,10 +4,16 @@ require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
 require_once($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/email-auth.php');
 
+/**
+ * Token pendente cuja conta, agora, está ativa e pode entrar em algum painel.
+ * Um link antigo de quem ficou inativo ou passou a cargo sem login (ex.:
+ * faxineira) vale como inválido, com a mesma mensagem: nada é revelado.
+ */
 function onefitBuscaTokenRedefinicao(mysqli $conn, string $hash, bool $bloquear = false): ?array
 {
-    $sql = 'SELECT id, usuario_id, expira_em FROM recuperacao_senha_tokens
-            WHERE token_hash = ? AND usado_em IS NULL LIMIT 1';
+    $sql = 'SELECT t.id, t.usuario_id, t.expira_em, u.tipo_usuario, u.status
+            FROM recuperacao_senha_tokens t JOIN usuarios u ON u.id_usuario = t.usuario_id
+            WHERE t.token_hash = ? AND t.usado_em IS NULL LIMIT 1';
     if ($bloquear) {
         $sql .= ' FOR UPDATE';
     }
@@ -18,7 +24,10 @@ function onefitBuscaTokenRedefinicao(mysqli $conn, string $hash, bool $bloquear 
     $registro = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    return $registro ?: null;
+    if (!$registro || $registro['status'] !== 'ativo' || onefitPainelDoPapel($registro['tipo_usuario']) === null) {
+        return null;
+    }
+    return $registro;
 }
 
 $token = trim((string) ($_GET['token'] ?? $_POST['token'] ?? ''));

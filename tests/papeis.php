@@ -99,6 +99,15 @@ papeisCheck(onefitAvaliarCadastroFacial(null, $conta('aluno'), false)['motivo'] 
 // A foto não muda a regra da catraca nem dá login: faxineira continua sem painel.
 papeisCheck(onefitPainelDoPapel('faxineira') === null && onefitPainelDoPapel('recepcionista') === null, 'Facial não concede painel');
 
+// --- Notificação de compra: rótulo pela política, sem "não é profissional, então é aluno" ---
+require_once __DIR__ . '/../config/notificacoes.php';
+$rotulos = ['aluno' => 'Aluno', 'professor' => 'Profissional', 'profissional' => 'Profissional',
+    'admin' => null, 'vendedor' => null, 'recepcionista' => null, 'faxineira' => null, '' => null, 'gerente' => null];
+foreach ($rotulos as $cargo => $rotulo) {
+    papeisCheck(notificacaoTipoComprador($cargo) === $rotulo, "Rótulo do comprador: '$cargo'");
+}
+papeisCheck(notificacaoTipoComprador(null) === null, 'Rótulo do comprador: nulo');
+
 // --- Cargo desconhecido nunca vira aluno ------------------------------------
 foreach ([null, '', ' ', 'Aluno', 'ADMIN', ' admin', 'aluno ', 'superadmin', '0', 'root', 'funcionario'] as $desconhecido) {
     $rotulo = var_export($desconhecido, true);

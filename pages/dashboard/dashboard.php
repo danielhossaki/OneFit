@@ -205,9 +205,10 @@ if ($perfilLogado === 'admin') {
             require __DIR__ . '/components/section-profissional.php';
         } elseif ($perfilLogado === 'vendedor') {
             require __DIR__ . '/components/section-vendedor.php';
-        } else {
+        } elseif ($perfilLogado === 'aluno') {
             require __DIR__ . '/components/section-aluno.php';
         }
+        // Painel sem seção própria não recebe a do aluno: nada é exibido.
         require __DIR__ . '/components/section-configuracoes.php';
         require __DIR__ . '/components/section-stub.php';
         ?>
