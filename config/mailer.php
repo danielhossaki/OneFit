@@ -103,3 +103,22 @@ function onefitEnviarRedefinicaoSenha(string $email, string $nome, string $token
 
     return onefitEnviarEmail($email, $nome, onefitTraduzir('Redefinição de senha - {marca}'), $html);
 }
+
+/**
+ * Primeiro acesso de um funcionário cadastrado pelo admin. Usa o mesmo token
+ * de uso único de recuperacao_senha_tokens e a mesma página de definição de
+ * senha; o operador nunca conhece nem escolhe a senha.
+ */
+function onefitEnviarDefinicaoSenhaInicial(string $email, string $nome, string $token): bool
+{
+    $link = onefitAppUrl() . '/pages/auth/senha/redefinir-senha.php?token=' . rawurlencode($token);
+    $html = onefitTemplateEmail(
+        $nome,
+        'Uma conta de funcionário foi criada para você na {marca}. Para definir sua senha de acesso, clique no botão abaixo.',
+        'Definir minha senha',
+        $link,
+        'Este link expira em 30 minutos e só pode ser usado uma vez. Se ele expirar, peça à administração um novo envio. Se você não reconhece este cadastro, ignore este e-mail.'
+    );
+
+    return onefitEnviarEmail($email, $nome, onefitTraduzir('Defina sua senha - {marca}'), $html);
+}

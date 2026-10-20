@@ -36,6 +36,40 @@ papeisCheck($politicas['faxineira']['login'] === false, 'Faxineira não faz logi
 papeisCheck(onefitPapeisCom('opera_cadastro_facial') === ['admin', 'recepcionista'], 'Só admin e recepcionista operam o cadastro facial');
 papeisCheck(!in_array('profissional', onefitPapeisCom('opera_cadastro_facial'), true), 'Professor não opera o cadastro facial');
 
+// --- Funcionários (Etapa 2) ---------------------------------------------------
+papeisCheck(onefitCargosAtribuiveisPorAdmin() === ['vendedor', 'professor', 'recepcionista', 'faxineira'], 'Cargos atribuíveis por admin comum');
+foreach (['admin', 'aluno', 'profissional', '', null, 'Professor', 'superadmin'] as $naoAtribuivel) {
+    papeisCheck(!in_array($naoAtribuivel, onefitCargosAtribuiveisPorAdmin(), true), 'Não atribuível: ' . var_export($naoAtribuivel, true));
+}
+papeisCheck(onefitFuncionarioGerenciavelPorAdmin('profissional'), 'Conta legada profissional continua gerenciável como professor');
+foreach (['admin', 'aluno', '', null, 'gerente'] as $naoGerenciavel) {
+    papeisCheck(!onefitFuncionarioGerenciavelPorAdmin($naoGerenciavel), 'Não gerenciável por admin comum: ' . var_export($naoGerenciavel, true));
+}
+papeisCheck(onefitPapeisFuncionarios() === ['vendedor', 'professor', 'recepcionista', 'faxineira', 'profissional', 'admin'], 'Cargos listados na tela Funcionários');
+// Lista restrita ainda não definida (P1): ninguém pode gerenciar contas admin.
+foreach ([1, 2, 6, 999] as $idQualquer) {
+    papeisCheck(onefitAdminRestrito(mysqli_init(), $idQualquer) === false, "Ninguém é admin restrito ($idQualquer)");
+}
+$catraca = [
+    // [cargo, status, cadastro profissional ativo?, liberado, motivo]
+    ['vendedor', 'ativo', false, true, 'ok'],
+    ['recepcionista', 'ativo', false, true, 'ok'],
+    ['faxineira', 'ativo', false, true, 'ok'],
+    ['admin', 'ativo', false, true, 'ok'],
+    ['faxineira', 'inativo', false, false, 'conta_inativa'],
+    ['vendedor', 'bloqueado', false, false, 'conta_inativa'],
+    ['professor', 'ativo', true, true, 'ok'],
+    ['professor', 'ativo', false, false, 'cadastro_profissional_inativo'],
+    ['profissional', 'ativo', false, false, 'cadastro_profissional_inativo'],
+    ['professor', 'inativo', true, false, 'conta_inativa'],
+    ['aluno', 'ativo', false, false, 'requer_matricula'],
+    ['gerente', 'ativo', true, false, 'cargo_desconhecido'],
+    [null, 'ativo', true, false, 'cargo_desconhecido'],
+];
+foreach ($catraca as [$cargo, $status, $cadastroAtivo, $liberado, $motivo]) {
+    papeisCheck(onefitSituacaoCatracaFuncionario($cargo, $status, $cadastroAtivo) === ['liberado' => $liberado, 'motivo' => $motivo], 'Catraca prevista: ' . var_export($cargo, true) . "/$status");
+}
+
 // --- Cargo desconhecido nunca vira aluno ------------------------------------
 foreach ([null, '', ' ', 'Aluno', 'ADMIN', ' admin', 'aluno ', 'superadmin', '0', 'root', 'funcionario'] as $desconhecido) {
     $rotulo = var_export($desconhecido, true);
@@ -91,12 +125,18 @@ foreach (['pages', 'config', 'components', 'database'] as $pasta) {
         if ($arquivo->getExtension() !== 'php') {
             continue;
         }
-        if (preg_match('/UPDATE\s+`?usuarios`?\s+SET[^;]*\btipo_usuario\b/is', (string) file_get_contents($arquivo->getPathname()))) {
-            $gravacoesDeCargo[] = substr($arquivo->getPathname(), strlen($raiz) + 1);
+        // Só a cláusula SET grava; tipo_usuario no WHERE é proteção, não gravação.
+        preg_match_all('/UPDATE\s+`?usuarios`?\s+SET\s+((?:(?!\bWHERE\b)[^;])*)/is', (string) file_get_contents($arquivo->getPathname()), $sets);
+        foreach ($sets[1] as $set) {
+            if (preg_match('/\btipo_usuario\s*=/i', $set)) {
+                $gravacoesDeCargo[] = str_replace('\\', '/', substr($arquivo->getPathname(), strlen($raiz) + 1));
+                break;
+            }
         }
     }
 }
-papeisCheck($gravacoesDeCargo === [], 'Gravação de cargo fora do fluxo autorizado: ' . implode(', ', $gravacoesDeCargo));
+// Único fluxo autorizado: a tela Funcionários (operador e alvo conferidos com trava).
+papeisCheck($gravacoesDeCargo === ['pages/dashboard/includes/funcionarios.php'], 'Gravação de cargo fora do fluxo autorizado: ' . implode(', ', $gravacoesDeCargo));
 
 foreach (['pages/dashboard/funcionalidades/permissoes.php', 'pages/dashboard/funcionalidades/funcoes.php'] as $handler) {
     papeisCheck(!preg_match('/\b(INSERT|UPDATE|DELETE|REPLACE)\b/i', $ler($handler)), "$handler não grava no banco");
@@ -171,7 +211,7 @@ $novas = [
     'Sua sessão foi encerrada. Entre novamente para continuar.',
     'Esta conta não tem acesso ao painel. Fale com a administração da {marca}.',
     'As telas Permissões e Funções foram desativadas e não alteram mais cargos.',
-    'Contas de administrador não podem ser alteradas nesta tela.',
+    'Esta tela gerencia apenas alunos. Funcionários e administradores ficam na tela Funcionários.',
 ];
 foreach (onefitIdiomas() as $idioma) {
     $catalogo = require $raiz . '/config/locales/' . $idioma . '.php';

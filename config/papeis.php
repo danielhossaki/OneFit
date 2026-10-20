@@ -20,19 +20,22 @@ require_once __DIR__ . '/interface.php';
  *   painel                chave do painel (BO_PERFIS / data-perfil); null = sem painel
  *   opera_cadastro_facial pode operar a tela de cadastro facial
  *   catraca               regra de acesso físico (usada pela integração da catraca)
+ *   atribuivel_por_admin  um administrador comum pode atribuir o cargo na tela Funcionários
  */
 function onefitPoliticasPapeis(): array
 {
-    $professor = ['login' => true, 'painel' => 'profissional', 'opera_cadastro_facial' => false, 'catraca' => 'cadastro_profissional'];
+    $professor = ['login' => true, 'painel' => 'profissional', 'opera_cadastro_facial' => false, 'catraca' => 'cadastro_profissional', 'atribuivel_por_admin' => true];
     return [
-        'aluno' => ['login' => true, 'painel' => 'aluno', 'opera_cadastro_facial' => false, 'catraca' => 'matricula'],
-        'admin' => ['login' => true, 'painel' => 'admin', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa'],
-        'vendedor' => ['login' => true, 'painel' => 'vendedor', 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa'],
+        'aluno' => ['login' => true, 'painel' => 'aluno', 'opera_cadastro_facial' => false, 'catraca' => 'matricula', 'atribuivel_por_admin' => false],
+        // Contas admin só são criadas/alteradas por administradores da lista restrita (onefitAdminRestrito).
+        'admin' => ['login' => true, 'painel' => 'admin', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => false],
+        'vendedor' => ['login' => true, 'painel' => 'vendedor', 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
         'professor' => $professor,
-        'profissional' => $professor, // valor gravado no banco até a migração do ENUM
+        // Valor legado gravado no banco: mesma política do professor, mas nunca atribuído a cadastros novos.
+        'profissional' => ['atribuivel_por_admin' => false] + $professor,
         // O painel da recepção ainda não existe; sem painel, a conta não entra.
-        'recepcionista' => ['login' => true, 'painel' => null, 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa'],
-        'faxineira' => ['login' => false, 'painel' => null, 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa'],
+        'recepcionista' => ['login' => true, 'painel' => null, 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
+        'faxineira' => ['login' => false, 'painel' => null, 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
     ];
 }
 
@@ -83,6 +86,57 @@ function onefitPapelOperaCadastroFacial(?string $papel): bool
 function onefitPapeisCom(string $regra): array
 {
     return array_keys(array_filter(onefitPoliticasPapeis(), static fn(array $politica): bool => ($politica[$regra] ?? false) === true));
+}
+
+/** Cargos que um administrador comum pode atribuir: professor, recepcionista, vendedor, faxineira. */
+function onefitCargosAtribuiveisPorAdmin(): array
+{
+    return onefitPapeisCom('atribuivel_por_admin');
+}
+
+/** Conta de funcionário que um administrador comum pode gerenciar (inclui o legado 'profissional'). */
+function onefitFuncionarioGerenciavelPorAdmin(?string $papel): bool
+{
+    return onefitPapelPermitido($papel, onefitCargosAtribuiveisPorAdmin());
+}
+
+/** Cargos listados na tela Funcionários: os gerenciáveis, o legado e admin (somente leitura). */
+function onefitPapeisFuncionarios(): array
+{
+    return array_values(array_unique(array_merge(onefitCargosAtribuiveisPorAdmin(), ['profissional', 'admin'])));
+}
+
+/**
+ * Administradores da lista restrita (decisão D2): os únicos que poderão criar,
+ * promover ou alterar contas admin. A lista ainda não foi definida (pendência
+ * P1), então ninguém é restrito e nenhuma tela altera contas admin.
+ */
+function onefitAdminRestrito(mysqli $db, int $idUsuario): bool
+{
+    return false;
+}
+
+/**
+ * Situação prevista na catraca para um funcionário, pela regra do cargo.
+ * Alunos dependem da matrícula e não são avaliados aqui.
+ * Retorna ['liberado' => bool, 'motivo' => string].
+ */
+function onefitSituacaoCatracaFuncionario(?string $papel, ?string $status, bool $cadastroProfissionalAtivo): array
+{
+    $politica = onefitPolitica($papel);
+    if ($politica === null) {
+        return ['liberado' => false, 'motivo' => 'cargo_desconhecido'];
+    }
+    if ($status !== 'ativo') {
+        return ['liberado' => false, 'motivo' => 'conta_inativa'];
+    }
+    return match ($politica['catraca']) {
+        'conta_ativa' => ['liberado' => true, 'motivo' => 'ok'],
+        'cadastro_profissional' => $cadastroProfissionalAtivo
+            ? ['liberado' => true, 'motivo' => 'ok']
+            : ['liberado' => false, 'motivo' => 'cadastro_profissional_inativo'],
+        default => ['liberado' => false, 'motivo' => 'requer_matricula'],
+    };
 }
 
 /**

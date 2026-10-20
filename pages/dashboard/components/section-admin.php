@@ -7,7 +7,8 @@
  * precisa bater com a "key" do menu para o JS conseguir exibir a tela certa).
  *
  * Depende das variáveis vindas de includes/db-data.php:
- *   $usuarios, $pagamentos, $cashbackResumo,
+ *   $usuarios (só alunos), $funcionarios, $cadastrosProfissionaisLivres,
+ *   $funcionariosMigracao, $funcionariosErro, $pagamentos, $cashbackResumo,
  *   $cashbackTransacoes, $categorias, $produtosResumo, $produtos, $planos,
  *   $profissionaisAdm
  * e das funções de includes/helpers.php: bo_badge(), bo_money(), bo_json()
@@ -75,15 +76,15 @@ require __DIR__ . '/section-fotos-faciais.php';
     </div>
 </section>
 
-<!-- ===== ADMIN · Usuários (lista + editar/ativar-inativar/excluir) ===== -->
+<!-- ===== ADMIN · Alunos (data-section "usuarios"; só contas tipo_usuario = 'aluno') ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="usuarios">
     <div class="bo-page-title">
         <div>
-            <h1><?php echo of_t('Usuários'); ?></h1>
-            <p><?php echo of_t('Gerencie os usuários cadastrados na plataforma.'); ?></p>
+            <h1><?php echo of_t('Alunos'); ?></h1>
+            <p><?php echo of_t('Gerencie os alunos cadastrados. Funcionários ficam na tela Funcionários.'); ?></p>
         </div>
         <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalUsuarioNovo">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Novo Usuário'); ?>
+            <i class="bi bi-plus-lg"></i> <?php echo of_t('Novo aluno'); ?>
         </button>
     </div>
     <?php bo_modal_usuario(null, 'usuarios', $planos); ?>
@@ -151,6 +152,8 @@ require __DIR__ . '/section-fotos-faciais.php';
         <?php bo_modal_confirmar_exclusao('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
     <?php endforeach; ?>
 </section>
+
+<?php require __DIR__ . '/section-funcionarios.php'; ?>
 
 <!-- Permissões e Funções foram desativadas: o cargo vem apenas de
      usuarios.tipo_usuario (config/papeis.php). As tabelas `permissoes` e

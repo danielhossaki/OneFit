@@ -198,7 +198,8 @@ const BO_PERFIS = {
         label: ofT('Administrador'),
         menus: [
             { key: 'dashboard', label: ofT('Visão Geral'), icon: 'bi-speedometer2' },
-            { key: 'usuarios', label: ofT('Usuários'), icon: 'bi-people' },
+            { key: 'usuarios', label: ofT('Alunos'), icon: 'bi-people' },
+            { key: 'funcionarios', label: ofT('Funcionários'), icon: 'bi-person-vcard' },
             // Permissões e Funções foram desativadas: cargos vêm só de usuarios.tipo_usuario.
             { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
             { key: 'cashbacks', label: ofT('Cashbacks'), icon: 'bi-wallet2' },

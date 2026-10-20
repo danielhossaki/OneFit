@@ -1395,4 +1395,107 @@ Não compareceu|No-show|No asistió
 Sua sessão foi encerrada. Entre novamente para continuar.|Your session has ended. Sign in again to continue.|Tu sesión ha finalizado. Vuelve a entrar para continuar.
 Esta conta não tem acesso ao painel. Fale com a administração da {marca}.|This account does not have access to the dashboard. Contact {marca} management.|Esta cuenta no tiene acceso al panel. Habla con la administración de {marca}.
 As telas Permissões e Funções foram desativadas e não alteram mais cargos.|The Permissions and Roles screens have been disabled and no longer change roles.|Las pantallas Permisos y Funciones se desactivaron y ya no cambian cargos.
-Contas de administrador não podem ser alteradas nesta tela.|Administrator accounts cannot be changed on this screen.|Las cuentas de administrador no se pueden modificar en esta pantalla.
+Esta tela gerencia apenas alunos. Funcionários e administradores ficam na tela Funcionários.|This screen manages students only. Staff and administrators are on the Staff screen.|Esta pantalla gestiona solo alumnos. Los empleados y administradores están en la pantalla Empleados.
+A migração de funcionários ainda não foi aplicada neste banco. Nenhuma alteração foi feita.|The staff migration has not been applied to this database yet. Nothing was changed.|La migración de empleados aún no se ha aplicado en esta base de datos. No se realizó ningún cambio.
+Você não tem permissão para gerenciar funcionários.|You do not have permission to manage staff.|No tienes permiso para gestionar empleados.
+Selecione um cargo permitido: professor, recepcionista, vendedor ou faxineira.|Select an allowed role: instructor, receptionist, seller or cleaner.|Selecciona un cargo permitido: profesor, recepcionista, vendedor o limpiadora.
+Informe o nome completo (até 150 caracteres).|Enter the full name (up to 150 characters).|Ingresa el nombre completo (hasta 150 caracteres).
+Informe um CPF válido.|Enter a valid CPF.|Ingresa un CPF válido.
+Informe uma data de nascimento válida (idade entre 14 e 100 anos).|Enter a valid date of birth (age between 14 and 100).|Ingresa una fecha de nacimiento válida (edad entre 14 y 100 años).
+Cidade ou endereço muito longos.|City or address is too long.|Ciudad o dirección demasiado largas.
+Escolha como vincular o cadastro profissional.|Choose how to link the professional record.|Elige cómo vincular el registro profesional.
+A especialidade pode ter até 100 caracteres.|The specialty can have up to 100 characters.|La especialidad puede tener hasta 100 caracteres.
+Selecione o cadastro profissional que será vinculado.|Select the professional record to link.|Selecciona el registro profesional que se vinculará.
+Já existe uma conta com este e-mail ou CPF. Nenhuma conta existente é reaproveitada.|An account with this email or CPF already exists. Existing accounts are never reused.|Ya existe una cuenta con este correo o CPF. Ninguna cuenta existente se reutiliza.
+Funcionário não encontrado.|Staff member not found.|Empleado no encontrado.
+Você não pode alterar a sua própria conta nesta tela.|You cannot change your own account on this screen.|No puedes modificar tu propia cuenta en esta pantalla.
+Contas de administrador só podem ser alteradas por administradores autorizados.|Administrator accounts can only be changed by authorized administrators.|Las cuentas de administrador solo pueden ser modificadas por administradores autorizados.
+Esta conta não é de um funcionário gerenciável nesta tela.|This account is not a staff member managed on this screen.|Esta cuenta no es de un empleado gestionable en esta pantalla.
+Este professor já tem um cadastro profissional vinculado.|This instructor already has a linked professional record.|Este profesor ya tiene un registro profesional vinculado.
+Cadastro profissional não encontrado.|Professional record not found.|Registro profesional no encontrado.
+Este cadastro profissional já está vinculado a outra conta.|This professional record is already linked to another account.|Este registro profesional ya está vinculado a otra cuenta.
+Já existe um cadastro profissional com este e-mail. Para usá-lo, escolha "Vincular cadastro existente".|A professional record with this email already exists. To use it, choose "Link existing record".|Ya existe un registro profesional con este correo. Para usarlo, elige "Vincular registro existente".
+Situação inválida.|Invalid status.|Situación no válida.
+Só professores têm cadastro profissional.|Only instructors have a professional record.|Solo los profesores tienen registro profesional.
+Ative a conta antes de enviar o link de acesso.|Activate the account before sending the access link.|Activa la cuenta antes de enviar el enlace de acceso.
+Este cargo não tem acesso ao painel; nenhum link de acesso é enviado.|This role has no dashboard access; no access link is sent.|Este cargo no tiene acceso al panel; no se envía ningún enlace de acceso.
+Professor|Instructor|Profesor
+Recepcionista|Receptionist|Recepcionista
+Faxineira|Cleaner|Limpiadora
+Cadastro profissional vinculado.|Professional record linked.|Registro profesional vinculado.
+Não foi possível concluir a operação. Nada foi alterado.|The operation could not be completed. Nothing was changed.|No fue posible completar la operación. No se cambió nada.
+Funcionário cadastrado. O link para definir a senha foi enviado por e-mail.|Staff member registered. The link to set the password was sent by email.|Empleado registrado. El enlace para definir la contraseña se envió por correo.
+Funcionário cadastrado, mas o e-mail com o link de acesso não pôde ser enviado. Use "Enviar link de acesso" para tentar de novo.|Staff member registered, but the email with the access link could not be sent. Use "Send access link" to try again.|Empleado registrado, pero no se pudo enviar el correo con el enlace de acceso. Usa "Enviar enlace de acceso" para intentarlo de nuevo.
+Funcionário cadastrado. Este cargo não tem acesso ao painel, então nenhum link de acesso foi enviado.|Staff member registered. This role has no dashboard access, so no access link was sent.|Empleado registrado. Este cargo no tiene acceso al panel, por lo que no se envió ningún enlace de acceso.
+Link de acesso enviado por e-mail.|Access link sent by email.|Enlace de acceso enviado por correo.
+O e-mail com o link de acesso não pôde ser enviado. Tente novamente mais tarde.|The email with the access link could not be sent. Try again later.|No se pudo enviar el correo con el enlace de acceso. Inténtalo de nuevo más tarde.
+Funcionário atualizado. Como o e-mail mudou, a pessoa precisará confirmar o novo endereço.|Staff member updated. Since the email changed, the person will need to confirm the new address.|Empleado actualizado. Como el correo cambió, la persona deberá confirmar la nueva dirección.
+Funcionário atualizado.|Staff member updated.|Empleado actualizado.
+Funcionário ativado.|Staff member activated.|Empleado activado.
+Funcionário inativado.|Staff member deactivated.|Empleado desactivado.
+Funcionários|Staff|Empleados
+Cadastre e gerencie professores, recepcionistas, vendedores e faxineiras.|Register and manage instructors, receptionists, sellers and cleaners.|Registra y gestiona profesores, recepcionistas, vendedores y limpiadoras.
+Novo funcionário|New staff member|Nuevo empleado
+Não foi possível carregar os funcionários.|Could not load the staff.|No fue posible cargar los empleados.
+Nenhuma alteração pode ser feita até o problema ser resolvido.|No changes can be made until the problem is resolved.|No se puede hacer ningún cambio hasta que se resuelva el problema.
+Migração de funcionários pendente|Staff migration pending|Migración de empleados pendiente
+Este banco ainda não tem os cargos novos e a tabela de auditoria. Cadastro e edição ficam bloqueados até a migração ser aplicada (database/migrate-funcionarios.php).|This database does not have the new roles and the audit table yet. Registration and editing are blocked until the migration is applied (database/migrate-funcionarios.php).|Esta base de datos aún no tiene los cargos nuevos ni la tabla de auditoría. El registro y la edición quedan bloqueados hasta aplicar la migración (database/migrate-funcionarios.php).
+Contas de administrador|Administrator accounts|Cuentas de administrador
+Aparecem aqui só para consulta. Criar, promover ou alterar administradores é exclusivo dos administradores autorizados, lista que ainda não foi definida.|Shown here for reference only. Creating, promoting or changing administrators is restricted to authorized administrators, a list that has not been defined yet.|Aparecen aquí solo para consulta. Crear, promover o modificar administradores es exclusivo de los administradores autorizados, lista que aún no se ha definido.
+Buscar por nome ou e-mail|Search by name or email|Buscar por nombre o correo
+Cargo|Role|Cargo
+Todos os cargos|All roles|Todos los cargos
+Situação|Status|Situación
+Todas as situações|All statuses|Todas las situaciones
+Painel|Dashboard|Panel
+Regra que a catraca aplicará quando a integração estiver ativa.|Rule the turnstile will apply once the integration is active.|Regla que aplicará el torniquete cuando la integración esté activa.
+Catraca (prevista)|Turnstile (expected)|Torniquete (previsto)
+Sem cadastro profissional|No professional record|Sin registro profesional
+E-mail não confirmado|Email not confirmed|Correo no confirmado
+Somente administradores autorizados podem alterar esta conta.|Only authorized administrators can change this account.|Solo los administradores autorizados pueden modificar esta cuenta.
+Enviar link de acesso|Send access link|Enviar enlace de acceso
+Vincular cadastro profissional|Link professional record|Vincular registro profesional
+Nenhum funcionário encontrado para os filtros selecionados.|No staff found for the selected filters.|No se encontraron empleados para los filtros seleccionados.
+Sim|Yes|Sí
+Não|No|No
+Liberada|Allowed|Permitida
+Bloqueada|Blocked|Bloqueada
+Bloqueada: conta inativa|Blocked: inactive account|Bloqueada: cuenta inactiva
+Bloqueada: cadastro profissional inativo ou ausente|Blocked: professional record inactive or missing|Bloqueada: registro profesional inactivo o ausente
+Bloqueada: cargo desconhecido|Blocked: unknown role|Bloqueada: cargo desconocido
+Depende da matrícula|Depends on enrollment|Depende de la matrícula
+Desconhecido|Unknown|Desconocido
+Cadastro profissional ativo|Professional record active|Registro profesional activo
+Cadastro profissional inativo|Professional record inactive|Registro profesional inactivo
+Inativar|Deactivate|Desactivar
+Ativar|Activate|Activar
+Gerencie os alunos cadastrados. Funcionários ficam na tela Funcionários.|Manage registered students. Staff are on the Staff screen.|Gestiona los alumnos registrados. Los empleados están en la pantalla Empleados.
+Novo aluno|New student|Nuevo alumno
+Esta conta ainda não tem cadastro profissional vinculado. Peça ao administrador para vinculá-lo na tela Funcionários.|This account does not have a linked professional record yet. Ask the administrator to link it on the Staff screen.|Esta cuenta aún no tiene un registro profesional vinculado. Pide al administrador que lo vincule en la pantalla Empleados.
+Defina sua senha - {marca}|Set your password - {marca}|Define tu contraseña - {marca}
+Uma conta de funcionário foi criada para você na {marca}. Para definir sua senha de acesso, clique no botão abaixo.|A staff account was created for you at {marca}. To set your access password, click the button below.|Se creó una cuenta de empleado para ti en {marca}. Para definir tu contraseña de acceso, haz clic en el botón de abajo.
+Definir minha senha|Set my password|Definir mi contraseña
+Este link expira em 30 minutos e só pode ser usado uma vez. Se ele expirar, peça à administração um novo envio. Se você não reconhece este cadastro, ignore este e-mail.|This link expires in 30 minutes and can only be used once. If it expires, ask the administration to send a new one. If you do not recognize this registration, ignore this email.|Este enlace caduca en 30 minutos y solo se puede usar una vez. Si caduca, pide a la administración un nuevo envío. Si no reconoces este registro, ignora este correo.
+Cadastro profissional (somente para o cargo Professor)|Professional record (Instructor role only)|Registro profesional (solo para el cargo Profesor)
+Criar novo cadastro profissional|Create a new professional record|Crear un nuevo registro profesional
+Vincular cadastro existente (ainda sem conta)|Link existing record (no account yet)|Vincular registro existente (aún sin cuenta)
+Cadastro existente|Existing record|Registro existente
+inativo|inactive|inactivo
+Especialidade (cadastro novo)|Specialty (new record)|Especialidad (registro nuevo)
+O vínculo nunca é feito pela coincidência de e-mail: escolha explicitamente o cadastro.|Records are never linked just because the emails match: choose the record explicitly.|El vínculo nunca se hace por coincidencia de correo: elige el registro explícitamente.
+CPF|CPF|CPF
+Cadastro profissional já vinculado a esta conta.|Professional record already linked to this account.|Registro profesional ya vinculado a esta cuenta.
+Enviar link de acesso para {nome}?|Send access link to {nome}?|¿Enviar enlace de acceso a {nome}?
+Um novo link de uso único, válido por 30 minutos, será enviado para {email}. Links enviados antes deixam de valer.|A new single-use link, valid for 30 minutes, will be sent to {email}. Previously sent links will stop working.|Se enviará un nuevo enlace de un solo uso, válido por 30 minutos, a {email}. Los enlaces enviados antes dejarán de valer.
+Enviar link|Send link|Enviar enlace
+Vincular cadastro profissional de {nome}|Link professional record for {nome}|Vincular registro profesional de {nome}
+Vincular|Link|Vincular
+Editar funcionário|Edit staff member|Editar empleado
+A senha não é alterada por aqui. Se o e-mail mudar, a pessoa precisará confirmar o novo endereço.|The password is not changed here. If the email changes, the person will need to confirm the new address.|La contraseña no se cambia aquí. Si el correo cambia, la persona deberá confirmar la nueva dirección.
+A senha nunca é definida pelo administrador: quem tem acesso ao painel recebe por e-mail um link de uso único para criar a própria senha. Faxineiras não têm login.|The administrator never sets the password: people with dashboard access receive a single-use email link to create their own password. Cleaners have no login.|El administrador nunca define la contraseña: quien tiene acceso al panel recibe por correo un enlace de un solo uso para crear su propia contraseña. Las limpiadoras no tienen inicio de sesión.
+Inativar {nome}?|Deactivate {nome}?|¿Desactivar a {nome}?
+Ativar {nome}?|Activate {nome}?|¿Activar a {nome}?
+A pessoa perde o acesso ao painel na próxima ação e a catraca deixa de liberá-la. Links de acesso pendentes são cancelados.|The person loses dashboard access on their next action and the turnstile stops letting them in. Pending access links are cancelled.|La persona pierde el acceso al panel en su próxima acción y el torniquete deja de permitirle la entrada. Los enlaces de acceso pendientes se cancelan.
+A conta volta a valer para o painel (se o cargo tiver acesso) e para a catraca, conforme a regra do cargo.|The account becomes valid again for the dashboard (if the role has access) and for the turnstile, according to the role's rule.|La cuenta vuelve a valer para el panel (si el cargo tiene acceso) y para el torniquete, según la regla del cargo.
+Sim, inativar|Yes, deactivate|Sí, desactivar
+Sim, ativar|Yes, activate|Sí, activar

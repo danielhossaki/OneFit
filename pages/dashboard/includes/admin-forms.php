@@ -165,6 +165,246 @@ function bo_modal_usuario(?array $u, string $secao, array $planos = []): void
 }
 
 /* =======================================================================
+ * FUNCIONÁRIOS (regras em includes/funcionarios.php)
+ * ===================================================================== */
+
+/** Campos de vínculo com cadastro_profissional (usados só para o cargo Professor). */
+function bo_campos_cadastro_profissional(string $idBase, array $cadastrosLivres): void
+{
+    ?>
+    <div class="col-12">
+        <fieldset class="border rounded p-3">
+            <legend class="fs-6 mb-2"><?php echo of_t('Cadastro profissional (somente para o cargo Professor)'); ?></legend>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="cadastro_modo" id="<?php echo $idBase; ?>Novo" value="novo" checked>
+                <label class="form-check-label" for="<?php echo $idBase; ?>Novo"><?php echo of_t('Criar novo cadastro profissional'); ?></label>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="radio" name="cadastro_modo" id="<?php echo $idBase; ?>Existente" value="existente" <?php echo $cadastrosLivres ? '' : 'disabled'; ?>>
+                <label class="form-check-label" for="<?php echo $idBase; ?>Existente"><?php echo of_t('Vincular cadastro existente (ainda sem conta)'); ?></label>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label" for="<?php echo $idBase; ?>Id"><?php echo of_t('Cadastro existente'); ?></label>
+                    <select class="form-select" name="id_profissional" id="<?php echo $idBase; ?>Id">
+                        <option value=""><?php echo of_t('Selecione'); ?></option>
+                        <?php foreach ($cadastrosLivres as $c): ?>
+                            <option value="<?php echo (int) $c['id']; ?>">
+                                <?php echo bo_val($c['nome'] . ' — ' . $c['email'] . ($c['especialidade'] ? ' (' . $c['especialidade'] . ')' : '')); ?><?php echo $c['status'] !== 'ativo' ? ' · ' . of_t('inativo') : ''; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" for="<?php echo $idBase; ?>Especialidade"><?php echo of_t('Especialidade (cadastro novo)'); ?></label>
+                    <input type="text" class="form-control" name="especialidade" id="<?php echo $idBase; ?>Especialidade" maxlength="100">
+                </div>
+            </div>
+            <small class="text-muted d-block mt-2"><?php echo of_t('O vínculo nunca é feito pela coincidência de e-mail: escolha explicitamente o cadastro.'); ?></small>
+        </fieldset>
+    </div>
+    <?php
+}
+
+function bo_modal_funcionario(?array $f, array $cadastrosLivres, string $secao): void
+{
+    $isEdit = $f !== null;
+    $sufixo = $isEdit ? 'Editar' . (int) $f['id'] : 'Novo';
+    $modalId = 'modalFuncionario' . $sufixo;
+    $rotulos = bo_funcionarios_rotulos_cargo();
+    $cargoAtual = $f['cargo'] ?? '';
+    // Professor já vinculado não mostra os campos de cadastro profissional.
+    $mostrarCadastro = !$isEdit || $cargoAtual !== 'professor' || (int) $f['cadastros'] === 0;
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar funcionário' : 'Novo funcionário'); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('funcionarios.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
+                        <?php if ($isEdit): ?><?php echo bo_hidden('id', (int) $f['id']); ?><?php endif; ?>
+
+                        <div class="col-12">
+                            <label class="form-label" for="funcNome<?php echo $sufixo; ?>"><?php echo of_t('Nome completo'); ?></label>
+                            <input type="text" class="form-control" id="funcNome<?php echo $sufixo; ?>" name="nome" maxlength="150" value="<?php echo bo_val($f['nome'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcEmail<?php echo $sufixo; ?>"><?php echo of_t('E-mail'); ?></label>
+                            <input type="email" class="form-control" id="funcEmail<?php echo $sufixo; ?>" name="email" maxlength="150" value="<?php echo bo_val($f['email'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcCpf<?php echo $sufixo; ?>"><?php echo of_t('CPF'); ?></label>
+                            <input type="text" class="form-control" id="funcCpf<?php echo $sufixo; ?>" name="cpf" inputmode="numeric" maxlength="14" value="<?php echo bo_val($f['cpf'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcCelular<?php echo $sufixo; ?>"><?php echo of_t('Celular'); ?></label>
+                            <input type="text" class="form-control" id="funcCelular<?php echo $sufixo; ?>" name="celular" inputmode="tel" maxlength="20" value="<?php echo bo_val($f['celular'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcNascimento<?php echo $sufixo; ?>"><?php echo of_t('Data de nascimento'); ?></label>
+                            <input type="date" class="form-control" id="funcNascimento<?php echo $sufixo; ?>" name="nascimento" value="<?php echo bo_val($f['nascimento'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcGenero<?php echo $sufixo; ?>"><?php echo of_t('Gênero'); ?></label>
+                            <select class="form-select" id="funcGenero<?php echo $sufixo; ?>" name="genero" required>
+                                <?php foreach (['masculino' => 'Masculino', 'feminino' => 'Feminino', 'outro' => 'Outro'] as $valor => $rotulo): ?>
+                                    <option value="<?php echo $valor; ?>" <?php echo ($f['genero'] ?? '') === $valor ? 'selected' : ''; ?>><?php echo of_t($rotulo); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcCargo<?php echo $sufixo; ?>"><?php echo of_t('Cargo'); ?></label>
+                            <select class="form-select" id="funcCargo<?php echo $sufixo; ?>" name="cargo" required>
+                                <?php foreach (onefitCargosAtribuiveisPorAdmin() as $cargo): ?>
+                                    <option value="<?php echo bo_val($cargo); ?>" <?php echo $cargoAtual === $cargo ? 'selected' : ''; ?>><?php echo of_t($rotulos[$cargo]); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcNacionalidade<?php echo $sufixo; ?>"><?php echo of_t('Nacionalidade'); ?></label>
+                            <?php onefitSelectLocalidade('funcNacionalidade' . $sufixo, 'nacionalidade', (string) ($f['nacionalidade'] ?? 'BR'), 'country'); ?>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcEstado<?php echo $sufixo; ?>"><?php echo of_t('Estado (UF)'); ?></label>
+                            <?php onefitSelectLocalidade('funcEstado' . $sufixo, 'estado', (string) ($f['estado'] ?? ''), 'state'); ?>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="funcCidade<?php echo $sufixo; ?>"><?php echo of_t('Cidade'); ?></label>
+                            <input type="text" class="form-control" id="funcCidade<?php echo $sufixo; ?>" name="cidade" maxlength="100" value="<?php echo bo_val($f['cidade'] ?? ''); ?>" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="funcEndereco<?php echo $sufixo; ?>"><?php echo of_t('Endereço'); ?></label>
+                            <input type="text" class="form-control" id="funcEndereco<?php echo $sufixo; ?>" name="endereco" maxlength="255" value="<?php echo bo_val($f['endereco'] ?? ''); ?>" required>
+                        </div>
+
+                        <?php if ($mostrarCadastro): ?>
+                            <?php bo_campos_cadastro_profissional('funcCadastro' . $sufixo, $cadastrosLivres); ?>
+                        <?php else: ?>
+                            <div class="col-12"><small class="text-muted"><i class="bi bi-link-45deg"></i> <?php echo of_t('Cadastro profissional já vinculado a esta conta.'); ?></small></div>
+                        <?php endif; ?>
+
+                        <div class="col-12">
+                            <small class="text-muted">
+                                <i class="bi bi-shield-lock"></i>
+                                <?php echo of_t($isEdit
+                                    ? 'A senha não é alterada por aqui. Se o e-mail mudar, a pessoa precisará confirmar o novo endereço.'
+                                    : 'A senha nunca é definida pelo administrador: quem tem acesso ao painel recebe por e-mail um link de uso único para criar a própria senha. Faxineiras não têm login.'); ?>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                        <button type="submit" class="btn-bo-gold"><?php echo of_t('Salvar'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/** Confirmação explícita para ativar ou inativar (envia o status desejado, nunca alterna). */
+function bo_modal_funcionario_status(array $f, string $secao): void
+{
+    $ativo = $f['status'] === 'ativo';
+    $modalId = 'modalFuncionarioStatus' . (int) $f['id'];
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo of_t($ativo ? 'Inativar {nome}?' : 'Ativar {nome}?', ['{nome}' => $f['nome']]); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('funcionarios.php'); ?>">
+                    <div class="modal-body">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', 'status'); ?>
+                        <?php echo bo_hidden('id', (int) $f['id']); ?>
+                        <?php echo bo_hidden('status', $ativo ? 'inativo' : 'ativo'); ?>
+                        <p class="mb-0"><?php echo of_t($ativo
+                            ? 'A pessoa perde o acesso ao painel na próxima ação e a catraca deixa de liberá-la. Links de acesso pendentes são cancelados.'
+                            : 'A conta volta a valer para o painel (se o cargo tiver acesso) e para a catraca, conforme a regra do cargo.'); ?></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                        <button type="submit" class="btn-bo-gold"><?php echo of_t($ativo ? 'Sim, inativar' : 'Sim, ativar'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+function bo_modal_funcionario_acesso(array $f, string $secao): void
+{
+    $modalId = 'modalFuncionarioAcesso' . (int) $f['id'];
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo of_t('Enviar link de acesso para {nome}?', ['{nome}' => $f['nome']]); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('funcionarios.php'); ?>">
+                    <div class="modal-body">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', 'reenviar-acesso'); ?>
+                        <?php echo bo_hidden('id', (int) $f['id']); ?>
+                        <p class="mb-0"><?php echo of_t('Um novo link de uso único, válido por 30 minutos, será enviado para {email}. Links enviados antes deixam de valer.', ['{email}' => $f['email']]); ?></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                        <button type="submit" class="btn-bo-gold"><i class="bi bi-envelope"></i> <?php echo of_t('Enviar link'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+function bo_modal_funcionario_vincular(array $f, array $cadastrosLivres, string $secao): void
+{
+    $modalId = 'modalFuncionarioVincular' . (int) $f['id'];
+    ?>
+    <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo of_t('Vincular cadastro profissional de {nome}', ['{nome}' => $f['nome']]); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
+                </div>
+                <form method="POST" action="<?php echo bo_form_action('funcionarios.php'); ?>">
+                    <div class="modal-body row g-3">
+                        <?php echo bo_csrf_field(); ?>
+                        <?php echo bo_hidden('secao', $secao); ?>
+                        <?php echo bo_hidden('acao', 'vincular-cadastro'); ?>
+                        <?php echo bo_hidden('id', (int) $f['id']); ?>
+                        <?php bo_campos_cadastro_profissional('funcVincular' . (int) $f['id'], $cadastrosLivres); ?>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn-bo-outline" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                        <button type="submit" class="btn-bo-gold"><?php echo of_t('Vincular'); ?></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+
+/* =======================================================================
  * PAGAMENTOS
  * ===================================================================== */
 function bo_modal_pagamento(?array $p, string $secao): void

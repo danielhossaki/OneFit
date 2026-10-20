@@ -136,7 +136,8 @@ if ($perfilLogado === 'admin') {
         $testemunhosAdmin[] = $row;
     }
 
-    // Tela "Usuários"
+    // Tela "Alunos" (seção "usuarios"): só contas de aluno. Funcionários e
+    // administradores ficam na tela "Funcionários".
     $usuarios = [];
     $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
                    u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
@@ -148,6 +149,7 @@ if ($perfilLogado === 'admin') {
                 ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1
             )
             LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
+            WHERE u.tipo_usuario = 'aluno'
             ORDER BY u.nome";
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
@@ -177,6 +179,24 @@ if ($perfilLogado === 'admin') {
     }
 
     // As telas "Funções" e "Permissões" foram desativadas (config/papeis.php).
+
+    // Tela "Funcionários" (includes/funcionarios.php). Falha de leitura deixa
+    // a tela sem dados e sem nenhuma ação de gravação.
+    require_once __DIR__ . '/funcionarios.php';
+    $funcionarios = [];
+    $cadastrosProfissionaisLivres = [];
+    $funcionariosMigracao = ['ok' => false, 'faltando' => []];
+    $funcionariosErro = false;
+    try {
+        $funcionariosMigracao = bo_funcionarios_migracao($conn);
+        $funcionarios = bo_funcionarios_listar($conn);
+        $cadastrosProfissionaisLivres = bo_cadastros_profissionais_livres($conn);
+    } catch (Throwable $erroFuncionarios) {
+        error_log('ONE FIT: falha ao carregar funcionários. Código: ' . $erroFuncionarios->getCode());
+        $funcionarios = [];
+        $cadastrosProfissionaisLivres = [];
+        $funcionariosErro = true;
+    }
 
     // Tela "Pagamentos"
     $pagamentos = [];

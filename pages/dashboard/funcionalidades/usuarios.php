@@ -13,21 +13,19 @@ $id = (int) bo_str('id');
 $secao = bo_secao_atual();
 
 /**
- * Contas de administrador (inclusive a do próprio operador) só podem ser
- * alteradas pelos administradores da lista restrita, fluxo que ainda não
- * existe. Até lá, esta tela recusa status, dados, e-mail e exclusão delas.
+ * Esta tela gerencia só alunos. Funcionários e administradores (inclusive o
+ * próprio operador) ficam na tela "Funcionários", com as regras de cargo.
+ * Além desta checagem, cada UPDATE/DELETE abaixo repete a condição
+ * tipo_usuario = 'aluno', para que a proteção valha na própria gravação.
  */
-function bo_usuario_alvo_protegido(mysqli $conn, int $id): bool
+function bo_usuario_alvo_e_aluno(mysqli $conn, int $id): bool
 {
-    if ($id === (int) ($_SESSION['id_usuario'] ?? 0)) {
-        return true;
-    }
     $alvo = onefitBuscarSituacaoUsuario($conn, $id);
-    return $alvo !== null && onefitPapelPermitido($alvo['tipo_usuario'], ['admin']);
+    return $alvo !== null && $alvo['tipo_usuario'] === 'aluno';
 }
 
-if ($id && in_array($acao, ['toggle-status', 'delete', 'update'], true) && bo_usuario_alvo_protegido($conn, $id)) {
-    bo_flash('error', 'Contas de administrador não podem ser alteradas nesta tela.');
+if ($id && in_array($acao, ['toggle-status', 'delete', 'update'], true) && !bo_usuario_alvo_e_aluno($conn, $id)) {
+    bo_flash('error', 'Esta tela gerencia apenas alunos. Funcionários e administradores ficam na tela Funcionários.');
     bo_redirect($secao);
 }
 
@@ -36,7 +34,7 @@ if ($acao === 'toggle-status') {
         bo_flash('error', 'Usuário inválido.');
         bo_redirect($secao);
     }
-    $stmt = $conn->prepare("UPDATE usuarios SET status = IF(status = 'ativo', 'inativo', 'ativo') WHERE id_usuario = ?");
+    $stmt = $conn->prepare("UPDATE usuarios SET status = IF(status = 'ativo', 'inativo', 'ativo') WHERE id_usuario = ? AND tipo_usuario = 'aluno'");
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $stmt->close();
@@ -50,7 +48,7 @@ if ($acao === 'delete') {
         bo_redirect($secao);
     }
     try {
-        $stmt = $conn->prepare('DELETE FROM usuarios WHERE id_usuario = ?');
+        $stmt = $conn->prepare("DELETE FROM usuarios WHERE id_usuario = ? AND tipo_usuario = 'aluno'");
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $stmt->close();
@@ -95,7 +93,7 @@ if ($acao === 'update') {
     }
     $check->close();
 
-    $stmt = $conn->prepare('UPDATE usuarios SET nome = ?, email = ?, cpf = ?, status = ? WHERE id_usuario = ?');
+    $stmt = $conn->prepare("UPDATE usuarios SET nome = ?, email = ?, cpf = ?, status = ? WHERE id_usuario = ? AND tipo_usuario = 'aluno'");
     $stmt->bind_param('ssssi', $nome, $email, $cpf, $status, $id);
     $stmt->execute();
     $stmt->close();

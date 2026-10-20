@@ -21,6 +21,8 @@ try {
         throw new RuntimeException('Conexão com o banco indisponível.');
     }
 
+    // Só o vínculo explícito (id_usuario), feito pelo admin na tela
+    // Funcionários. Abrir esta página nunca liga cadastros por e-mail.
     $stmt = $conn->prepare('SELECT id_profissional FROM cadastro_profissional WHERE id_usuario = ? LIMIT 1');
     $stmt->bind_param('i', $ofIdUsuario);
     $stmt->execute();
@@ -28,38 +30,7 @@ try {
     $stmt->close();
 
     if (!$ofCadastroProfissional) {
-        $stmt = $conn->prepare(
-            "SELECT cp.id_profissional
-             FROM cadastro_profissional cp
-             JOIN usuarios u ON u.email = cp.email
-             WHERE u.id_usuario = ? AND u.tipo_usuario = 'profissional'
-               AND cp.id_usuario IS NULL
-             LIMIT 1"
-        );
-        $stmt->bind_param('i', $ofIdUsuario);
-        $stmt->execute();
-        $cadastroPorEmail = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        if ($cadastroPorEmail) {
-            $idCadastroPorEmail = (int) $cadastroPorEmail['id_profissional'];
-            $stmt = $conn->prepare(
-                'UPDATE cadastro_profissional SET id_usuario = ? WHERE id_profissional = ? AND id_usuario IS NULL'
-            );
-            $stmt->bind_param('ii', $ofIdUsuario, $idCadastroPorEmail);
-            $stmt->execute();
-            $stmt->close();
-
-            $stmt = $conn->prepare('SELECT id_profissional FROM cadastro_profissional WHERE id_usuario = ? LIMIT 1');
-            $stmt->bind_param('i', $ofIdUsuario);
-            $stmt->execute();
-            $ofCadastroProfissional = $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-        }
-    }
-
-    if (!$ofCadastroProfissional) {
-        $ofFeedback = ['type' => 'warning', 'message' => 'Não encontramos um cadastro profissional com o e-mail desta conta. Peça ao administrador para conferir o cadastro e o e-mail.'];
+        $ofFeedback = ['type' => 'warning', 'message' => 'Esta conta ainda não tem cadastro profissional vinculado. Peça ao administrador para vinculá-lo na tela Funcionários.'];
         $ofIdProfissional = 0;
     } else {
         $ofIdProfissional = (int) $ofCadastroProfissional['id_profissional'];
