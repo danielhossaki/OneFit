@@ -111,6 +111,14 @@ $id = $pessoa('professor'); $caso($id, false, 'cadastro profissional inativo', '
 $id = $pessoa('profissional'); $cadastro($id, 'ativo'); $caso($id, true, 'ok', 'profissional (legado) com cadastro ativo');
 $id = $pessoa('professor', 'inativo'); $cadastro($id, 'ativo'); $caso($id, false, 'conta inativa ou bloqueada', 'professor inativo');
 $id = $pessoa('aluno'); $cadastro($id, 'ativo'); $caso($id, false, $semMatricula, 'aluno com cadastro profissional não vira professor');
+// Disponibilidade para agendamentos (20261021_professores_v1) não entra na catraca.
+if ((int) $db->query("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cadastro_profissional' AND COLUMN_NAME = 'disponivel_agendamento'")->fetch_row()[0] === 1) {
+    $id = $pessoa('professor'); $cadastro($id, 'ativo');
+    $db->query("UPDATE cadastro_profissional SET disponivel_agendamento = 0 WHERE id_usuario = $id");
+    $caso($id, true, 'ok', 'professor indisponível para agendamentos continua liberado');
+    $id = $pessoa('professor'); $cadastro($id, 'inativo');
+    $caso($id, false, 'cadastro profissional inativo', 'professor disponível com cadastro inativo continua bloqueado');
+}
 // Demais cargos: só conta ativa, sem matrícula.
 foreach (['diretor', 'admin', 'recepcionista', 'vendedor', 'faxineira'] as $cargo) {
     $id = $pessoa($cargo); $caso($id, true, 'ok', "$cargo ativo sem matrícula");

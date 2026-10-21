@@ -10,7 +10,7 @@
  *   $usuarios (só alunos), $funcionarios, $cadastrosProfissionaisLivres,
  *   $funcionariosMigracao, $funcionariosErro, $pagamentos, $cashbackResumo,
  *   $cashbackTransacoes, $categorias, $produtosResumo, $produtos, $planos,
- *   $profissionaisAdm
+ *   $professores, $professoresMigracao, $professoresPendencias, $professoresErro
  * e das funções de includes/helpers.php: bo_badge(), bo_money(), bo_json()
  */
 require __DIR__ . '/section-fotos-faciais.php';
@@ -29,54 +29,81 @@ $boSomenteLeitura = false;
         </div>
     </div>
 
-    <!-- Linha 1: indicadores principais (usuários, saldo do mês, cashback distribuído) -->
     <div class="row g-3 mb-3">
-        <div class="col-12 col-md-4">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Usuários ativos'); ?></div>
-                <div class="bo-card-value"><?php echo $admDashboard['usuariosAtivos']; ?></div>
-                <div class="bo-card-sub">+<?php echo $admDashboard['usuariosNovosMes']; ?> <?php echo of_t('este mês'); ?></div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Saldo operacional (mês)'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($admDashboard['saldoMes']); ?></div>
-                <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['saldoAno']); ?> <?php echo of_t('· Semana'); ?> <?php echo bo_money($admDashboard['saldoSemana']); ?> <?php echo of_t('· Dia'); ?> <?php echo bo_money($admDashboard['saldoDia']); ?></div>
-            </div>
-        </div>
-        <div class="col-12 col-md-4">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Cashback distribuído'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($admDashboard['cashbackMes']); ?></div>
-                <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['cashbackAno']); ?> <?php echo of_t('· Semana'); ?> <?php echo bo_money($admDashboard['cashbackSemana']); ?> <?php echo of_t('· Dia'); ?> <?php echo bo_money($admDashboard['cashbackDia']); ?></div>
-            </div>
-        </div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Alunos ativos'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['alunosAtivos']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} de {total} contas de aluno', ['{n}' => (string) $admDashboard['alunosAtivos'], '{total}' => (string) $admDashboard['alunosTotal']]); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Alunos novos este mês'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['alunosNovosMes']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} contas de aluno inativas', ['{n}' => (string) $admDashboard['alunosInativos']]); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Matrículas vigentes'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['matriculasAtivas']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} pendentes', ['{n}' => (string) $admDashboard['matriculasPendentes']]); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Matrículas vencidas'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['matriculasVencidas']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Situação atual das matrículas'); ?></div>
+        </div></div>
     </div>
-
-    <!-- Linha 2: indicadores de acesso e equipe -->
+    <div class="row g-3 mb-3">
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Pagamentos aprovados no mês'); ?></div>
+            <div class="bo-card-value"><?php echo bo_money($admDashboard['saldoMes']); ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['saldoAno']); ?> · <?php echo of_t('Semana'); ?> <?php echo bo_money($admDashboard['saldoSemana']); ?> · <?php echo of_t('Dia'); ?> <?php echo bo_money($admDashboard['saldoDia']); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Pagamentos pendentes ou atrasados'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['pagamentosPendentes']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Contagem de cobranças, sem somar ao recebido'); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Cashback concedido no mês'); ?></div>
+            <div class="bo-card-value"><?php echo bo_money($admDashboard['cashbackMes']); ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Ano'); ?> <?php echo bo_money($admDashboard['cashbackAno']); ?> · <?php echo of_t('Semana'); ?> <?php echo bo_money($admDashboard['cashbackSemana']); ?> · <?php echo of_t('Dia'); ?> <?php echo bo_money($admDashboard['cashbackDia']); ?> · <?php echo of_t('Sem devoluções ou lançamentos cancelados'); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Funcionários ativos'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['funcionariosAtivos']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} contas inativas ou bloqueadas', ['{n}' => (string) $admDashboard['funcionariosInativos']]); ?></div>
+        </div></div>
+    </div>
     <div class="row g-3">
-        <div class="col-12 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Acessos liberados'); ?></div>
-                <div class="bo-card-value"><?php echo $admDashboard['acessosLiberados']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosLiberados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base'); ?></div>
-            </div>
-        </div>
-        <div class="col-12 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Acessos bloqueados'); ?></div>
-                <div class="bo-card-value"><?php echo $admDashboard['acessosBloqueados']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosBloqueados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base'); ?></div>
-            </div>
-        </div>
-        <div class="col-12 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Profissionais ativos'); ?></div>
-                <div class="bo-card-value"><?php echo $admDashboard['profissionaisAtivos']; ?></div>
-                <div class="bo-card-sub"><?php echo $admDashboard['profissionaisPendentes']; ?> <?php echo of_t('pendentes de contrato'); ?></div>
-            </div>
-        </div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Contas de professor ativas'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['profissionaisAtivos']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} recebem novos agendamentos', ['{n}' => (string) $admDashboard['profissionaisAgendaveis']]); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Professores não agendáveis'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['profissionaisIndisponiveis']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Conta, cadastro ou disponibilidade impedem novos agendamentos'); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Agendamentos nos próximos 7 dias'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['agendamentosProximos']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('Apenas horários futuros agendados ou confirmados'); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Agendamentos concluídos nos últimos 30 dias'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['agendamentosConcluidos']; ?></div>
+            <div class="bo-card-sub"><?php echo of_t('{n} cancelados', ['{n}' => (string) $admDashboard['agendamentosCancelados']]); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Acessos liberados'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['acessosLiberados']; ?></div>
+            <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosLiberados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base total'); ?></div>
+        </div></div>
+        <div class="col-12 col-sm-6 col-xl-3"><div class="bo-card">
+            <div class="bo-card-label"><?php echo of_t('Acessos bloqueados'); ?></div>
+            <div class="bo-card-value"><?php echo $admDashboard['acessosBloqueados']; ?></div>
+            <div class="bo-card-sub"><?php echo $admDashboard['totalUsuarios'] ? round($admDashboard['acessosBloqueados'] / $admDashboard['totalUsuarios'] * 100) : 0; ?><?php echo of_t('% da base total'); ?></div>
+        </div></div>
     </div>
 </section>
 
@@ -544,84 +571,6 @@ $boSomenteLeitura = false;
     <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Profissionais (equipe cadastrada na plataforma) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="profissionais">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Profissionais'); ?></h1>
-            <p><?php echo of_t('Gerencie os profissionais cadastrados na plataforma.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalProfissionalNovo">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Novo Profissional'); ?>
-        </button>
-    </div>
-    <?php bo_modal_profissional(null, 'profissionais', $modalidadesOptions); ?>
-
-    <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:280px" placeholder="<?php echo of_t('Buscar por ID, nome, função ou doc'); ?>"
-            data-bo-filter="search" data-bo-target="profissionais">
-        <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="profissionais">
-            <option value=""><?php echo of_t('Todos'); ?></option>
-            <option value="ativo"><?php echo of_t('Ativo'); ?></option>
-            <option value="inativo"><?php echo of_t('Inativo'); ?></option>
-        </select>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table" data-bo-table="profissionais">
-                <thead>
-                    <tr>
-                        <th><?php echo of_t('Foto'); ?></th>
-                        <th>ID</th>
-                        <th><?php echo of_t('Nome'); ?></th>
-                        <th><?php echo of_t('Função'); ?></th>
-                        <th><?php echo of_t('Modalidades'); ?></th>
-                        <th><?php echo of_t('Documento'); ?></th>
-                        <th><?php echo of_t('Status'); ?></th>
-                        <th><?php echo of_t('Ações'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($profissionaisAdm as $p): ?>
-                        <tr data-status="<?php echo $p['status']; ?>"
-                            data-search="<?php echo strtolower($p['id'] . ' #' . str_pad((string) $p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['nome'] . ' ' . $p['funcao'] . ' ' . $p['documento']); ?>">
-                            <td>
-                                <div class="bo-thumb">
-                                    <?php if ($p['foto']): ?>
-                                        <img src="<?php echo htmlspecialchars($p['foto']); ?>" alt="">
-                                    <?php else: ?>
-                                        <i class="bi bi-person"></i>
-                                    <?php endif; ?>
-                                </div>
-                            </td>
-                            <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo $p['nome']; ?></td>
-                            <td><?php echo $p['funcao']; ?></td>
-                            <td><?php echo $p['modalidades'] !== '' ? $p['modalidades'] : '—'; ?></td>
-                            <td><?php echo $p['documento']; ?></td>
-                            <td><?php echo bo_badge($p['status'] === 'ativo'); ?></td>
-                            <td>
-                                <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalProfissionalEditar<?php echo $p['id']; ?>">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <?php echo bo_botao_excluir('profissionais', $p['id']); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <tr class="bo-empty-row" style="display:none">
-                        <td colspan="8"><?php echo of_t('Nenhum profissional encontrado para os filtros selecionados.'); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php foreach ($profissionaisAdm as $p): ?>
-        <?php bo_modal_profissional($p, 'profissionais', $modalidadesOptions); ?>
-        <?php bo_modal_confirmar_exclusao('profissionais', $p['id'], $p['nome'], 'profissionais'); ?>
-    <?php endforeach; ?>
-</section>
+<?php require __DIR__ . '/section-professores.php'; ?>
 
 <?php require __DIR__ . '/section-modalidades.php'; ?>

@@ -698,6 +698,7 @@ Ano|Year|Año
 pendentes de contrato|awaiting a contract|pendientes de contrato
 Buscar por ID, nome e email|Search by ID, name or email|Buscar por ID, nombre o correo
 Buscar por ID|Search by ID|Buscar por ID
+Buscar por ID do usuário|Search by user ID|Buscar por ID del usuario
 Cashbacks|Cashback transactions|Reembolsos
 Comentários|Comments|Comentarios
 Aprove ou reprove os depoimentos enviados pelos alunos e controle quais aparecem na home.|Approve or reject student testimonials and choose which appear on the home page.|Aprueba o rechaza los testimonios de los alumnos y elige cuáles aparecen en la página de inicio.
@@ -1534,3 +1535,159 @@ Ficha atual|Current plan|Ficha actual
 Nenhum exercício na ficha.|No exercises in the plan.|No hay ejercicios en la ficha.
 Exercício adicionado ao treino do aluno.|Exercise added to the student's workout.|Ejercicio agregado al entrenamiento del alumno.
 Acesso negado.|Access denied.|Acceso denegado.
+Cashback dos clientes|Customer cashback|Cashback de los clientes
+Consulte o cashback concedido, utilizado e disponível dos clientes. Estes valores não são o seu saldo.|Check the cashback granted, used and available to customers. These amounts are not your balance.|Consulte el cashback otorgado, utilizado y disponible de los clientes. Estos valores no son su saldo.
+Cashback concedido|Cashback granted|Cashback otorgado
+Compras, mensalidades e lançamentos do admin|Purchases, memberships and admin entries|Compras, mensualidades y registros del administrador
+Devoluções creditadas|Credited returns|Devoluciones acreditadas
+Pedidos devolvidos lançados como saldo|Returned orders credited as balance|Pedidos devueltos acreditados como saldo
+Cashback utilizado|Cashback used|Cashback utilizado
+Abatido em compras no Marketplace|Deducted from Marketplace purchases|Descontado en compras del Marketplace
+· Débitos manuais do admin: {valor}|· Manual admin debits: {valor}|· Débitos manuales del administrador: {valor}
+Saldo disponível dos clientes|Customers' available balance|Saldo disponible de los clientes
+· {n} cliente(s) com saldo negativo ({valor}), fora da soma|· {n} customer(s) with a negative balance ({valor}), not included|· {n} cliente(s) con saldo negativo ({valor}), fuera de la suma
+Saldo por cliente|Balance by customer|Saldo por cliente
+Buscar cliente por nome ou ID|Search customer by name or ID|Buscar cliente por nombre o ID
+Cliente|Customer|Cliente
+Créditos|Credits|Créditos
+Débitos|Debits|Débitos
+Saldo|Balance|Saldo
+Movimentações|Transactions|Movimientos
+Última movimentação|Last transaction|Último movimiento
+Ver histórico|View history|Ver historial
+Nenhum cliente encontrado.|No customers found.|No se encontraron clientes.
+Buscar por transação, cliente ou pedido|Search by transaction, customer or order|Buscar por transacción, cliente o pedido
+Buscar por transação ou pedido|Search by transaction or order|Buscar por transacción o pedido
+Todas as origens|All sources|Todos los orígenes
+Origem|Source|Origen
+Compre produtos na loja ou consulte as compras dos clientes durante o atendimento.|Buy products in the store or look up customer purchases while assisting them.|Compre productos en la tienda o consulte las compras de los clientes durante la atención.
+Comprar produtos|Buy products|Comprar productos
+Abre a loja do Marketplace para comprar produtos.|Opens the Marketplace store to buy products.|Abre la tienda del Marketplace para comprar productos.
+Abrir a loja|Open the store|Abrir la tienda
+Consultar pedidos e vendas|Look up orders and sales|Consultar pedidos y ventas
+Localize uma compra pelo número do pedido, cliente, status ou período. Somente consulta.|Find a purchase by order number, customer, status or period. View only.|Localice una compra por número de pedido, cliente, estado o período. Solo consulta.
+Consultar pedidos|Look up orders|Consultar pedidos
+Pedidos e vendas ({n})|Orders and sales ({n})|Pedidos y ventas ({n})
+Buscar por pedido, cliente, produto ou rastreio|Search by order, customer, product or tracking code|Buscar por pedido, cliente, producto o rastreo
+Status do pedido|Order status|Estado del pedido
+Detalhes|Details|Detalles
+Usado: {valor}|Used: {valor}|Usado: {valor}
+Concedido: {valor}|Granted: {valor}|Otorgado: {valor}
+Ver detalhes do pedido|View order details|Ver detalles del pedido
+Nenhum pedido encontrado para os filtros selecionados.|No orders found for the selected filters.|No se encontraron pedidos para los filtros seleccionados.
+Pedido {pedido}|Order {pedido}|Pedido {pedido}
+Data da compra|Purchase date|Fecha de compra
+Preço unitário|Unit price|Precio unitario
+Entrega|Delivery|Entrega
+Recebido em {data}|Received on {data}|Recibido el {data}
+Nenhum item registrado neste pedido.|No items recorded for this order.|No hay artículos registrados en este pedido.
+Total do pedido|Order total|Total del pedido
+Cashback do pedido|Order cashback|Cashback del pedido
+Usado no pedido|Used in the order|Usado en el pedido
+Não utilizado|Not used|No utilizado
+Concedido pela compra|Granted for the purchase|Otorgado por la compra
+Sem cashback|No cashback|Sin cashback
+Devolução creditada|Credited return|Devolución acreditada
+Motivo:|Reason:|Motivo:
+Observação:|Note:|Observación:
+Linha do tempo|Timeline|Cronología
+O sistema não registra a data de cada mudança de status da entrega nem um status de pagamento separado para pedidos do Marketplace. Alterações no pedido são feitas pelo vendedor ou pela administração.|The system does not record the date of each delivery status change or a separate payment status for Marketplace orders. Order changes are made by the seller or the administration.|El sistema no registra la fecha de cada cambio de estado de la entrega ni un estado de pago separado para los pedidos del Marketplace. Los cambios en el pedido los realiza el vendedor o la administración.
+Pedido realizado · pagamento: {forma}|Order placed · payment: {forma}|Pedido realizado · pago: {forma}
+Recebimento confirmado pelo cliente: {produto}|Receipt confirmed by the customer: {produto}|Recepción confirmada por el cliente: {produto}
+Devolução solicitada|Return requested|Devolución solicitada
+Devolução aprovada|Return approved|Devolución aprobada
+Devolução recusada|Return declined|Devolución rechazada
+Devolução concluída|Return completed|Devolución concluida
+Devolução solicitada — aguardando análise|Return requested — awaiting review|Devolución solicitada — en espera de análisis
+Devolução aprovada — aguardando conclusão|Return approved — awaiting completion|Devolución aprobada — en espera de conclusión
+Cashback usado no pedido: {valor}|Cashback used in the order: {valor}|Cashback usado en el pedido: {valor}
+Valor do pedido creditado como cashback: {valor}|Order amount credited as cashback: {valor}|Importe del pedido acreditado como cashback: {valor}
+Cashback concedido pela compra: {valor}|Cashback granted for the purchase: {valor}|Cashback otorgado por la compra: {valor}
+lançamento cancelado|entry cancelled|registro cancelado
+Cashback de compra|Purchase cashback|Cashback de compra
+Cashback de mensalidade|Membership cashback|Cashback de mensualidad
+Lançamento do admin|Admin entry|Registro del administrador
+Devolução de pedido|Order return|Devolución de pedido
+Uso em compra|Used in a purchase|Uso en compra
+Débito manual do admin|Manual admin debit|Débito manual del administrador
+Acompanhe concessões, devoluções, utilizações e saldos de cashback dos clientes.|Track customer cashback grants, returns, usage and balances.|Siga las concesiones, devoluciones, usos y saldos de cashback de los clientes.
+Indicadores de todos os clientes · lançamentos cancelados ficam fora dos totais|Figures for all customers · cancelled entries are excluded from the totals|Indicadores de todos los clientes · los registros cancelados quedan fuera de los totales
+{n} cliente(s) com saldo positivo|{n} customer(s) with a positive balance|{n} cliente(s) con saldo positivo
+Créditos, débitos e saldo de cada cliente com movimentação.|Credits, debits and balance of each customer with transactions.|Créditos, débitos y saldo de cada cliente con movimientos.
+Saldo disponível|Available balance|Saldo disponible
+Negativo: {valor}|Negative: {valor}|Negativo: {valor}
+Créditos e débitos de cashback, do mais recente ao mais antigo.|Cashback credits and debits, newest first.|Créditos y débitos de cashback, del más reciente al más antiguo.
+Filtros das movimentações|Transaction filters|Filtros de los movimientos
+Data final|End date|Fecha final
+Limpar filtros|Clear filters|Limpiar filtros
+Clientes|Customers|Clientes
+Vendas|Sales|Ventas
+Equipe|Team|Equipo
+{n} de {total}|{n} of {total}|{n} de {total}
+Aparece na agenda dos alunos|Shown in the students' schedule|Aparece en la agenda de los alumnos
+Fora da agenda: conta inativa|Not in the schedule: inactive account|Fuera de la agenda: cuenta inactiva
+Fora da agenda: cadastro profissional inativo|Not in the schedule: inactive professional record|Fuera de la agenda: registro profesional inactivo
+Fora da agenda: indisponível|Not in the schedule: unavailable|Fuera de la agenda: no disponible
+Ativa|Active|Activa
+Inativa|Inactive|Inactiva
+Professores|Instructors|Profesores
+Defina quais professores podem receber agendamentos dos alunos. O cadastro e os dados pessoais ficam na tela Funcionários.|Choose which instructors can receive student bookings. Registration and personal data are managed on the Staff screen.|Defina qué profesores pueden recibir reservas de los alumnos. El registro y los datos personales están en la pantalla Empleados.
+Cadastrar em Funcionários|Register under Staff|Registrar en Empleados
+Não foi possível carregar os professores.|The instructors could not be loaded.|No fue posible cargar los profesores.
+Migração de disponibilidade pendente|Availability migration pending|Migración de disponibilidad pendiente
+Este banco ainda não tem a coluna de disponibilidade. Até a migração ser aplicada (database/migrate-professores.php), todo professor com conta e cadastro profissional ativos continua na agenda, como antes, e a disponibilidade não pode ser alterada.|This database does not have the availability column yet. Until the migration is applied (database/migrate-professores.php), every instructor with an active account and professional record stays in the schedule, as before, and availability cannot be changed.|Esta base de datos aún no tiene la columna de disponibilidad. Hasta que se aplique la migración (database/migrate-professores.php), todo profesor con cuenta y registro profesional activos sigue en la agenda, como antes, y la disponibilidad no se puede cambiar.
+Disponibilidade não é a situação da conta|Availability is not the account status|La disponibilidad no es la situación de la cuenta
+Indisponível tira o professor só dos novos agendamentos dos alunos: a conta, o cargo, a catraca e os agendamentos já marcados continuam como estão. Para aparecer na agenda, o professor também precisa de conta ativa e cadastro profissional ativo.|Unavailable only removes the instructor from new student bookings: the account, role, turnstile access and existing bookings stay as they are. To appear in the schedule, the instructor also needs an active account and an active professional record.|No disponible solo saca al profesor de las nuevas reservas de los alumnos: la cuenta, el cargo, el torniquete y las reservas ya hechas siguen igual. Para aparecer en la agenda, el profesor también necesita cuenta activa y registro profesional activo.
+Cadastros fora desta lista|Records not in this list|Registros fuera de esta lista
+Professores sem cadastro profissional: {n}. Vincule o cadastro na tela Funcionários para que apareçam aqui.|Instructors without a professional record: {n}. Link the record on the Staff screen so they appear here.|Profesores sin registro profesional: {n}. Vincule el registro en la pantalla Empleados para que aparezcan aquí.
+Cadastros profissionais antigos sem conta: {n}. Eles não aparecem aqui nem na agenda; ligue cada um a um professor em Funcionários ("Vincular cadastro existente").|Old professional records without an account: {n}. They do not appear here or in the schedule; link each one to a instructor under Staff ("Link existing record").|Registros profesionales antiguos sin cuenta: {n}. No aparecen aquí ni en la agenda; vincule cada uno a un profesor en Empleados ("Vincular registro existente").
+Com cadastro profissional vinculado|With a linked professional record|Con registro profesional vinculado
+Recebem agendamentos|Receive bookings|Reciben reservas
+Disponíveis, com conta e cadastro ativos|Available, with active account and record|Disponibles, con cuenta y registro activos
+Fora de novos agendamentos|Excluded from new bookings|Fuera de nuevas reservas
+Buscar por ID, nome, especialidade ou modalidade|Search by ID, name, specialty or class|Buscar por ID, nombre, especialidad o disciplina
+Disponibilidade|Availability|Disponibilidad
+Toda disponibilidade|Any availability|Toda disponibilidad
+Todas as contas|All accounts|Todas las cuentas
+Conta ativa|Active account|Cuenta activa
+Conta inativa|Inactive account|Cuenta inactiva
+Conta bloqueada|Blocked account|Cuenta bloqueada
+Especialidade e modalidades|Specialty and classes|Especialidad y disciplinas
+Disponibilidade para agendamentos|Availability for bookings|Disponibilidad para reservas
+Tornar indisponível para novos agendamentos|Make unavailable for new bookings|Marcar como no disponible para nuevas reservas
+Tornar disponível para novos agendamentos|Make available for new bookings|Marcar como disponible para nuevas reservas
+Disponível para agendamentos: {nome}|Available for bookings: {nome}|Disponible para reservas: {nome}
+Editar dados profissionais|Edit professional details|Editar datos profesionales
+Nenhum professor encontrado para os filtros selecionados.|No instructors found for the selected filters.|No se encontraron profesores para los filtros seleccionados.
+Nenhum professor cadastrado. Cadastre um funcionário com o cargo Professor na tela Funcionários.|No instructors registered. Register a staff member with the Instructor role on the Staff screen.|No hay profesores registrados. Registre un empleado con el cargo Profesor en la pantalla Empleados.
+Nenhum professor recebe agendamentos no momento: os alunos não verão opções na agenda.|No instructor is receiving bookings right now: students will see no options in the schedule.|Ningún profesor recibe reservas en este momento: los alumnos no verán opciones en la agenda.
+Professores ativos|Active instructors|Profesores activos
+{n} recebem agendamentos|{n} receive bookings|{n} reciben reservas
+Com o cadastro profissional vinculado, o professor aparece na tela Professores, disponível para agendamentos; lá você define a disponibilidade e os dados profissionais.|With the professional record linked, the instructor appears on the Instructors screen, available for bookings; set availability and professional details there.|Con el registro profesional vinculado, el profesor aparece en la pantalla Profesores, disponible para reservas; allí se definen la disponibilidad y los datos profesionales.
+Nome, e-mail e celular salvos aqui também atualizam o cadastro profissional; a disponibilidade para agendamentos fica na tela Professores.|Name, email and mobile saved here also update the professional record; availability for bookings is on the Instructors screen.|El nombre, el correo y el celular guardados aquí también actualizan el registro profesional; la disponibilidad para reservas está en la pantalla Profesores.
+Dados profissionais de {nome}|Professional details of {nome}|Datos profesionales de {nome}
+Nome, e-mail, celular e situação da conta são alterados na tela Funcionários.|Name, email, mobile and account status are changed on the Staff screen.|El nombre, el correo, el celular y la situación de la cuenta se cambian en la pantalla Empleados.
+Especialidade|Specialty|Especialidad
+Cadastro profissional|Professional record|Registro profesional
+Inativo bloqueia a catraca do professor e os novos agendamentos, sem mudar a conta. Para só pausar a agenda, use a disponibilidade.|Inactive blocks the instructor's turnstile access and new bookings without changing the account. To pause only the schedule, use availability.|Inactivo bloquea el torniquete del profesor y las nuevas reservas, sin cambiar la cuenta. Para pausar solo la agenda, use la disponibilidad.
+Disponibilidade em Professores|Availability under Instructors|Disponibilidad en Profesores
+Perfil do professor no painel {marca}.|Instructor profile in the {marca} dashboard.|Perfil del profesor en el panel {marca}.
+Professor disponível para novos agendamentos.|Instructor available for new bookings.|Profesor disponible para nuevas reservas.
+Professor indisponível para novos agendamentos. Os agendamentos já marcados foram mantidos.|Instructor unavailable for new bookings. Existing bookings were kept.|Profesor no disponible para nuevas reservas. Las reservas ya hechas se mantuvieron.
+Dados profissionais atualizados.|Professional details updated.|Datos profesionales actualizados.
+Professores são cadastrados na tela Funcionários, com o cargo Professor.|Instructors are registered on the Staff screen, with the Instructor role.|Los profesores se registran en la pantalla Empleados, con el cargo Profesor.
+Cadastros profissionais não são excluídos. Para tirar o professor da agenda, marque-o como indisponível.|Professional records are not deleted. To remove the instructor from the schedule, mark them as unavailable.|Los registros profesionales no se eliminan. Para sacar al profesor de la agenda, márquelo como no disponible.
+A migração de disponibilidade dos professores ainda não foi aplicada neste banco. Nenhuma alteração foi feita.|The instructor availability migration has not been applied to this database yet. No changes were made.|La migración de disponibilidad de los profesores aún no se aplicó en esta base de datos. No se hizo ningún cambio.
+Professor não encontrado.|Instructor not found.|Profesor no encontrado.
+Professor não encontrado. O cadastro de professores é feito na tela Funcionários.|Instructor not found. Instructors are registered on the Staff screen.|Profesor no encontrado. Los profesores se registran en la pantalla Empleados.
+Disponibilidade inválida.|Invalid availability.|Disponibilidad no válida.
+Selecione a situação do cadastro profissional.|Select the professional record status.|Seleccione la situación del registro profesional.
+Especialidade e registro profissional podem ter até 100 caracteres.|Specialty and professional registration can have up to 100 characters.|La especialidad y el registro profesional pueden tener hasta 100 caracteres.
+A descrição pode ter até 2000 caracteres.|The description can have up to 2000 characters.|La descripción puede tener hasta 2000 caracteres.
+Selecione menos modalidades.|Select fewer classes.|Seleccione menos disciplinas.
+Já existe outro cadastro profissional com este e-mail. Nenhuma alteração foi feita.|Another professional record already uses this email. No changes were made.|Ya existe otro registro profesional con este correo. No se hizo ningún cambio.
+Novos agendamentos bloqueados|New bookings blocked|Nuevas reservas bloqueadas
+A administração marcou você como indisponível para novos agendamentos. Os agendamentos já marcados continuam valendo.|The administration marked you as unavailable for new bookings. Bookings already made remain valid.|La administración lo marcó como no disponible para nuevas reservas. Las reservas ya hechas siguen vigentes.
+Seu cadastro profissional está inativo: novos agendamentos estão bloqueados. Os agendamentos já marcados continuam valendo.|Your professional record is inactive: new bookings are blocked. Bookings already made remain valid.|Su registro profesional está inactivo: las nuevas reservas están bloqueadas. Las reservas ya hechas siguen vigentes.
+Sua conta está inativa: novos agendamentos estão bloqueados.|Your account is inactive: new bookings are blocked.|Su cuenta está inactiva: las nuevas reservas están bloqueadas.
+Este professor não está disponível para novos agendamentos.|This instructor is not available for new bookings.|Este profesor no está disponible para nuevas reservas.

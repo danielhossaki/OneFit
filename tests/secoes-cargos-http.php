@@ -5,6 +5,7 @@ if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }
 //  - menu (BO_PERFIS em assets/js/dashboard.js) e seções enviadas no HTML, exatamente as do cargo;
 //  - telas de consulta (recepção: Alunos, Pagamentos, Modalidades, Cashback; vendedor: Categorias,
 //    Cashback) sem botões, formulários nem modais de gravação, e as rotas de gravação recusadas;
+//  - agendamento da recepção com busca de aluno, horários revalidados e auditoria do operador;
 //  - professor: adiciona treino só a aluno ativo com vínculo ativo; o resto é recusado no servidor;
 //  - vendedor: só os próprios produtos;
 //  - admin e diretor continuam com as telas e as gravações de antes.
@@ -35,6 +36,18 @@ function scValor(mysqli $db, string $sql): ?string
     $linha = $db->query($sql)->fetch_row();
     return $linha === null ? null : (string) $linha[0];
 }
+function scCpf(int $n): string
+{
+    $cpf = sprintf('%09d', $n);
+    for ($posicao = 9; $posicao < 11; $posicao++) {
+        $soma = 0;
+        for ($i = 0; $i < $posicao; $i++) {
+            $soma += (int) $cpf[$i] * (($posicao + 1) - $i);
+        }
+        $cpf .= ((10 * $soma) % 11) % 10;
+    }
+    return $cpf;
+}
 /** "perfil:seção" de cada <section data-section> enviada no HTML. */
 function scSecoes(string $html): array
 {
@@ -59,6 +72,11 @@ function scSecao(string $html, string $perfil, string $secao): string
 function scAlerta(string $html): string
 {
     return preg_match('#<div class="alert alert-([a-z]+)[^"]*"[^>]*>(.*?)<button#s', $html, $m) ? $m[1] . ': ' . trim(strip_tags($m[2])) : '';
+}
+function scFlash(string $html): string
+{
+    return preg_match('#<div class="bo-notice(?: [^"]*)?"[^>]*>.*?<span>(.*?)</span>#s', $html, $m)
+        ? trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES, 'UTF-8')) : '';
 }
 /** Itens do menu de cada painel em BO_PERFIS (chave => [chaves dos itens]). */
 function scMenus(string $js): array
@@ -139,14 +157,21 @@ foreach ($contas as $chave => $conta) {
     scCheck(str_contains($nav[$chave]->entrar($conta['email'])['location'], 'pages/dashboard/dashboard.php'), "$chave entra no painel");
 }
 $painel = static fn(string $chave): string => $nav[$chave]->req('GET', 'pages/dashboard/dashboard.php')['body'];
+$idRecepcaoAgendamento = 0;
+$idRecepcaoAuditoria = 0;
+$idProfissionalAgenda = 0;
+$linkRecepcaoAnterior = false;
+$cpfAnteriorConsulta = null;
+$professor2DisponivelAnterior = null;
 
 try {
     // --- Menu e seções enviadas: exatamente as do cargo -----------------------------------------
     $menus = scMenus(file_get_contents(__DIR__ . '/../assets/js/dashboard.js'));
     $esperado = [
         'recepcionista' => ['painel' => 'recepcionista',
-            'menu' => ['usuarios', 'pagamentos', 'cadastro-facial', 'modalidades', 'cashbacks', 'marketplace', 'configuracoes'],
-            'secoes' => ['cadastro-facial', 'cashbacks', 'modalidades', 'pagamentos', 'usuarios']],
+                'menu' => ['agenda', 'usuarios', 'pagamentos', 'cadastro-facial', 'modalidades', 'cashbacks', 'marketplace', 'configuracoes'],
+            // Marketplace é uma seção: "Comprar produtos" (link para a loja) e a consulta de pedidos.
+                'secoes' => ['agenda', 'cadastro-facial', 'cashbacks', 'marketplace', 'modalidades', 'pagamentos', 'usuarios']],
         'professor' => ['painel' => 'profissional',
             'menu' => ['perfil', 'agenda', 'treino', 'configuracoes'],
             'secoes' => ['agenda', 'treino']],
@@ -163,8 +188,8 @@ try {
         $previstas = array_map(static fn(string $s): string => "$perfil:$s", $secoes);
         sort($previstas);
         scCheck($recebidas === $previstas, "Seções enviadas ao $chave: " . implode(', ', $recebidas));
-        // Cada item do menu que não é link nem seção especial tem a sua seção, e vice-versa.
-        $doMenu = array_values(array_diff($menu, ['perfil', 'configuracoes', 'marketplace']));
+        // Cada item do menu que não é seção especial tem a sua seção, e vice-versa.
+        $doMenu = array_values(array_diff($menu, ['perfil', 'configuracoes']));
         sort($doMenu);
         scCheck($doMenu === $secoes, "Menu e seções do $chave coincidem");
         scCheck(str_contains($html, 'id="boProfileSection"') && str_contains($html, 'id="boSettingsSection"'), "$chave tem Meu perfil e Configurações");
@@ -175,6 +200,42 @@ try {
         }
     }
     scCheck(in_array('marketplace', $menus['recepcionista'], true) && !in_array('marketplace', $menus['profissional'], true), 'Marketplace no menu da recepção, fora do menu do professor');
+    $dashboardAdmin = scSecao($painel('admin'), 'admin', 'dashboard');
+    $dashboardDiretor = scSecao($painel('diretor'), 'admin', 'dashboard');
+    foreach (['Alunos ativos', 'Matrículas vigentes', 'Pagamentos aprovados no mês', 'Cashback concedido no mês',
+        'Professores não agendáveis', 'Agendamentos nos próximos 7 dias', 'Acessos bloqueados'] as $indicador) {
+        scCheck(str_contains($dashboardAdmin, $indicador) && str_contains($dashboardDiretor, $indicador), "Indicador $indicador disponível para admin e diretor");
+    }
+    preg_match('#<div class="bo-card">\s*<div class="bo-card-label">Alunos ativos</div>\s*<div class="bo-card-value">(\d+)</div>#', $dashboardAdmin, $alunosAtivosCard);
+    $alunosAtivosDb = (int) scValor($db, "SELECT COUNT(*) FROM usuarios WHERE tipo_usuario = 'aluno' AND status = 'ativo'");
+    scCheck((int) ($alunosAtivosCard[1] ?? -1) === $alunosAtivosDb, 'Indicador de alunos ativos corresponde ao banco sintético');
+    // Sidebar do admin (diretor e administrador): os mesmos itens de sempre, agrupados em categorias.
+    // Os grupos só existem nesse painel; o menu dos demais cargos continua uma lista simples.
+    $js = file_get_contents(__DIR__ . '/../assets/js/dashboard.js');
+    preg_match('/const BO_PERFIS = \{(.*?)\n\};/s', $js, $blocoPerfis);
+    preg_match_all('/^\s{4}([a-z]+): \{\s*label:(.*?)menus: \[(.*?)\],/sm', $blocoPerfis[1], $perfisJs, PREG_SET_ORDER);
+    $grupoDe = [];
+    foreach ($perfisJs as [, $perfilJs, $cabecalho, $itensJs]) {
+        preg_match_all("/\{ key: '([a-z-]+)'[^}]*?(?:grupo: '([a-z]+)')?\s*\}/", $itensJs, $itensGrupo, PREG_SET_ORDER);
+        $grupoDe[$perfilJs] = array_combine(array_column($itensGrupo, 1), array_map(static fn(array $i): string => $i[2] ?? '', $itensGrupo));
+        scCheck(($perfilJs === 'admin') === str_contains($cabecalho, 'grupos:'), "Grupos de menu só no painel admin ($perfilJs)");
+        if ($perfilJs !== 'admin') {
+            scCheck(array_filter($grupoDe[$perfilJs]) === [], "Menu do $perfilJs sem itens agrupados");
+        }
+    }
+    $menuAdmin = $grupoDe['admin'] ?? [];
+    $semConfig = array_values(array_diff(array_keys($menuAdmin), ['configuracoes']));
+    sort($semConfig);
+    scCheck(count($menuAdmin) === 14 && $semConfig === $secoesAdmin, 'Menu do admin com os mesmos 14 itens, um por seção (' . implode(', ', array_keys($menuAdmin)) . ')');
+    scCheck(array_key_first($menuAdmin) === 'dashboard', 'Visão Geral continua sendo a primeira página do admin');
+    // Ordem e grupos exatos da sidebar do admin.
+    $gruposEsperados = ['dashboard' => '', 'usuarios' => 'clientes', 'pagamentos' => 'clientes', 'vendas' => 'vendas', 'produtos' => 'vendas', 'categorias' => 'vendas',
+        'cashbacks' => 'vendas', 'funcionarios' => 'equipe', 'profissionais' => 'equipe', 'comentarios' => '', 'planos' => '', 'modalidades' => '',
+        'cadastro-facial' => '', 'configuracoes' => ''];
+    scCheck($menuAdmin === $gruposEsperados, 'Admin: ordem e grupos da sidebar (' . json_encode($menuAdmin) . ')');
+    scCheck(preg_match_all("/^\s{12}([a-z]+): \{ label:/m", explode('menus: [', $blocoPerfis[1], 2)[0], $chavesGrupos) === 3 && $chavesGrupos[1] === ['clientes', 'vendas', 'equipe'],
+        'Admin: só os grupos Clientes, Vendas e Equipe');
+    scCheck(!str_contains($js, 'engajamento') && !str_contains($js, "'Engajamento'"), 'Nenhuma referência ao antigo grupo Engajamento');
     foreach (['admin', 'diretor'] as $chave) {
         $html = $painel($chave);
         $recebidas = array_map(static fn(string $s): string => substr($s, strlen('admin:')), scSecoes($html));
@@ -193,7 +254,13 @@ try {
         foreach ($secoes as $secao) {
             $tela = scSecao($html, $perfil, $secao);
             scCheck($tela !== '' && str_contains($tela, 'data-bo-somente-consulta'), "$chave: $secao marcada como somente consulta");
-            scCheck(!preg_match('/<form\b|data-bs-toggle="modal"|funcionalidades\/|btn-bo-gold|data-bo-acao|bi-trash|bi-pencil/', $tela), "$chave: $secao sem formulário, modal ou botão de gravação");
+            $telaSemConsultaCpf = $tela;
+            if ($chave === 'recepcionista' && $secao === 'cashbacks') {
+                preg_match_all('/<form\b/i', $tela, $formulariosCpf);
+                scCheck(count($formulariosCpf[0]) === 1 && str_contains($tela, 'cashbacks-consulta.php'), 'Recepção tem somente o formulário autorizado de busca por CPF');
+                $telaSemConsultaCpf = preg_replace('#<form\b[^>]*action="[^"]*cashbacks-consulta\.php"[^>]*>.*?</form>#s', '', $tela) ?? $tela;
+            }
+            scCheck(!preg_match('/<form\b|data-bs-toggle="modal"|funcionalidades\/|btn-bo-gold|data-bo-acao|bi-trash|bi-pencil/', $telaSemConsultaCpf), "$chave: $secao sem formulário, modal ou botão de gravação");
         }
         scCheck(!preg_match('/id="modal(Usuario|Pagamento|Cashback|Categoria|Modalidade)[A-Za-z]*\d*"/', $html), "$chave: nenhum modal de gravação dessas telas no HTML");
     }
@@ -201,6 +268,86 @@ try {
     scCheck(str_contains(scSecao($recepcao, 'recepcionista', 'usuarios'), $contas['aluno']['email']), 'Recepção vê o aluno na tela Alunos');
     scCheck(str_contains(scSecao($recepcao, 'recepcionista', 'cashbacks'), $cashbackDoAluno), 'Recepção vê os lançamentos de cashback');
     scCheck(str_contains(scSecao($painel('vendedor'), 'vendedor', 'cashbacks'), $cashbackDoAluno), 'Vendedor vê os lançamentos de cashback');
+    scCheck(str_contains(scSecao($recepcao, 'recepcionista', 'agenda'), 'Buscar aluno'), 'Recepção recebe a seção de agendamentos');
+
+    // Consulta de cashback por CPF: o valor só é enviado por POST e não volta no HTML/URL.
+    $cpfConsulta = scCpf($run * 100 + 97);
+    $cpfAnteriorConsulta = scValor($db, "SELECT cpf FROM usuarios WHERE id_usuario = {$contas['aluno']['id']}");
+    $stmt = $db->prepare('UPDATE usuarios SET cpf = ? WHERE id_usuario = ?');
+    $stmt->bind_param('si', $cpfConsulta, $contas['aluno']['id']);
+    $stmt->execute();
+    $stmt->close();
+    $csrfRecepcao = $nav['recepcionista']->csrf();
+    $r = $nav['recepcionista']->req('POST', 'pages/dashboard/funcionalidades/cashbacks-consulta.php', [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'cashbacks', 'cpf' => $cpfConsulta,
+    ]);
+    $cashbackConsulta = $nav['recepcionista']->req('GET', 'pages/dashboard/dashboard.php?section=cashbacks');
+    preg_match('#<div class="bo-cashback-cpf-result" role="status">(.*?)</div>#s', $cashbackConsulta['body'], $resultadoCpf);
+    scCheck($r['status'] === 302 && !str_contains($r['location'], $cpfConsulta)
+        && str_contains($resultadoCpf[1] ?? '', htmlspecialchars($contas['aluno']['nome']))
+        && !str_contains($resultadoCpf[1] ?? '', $cpfConsulta), 'Recepção consulta cashback pelo CPF sem expor o CPF no URL ou resultado');
+    $semPermissao = $nav['vendedor']->req('POST', 'pages/dashboard/funcionalidades/cashbacks-consulta.php', [
+        'csrf_token' => $nav['vendedor']->csrf(), 'secao' => 'cashbacks', 'cpf' => $cpfConsulta,
+    ]);
+    scCheck($semPermissao['status'] === 302, 'Vendedor não acessa a busca de cashback por CPF');
+    $nav['recepcionista']->req('POST', 'pages/dashboard/funcionalidades/cashbacks-consulta.php', [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'cashbacks', 'acao' => 'limpar',
+    ]);
+
+    // Agendamento da recepção: busca, confirma a identidade do aluno, vê professor indisponível,
+    // consulta slots novamente no servidor e registra o operador na auditoria.
+    $dataAgenda = new DateTimeImmutable('tomorrow', new DateTimeZone('America/Sao_Paulo'));
+    while ((int) $dataAgenda->format('w') === 0) {
+        $dataAgenda = $dataAgenda->modify('+1 day');
+    }
+    $dataAgenda = $dataAgenda->format('Y-m-d');
+    $urlAgendaRecepcao = 'pages/dashboard/funcionalidades/agenda-recepcao.php';
+    $navRecepcao = $nav['recepcionista'];
+    $csrfRecepcao = $navRecepcao->csrf();
+    $linkRecepcaoAnterior = scValor($db, "SELECT COUNT(*) FROM profissional_aluno WHERE id_profissional = {$cadastro['professor']} AND id_aluno = {$contas['aluno']['id']}") === '1';
+    $r = $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'buscar_aluno', 'aluno_busca' => (string) $contas['aluno']['id'],
+    ]);
+    $agendaTela = $navRecepcao->req('GET', 'pages/dashboard/dashboard.php?section=agenda');
+    scCheck($r['status'] === 302 && str_contains($agendaTela['body'], htmlspecialchars($contas['aluno']['nome'])), 'Recepção busca aluno ativo por ID');
+    $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'selecionar_aluno', 'id_aluno' => (string) $contas['vendedor']['id'],
+    ]);
+    $agendaTela = $navRecepcao->req('GET', 'pages/dashboard/dashboard.php?section=agenda');
+    scCheck(!str_contains(scSecao($agendaTela['body'], 'recepcionista', 'agenda'), 'Aluno selecionado'), 'Seleção forjada de conta que não é aluno não é aceita');
+    $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'selecionar_aluno', 'id_aluno' => (string) $contas['aluno']['id'],
+    ]);
+    $professor2DisponivelAnterior = (int) scValor($db, "SELECT disponivel_agendamento FROM cadastro_profissional WHERE id_profissional = {$cadastro['professor2']}");
+    $db->query("UPDATE cadastro_profissional SET disponivel_agendamento = 0 WHERE id_profissional = {$cadastro['professor2']}");
+    $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'horarios', 'data_evento' => $dataAgenda,
+    ]);
+    $agendaTela = $navRecepcao->req('GET', 'pages/dashboard/dashboard.php?section=agenda');
+    $agendaSecao = scSecao($agendaTela['body'], 'recepcionista', 'agenda');
+    scCheck(str_contains($agendaSecao, $contas['professor2']['nome']) && str_contains($agendaSecao, 'Agenda pausada')
+        && str_contains($agendaSecao, 'name="slot"'), 'Recepção vê professor indisponível e horários elegíveis');
+    preg_match('/<option value="(sim:[^"]+)"/', $agendaSecao, $slotRecepcao);
+    scCheck(!empty($slotRecepcao[1]), 'Agenda fornece horário futuro ao aluno selecionado');
+    $idProfissionalAgenda = (int) (explode(':', $slotRecepcao[1])[2] ?? 0);
+    $reservaRecepcao = $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'agendar', 'slot' => $slotRecepcao[1],
+    ]);
+    $paginaReservaRecepcao = $navRecepcao->req('GET', 'pages/dashboard/dashboard.php?section=agenda');
+    $idRecepcaoAgendamento = (int) scValor($db, "SELECT id_agendamento FROM agendamento WHERE id_usuario = {$contas['aluno']['id']} AND id_profissional = $idProfissionalAgenda AND data_evento = '$dataAgenda' ORDER BY id_agendamento DESC LIMIT 1");
+    $idRecepcaoAuditoria = (int) scValor($db, "SELECT id_evento FROM auditoria_eventos WHERE categoria = 'agenda' AND acao = 'criado_recepcao' AND id_operador = {$contas['recepcionista']['id']} AND id_alvo = {$contas['aluno']['id']} ORDER BY id_evento DESC LIMIT 1");
+    $agendamentoRecepcao = $db->query("SELECT status FROM agendamento WHERE id_agendamento = $idRecepcaoAgendamento")->fetch_row()[0] ?? '';
+    $auditoriaRecepcao = $db->query("SELECT COUNT(*) FROM auditoria_eventos WHERE id_evento = $idRecepcaoAuditoria")->fetch_row()[0] ?? 0;
+    scCheck($idRecepcaoAgendamento > 0 && $agendamentoRecepcao === 'confirmado'
+        && $idRecepcaoAuditoria > 0 && (int) $auditoriaRecepcao === 1,
+        'Agendamento confirmado e operador registrado na auditoria (POST ' . $reservaRecepcao['status'] . '; flash: ' . scFlash($paginaReservaRecepcao['body']) . ')');
+    $antesDuplicado = scValor($db, "SELECT COUNT(*) FROM agendamento WHERE id_usuario = {$contas['aluno']['id']} AND id_profissional = $idProfissionalAgenda AND data_evento = '$dataAgenda'");
+    $navRecepcao->req('POST', $urlAgendaRecepcao, [
+        'csrf_token' => $csrfRecepcao, 'secao' => 'agenda', 'acao' => 'agendar', 'slot' => $slotRecepcao[1],
+    ]);
+    scCheck(scValor($db, "SELECT COUNT(*) FROM agendamento WHERE id_usuario = {$contas['aluno']['id']} AND id_profissional = $idProfissionalAgenda AND data_evento = '$dataAgenda'") === $antesDuplicado,
+        'Reenvio de slot não cria agendamento duplicado');
+    $db->query("UPDATE cadastro_profissional SET disponivel_agendamento = 1 WHERE id_profissional = {$cadastro['professor2']}");
     $categoriasVendedor = scSecao($painel('vendedor'), 'vendedor', 'categorias');
     foreach ($db->query('SELECT nome, status FROM categorias')->fetch_all(MYSQLI_ASSOC) as $categoria) {
         scCheck(str_contains($categoriasVendedor, htmlspecialchars($categoria['nome'])) === ($categoria['status'] === 'ativo'), "Vendedor vê só categorias ativas ({$categoria['nome']})");
@@ -228,6 +375,12 @@ try {
         }
         scCheck($retrato() === $antes, "Recusas ao $chave não alteram o banco");
     }
+    $antes = $retrato();
+    $r = $nav['vendedor']->req('POST', 'pages/dashboard/funcionalidades/agenda-recepcao.php', [
+        'csrf_token' => $nav['vendedor']->csrf(), 'secao' => 'agenda', 'acao' => 'agendar', 'slot' => 'sim:invalid',
+    ]);
+    scCheck($r['status'] === 302 && str_ends_with($r['location'], 'pages/dashboard/dashboard.php'), 'Vendedor não acessa agendamentos da recepção');
+    scCheck($retrato() === $antes, 'Recusa do agendamento da recepção não altera o banco');
 
     // --- Professor: treino só de aluno com vínculo ativo -----------------------------------------
     $professor = $nav['professor'];
@@ -330,6 +483,23 @@ try {
     }
 } finally {
     // Remove o que este teste criou fora das contas (as contas ficam, como nos demais testes HTTP).
+    if (!empty($idRecepcaoAgendamento)) {
+        $db->query("DELETE FROM agendamento WHERE id_agendamento = $idRecepcaoAgendamento");
+        if (empty($linkRecepcaoAnterior)) {
+            $db->query("DELETE FROM profissional_aluno WHERE id_profissional = $idProfissionalAgenda AND id_aluno = {$contas['aluno']['id']}");
+        }
+    }
+    if (!empty($idRecepcaoAuditoria)) {
+        $db->query("DELETE FROM auditoria_eventos WHERE id_evento = $idRecepcaoAuditoria");
+    }
+    if ($cpfAnteriorConsulta !== null) {
+        $stmt = $db->prepare('UPDATE usuarios SET cpf = ? WHERE id_usuario = ?');
+        $stmt->bind_param('si', $cpfAnteriorConsulta, $contas['aluno']['id']);
+        $stmt->execute();
+    }
+    if ($professor2DisponivelAnterior !== null) {
+        $db->query("UPDATE cadastro_profissional SET disponivel_agendamento = $professor2DisponivelAnterior WHERE id_profissional = {$cadastro['professor2']}");
+    }
     $db->query("DELETE FROM produtos WHERE nome LIKE '% $run%' OR nome LIKE '%$run (editado)'");
     $db->query("DELETE FROM cashback WHERE descricao = '" . $db->real_escape_string($cashbackDoAluno) . "'");
 }

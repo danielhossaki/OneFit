@@ -10,6 +10,10 @@ A referência é a home atual. A paleta continua exclusivamente em `assets/css/i
 - Cores de sucesso/perigo são semânticas, com contraste próprio para cada modo. Não são uma segunda paleta de marca.
 - IDs, classes funcionais, atributos `data-*`, JavaScript e regras PHP permanecem preservados. O único ajuste de classe de ação é o botão de confirmação de exclusão, com estado visual de perigo.
 
+## Indicadores administrativos
+
+O painel do Administrador e do Diretor mostra alunos e matrículas, pagamentos, equipe, professores, agendamentos e acessos. Receita considera somente pagamentos aprovados; cobranças pendentes/atrasadas aparecem como contagem separada. Cashback concedido exclui devoluções e lançamentos cancelados. As janelas temporais aparecem nos próprios rótulos dos cards.
+
 ## Reprodução da revisão
 
 Requer PHP/MySQL locais, Chrome e as ferramentas de `tests/setup-browser.ps1`. Todos os dados abaixo são sintéticos; a configuração de conexão da aplicação não é usada.

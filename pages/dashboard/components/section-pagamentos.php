@@ -27,10 +27,12 @@ $boSomenteLeitura = $boSomenteLeitura ?? true;
     </div>
     <?php if (!$boSomenteLeitura) bo_modal_pagamento(null, 'pagamentos'); ?>
 
-    <!-- Filtros: busca por ID, tipo de pagamento e intervalo de datas -->
+    <!-- Filtros: busca por ID, ID do usuário, tipo de pagamento e intervalo de datas -->
     <div class="bo-filters">
         <input type="text" class="form-control" style="max-width:200px" placeholder="<?php echo of_t('Buscar por ID'); ?>"
             data-bo-filter="search" data-bo-target="pagamentos">
+        <input type="text" inputmode="numeric" class="form-control" style="max-width:220px" placeholder="<?php echo of_t('Buscar por ID do usuário'); ?>"
+            data-bo-filter="user" data-bo-target="pagamentos">
         <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="pagamentos">
             <option value=""><?php echo of_t('Todos os tipos'); ?></option>
             <option value="PIX">PIX</option>
@@ -58,7 +60,7 @@ $boSomenteLeitura = $boSomenteLeitura ?? true;
                 </thead>
                 <tbody>
                     <?php foreach ($pagamentos as $p): ?>
-                        <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo substr($p['data'], 0, 10); ?>"
+                        <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo substr($p['data'], 0, 10); ?>" data-user="<?php echo (int) $p['usuarioId']; ?>"
                             data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id']); ?>">
                             <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo onefitData('d/m/Y', strtotime($p['data'])); ?></td>

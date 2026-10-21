@@ -42,7 +42,7 @@ function onefitPoliticasPapeis(): array
         'professor' => $professor,
         // Valor legado gravado no banco: mesma política do professor, mas nunca atribuído a cadastros novos.
         'profissional' => ['atribuivel_por_admin' => false, 'atribuivel_por_diretor' => false] + $professor,
-        // Painel da recepção: só o cadastro facial (D5, validado no servidor) e as configurações da própria conta.
+        // Painel da recepção: agenda, consulta, cadastro facial e configurações; gravações específicas têm rotas próprias e checagem no servidor.
         'recepcionista' => ['login' => true, 'painel' => 'recepcionista', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true],
         'faxineira' => ['login' => false, 'painel' => null, 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true],
     ];

@@ -25,6 +25,31 @@ function mkt_csrf_field(): string
 function mkt_money($v)
 { return 'R$ ' . number_format((float) $v, 2, ',', '.'); }
 
+function mkt_imagem_produto(array $produto): string
+{
+    $imagem = trim((string) ($produto['imagem'] ?? ''));
+    if ($imagem !== '') {
+        return $imagem;
+    }
+
+    $nome = mb_strtolower((string) ($produto['nome'] ?? ''), 'UTF-8');
+    $imagensConhecidas = [
+        'garrafa' => 'garrafa.png',
+        'shaker' => 'garrafa.png',
+        'luva' => '093335b33a6cee7776471b6ffa0f1404.png',
+        'faixa' => '664a83fb26bd7660d8433a9aa80e378c.webp',
+        'strap' => 'strap.png',
+        'munhequeira' => 'strap.png',
+    ];
+    foreach ($imagensConhecidas as $termo => $arquivo) {
+        if (str_contains($nome, $termo)) {
+            return BASE_URL . 'assets/img/uploads/produtos/' . $arquivo;
+        }
+    }
+
+    return BASE_URL . 'assets/img/uploads/produtos/c00cd2ec4a9de80c019ed5fac8820a61.webp';
+}
+
 /* ===== Produtos disponíveis (cadastrados no backoffice) ===== */
 $produtos = [];
 $sql = "SELECT id_produto AS id, nome, descricao, categoria, preco, desconto, cashback_valor AS cashback, imagem, estoque, status
@@ -128,11 +153,12 @@ if (isset($_SESSION['id_usuario'])) {
 $mktAvisoAdicionado = isset($_GET['adicionado']);
 $mktAvisoSemEstoque = isset($_GET['semestoque']);
 
-/* ===== Aba de categoria ativa (filtro por recarregamento de página, sem JS) ===== */
-$categoriaAtiva = (string) ($_GET['categoria'] ?? '');
-if (!in_array($categoriaAtiva, $categorias, true)) {
+/* ===== Filtro de categoria (recarregamento de página, sem JS) ===== */
+$categoriaAtiva = (string) ($_GET['categoria'] ?? 'todos');
+if ($categoriaAtiva !== 'todos' && !in_array($categoriaAtiva, $categorias, true)) {
     $categoriaAtiva = $categorias[0] ?? '';
 }
+$mostrarTodasCategorias = $categoriaAtiva === 'todos';
 
 /* Botão "Voltar" do marketplace sempre leva ao dashboard do usuário. */
 $mktVoltarUrl = BASE_URL . 'pages/dashboard/dashboard.php';
@@ -204,8 +230,11 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
         <?php else: ?>
 
             <div class="mkt-tabs">
+                <a class="mkt-tab<?php echo $mostrarTodasCategorias ? ' active' : ''; ?>" href="?categoria=todos" <?php echo $mostrarTodasCategorias ? 'aria-current="page"' : ''; ?>>
+                    <?php echo of_t('Todos'); ?>
+                </a>
                 <?php foreach ($categorias as $categoria): ?>
-                    <a class="mkt-tab<?php echo $categoria === $categoriaAtiva ? ' active' : ''; ?>" href="?categoria=<?php echo urlencode($categoria); ?>">
+                    <a class="mkt-tab<?php echo !$mostrarTodasCategorias && $categoria === $categoriaAtiva ? ' active' : ''; ?>" href="?categoria=<?php echo urlencode($categoria); ?>" <?php echo !$mostrarTodasCategorias && $categoria === $categoriaAtiva ? 'aria-current="page"' : ''; ?>>
                         <?php echo htmlspecialchars($categoria); ?>
                     </a>
                 <?php endforeach; ?>
@@ -214,19 +243,18 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
             <div class="row g-3">
                 <?php foreach ($produtos as $produto): ?>
                     <?php
-                    if ($produto['categoria'] !== $categoriaAtiva) {
+                    if (!$mostrarTodasCategorias && $produto['categoria'] !== $categoriaAtiva) {
                         continue;
                     }
+                    $produtoImagem = mkt_imagem_produto($produto);
                     $isFavorito = !empty($_SESSION['favoritos'][$produto['id']]);
                     ?>
                     <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
                         <div class="mkt-card">
                             <div class="mkt-card-media">
-                                <?php if (!empty($produto['imagem'])): ?>
-                                    <img src="<?php echo htmlspecialchars($produto['imagem']); ?>" alt="<?php echo htmlspecialchars($produto['nome']); ?>">
-                                <?php else: ?>
-                                    <div class="mkt-no-image"><i class="bi bi-image"></i></div>
-                                <?php endif; ?>
+                                <img src="<?php echo htmlspecialchars($produtoImagem, ENT_QUOTES, 'UTF-8'); ?>"
+                                    alt="<?php echo htmlspecialchars($produto['nome'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    onerror="this.onerror=null;this.src='<?php echo htmlspecialchars(mkt_imagem_produto(['nome' => 'produto']), ENT_QUOTES, 'UTF-8'); ?>'">
 
                                 <?php if ($produto['desconto'] > 0): ?>
                                     <span class="mkt-badge-off"><?php echo (int) $produto['desconto']; ?><?php echo of_t('% OFF'); ?></span>
@@ -310,11 +338,9 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     <div class="mkt-off-item">
                         <a class="mkt-off-link" href="#mktDetalheModal<?php echo (int) $fp['id']; ?>" data-bs-toggle="modal" data-bs-target="#mktDetalheModal<?php echo (int) $fp['id']; ?>">
                             <div class="mkt-off-thumb">
-                                <?php if (!empty($fp['imagem'])): ?>
-                                    <img src="<?php echo htmlspecialchars($fp['imagem']); ?>" alt="">
-                                <?php else: ?>
-                                    <i class="bi bi-image"></i>
-                                <?php endif; ?>
+                                <img src="<?php echo htmlspecialchars(mkt_imagem_produto($fp), ENT_QUOTES, 'UTF-8'); ?>"
+                                    alt="<?php echo htmlspecialchars($fp['nome'], ENT_QUOTES, 'UTF-8'); ?>"
+                                    onerror="this.onerror=null;this.src='<?php echo htmlspecialchars(mkt_imagem_produto(['nome' => 'produto']), ENT_QUOTES, 'UTF-8'); ?>'">
                             </div>
                             <div class="mkt-off-info">
                                 <div class="nome"><?php echo htmlspecialchars($fp['nome']); ?></div>
@@ -347,11 +373,9 @@ $mktTema = ($_COOKIE['onefit_theme'] ?? 'dark') === 'light' ? 'light' : 'dark';
                     </div>
                     <div class="modal-body">
                         <div class="mkt-detalhe-media">
-                            <?php if (!empty($fp['imagem'])): ?>
-                                <img src="<?php echo htmlspecialchars($fp['imagem']); ?>" alt="<?php echo htmlspecialchars($fp['nome']); ?>">
-                            <?php else: ?>
-                                <div class="mkt-no-image"><i class="bi bi-image"></i></div>
-                            <?php endif; ?>
+                            <img src="<?php echo htmlspecialchars(mkt_imagem_produto($fp), ENT_QUOTES, 'UTF-8'); ?>"
+                                alt="<?php echo htmlspecialchars($fp['nome'], ENT_QUOTES, 'UTF-8'); ?>"
+                                onerror="this.onerror=null;this.src='<?php echo htmlspecialchars(mkt_imagem_produto(['nome' => 'produto']), ENT_QUOTES, 'UTF-8'); ?>'">
                         </div>
                         <div class="mkt-detalhe-categoria"><?php echo htmlspecialchars($fp['categoria']); ?></div>
                         <h4 class="mkt-detalhe-nome"><?php echo htmlspecialchars($fp['nome']); ?></h4>

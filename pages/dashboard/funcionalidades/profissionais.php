@@ -1,122 +1,57 @@
 <?php
 /**
  * funcionalidades/profissionais.php
- * CRUD da tela "Profissionais" do admin (tabela `cadastro_profissional`).
+ * Handler da tela "Professores" do admin (seção e rota "profissionais",
+ * mantidas por compatibilidade). As regras ficam em includes/professores.php;
+ * aqui entram só autenticação (via _shared.php: admin ou diretor com sessão
+ * revalidada no banco e método POST), CSRF e a mensagem de retorno.
+ *
+ * Professores são cadastrados só na tela Funcionários: esta rota não cria nem
+ * exclui cadastros profissionais (a exclusão apagaria o vínculo de agendamentos
+ * e alunos, que não têm chave estrangeira).
  */
 
 require __DIR__ . '/_shared.php';
 bo_check_csrf();
+require __DIR__ . '/../includes/professores.php';
 
 $acao = bo_str('acao');
 $id = (int) bo_str('id');
-$secao = bo_secao_atual();
-
-if ($acao === 'delete') {
-    if (!$id) {
-        bo_flash('error', 'Profissional inválido.');
-        bo_redirect($secao);
-    }
-    try {
-        $stmt = $conn->prepare('DELETE FROM cadastro_profissional WHERE id_profissional = ?');
-        $stmt->bind_param('i', $id);
-        $stmt->execute();
-        $stmt->close();
-        bo_flash('success', 'Profissional excluído.');
-    } catch (\Throwable $e) {
-        bo_flash('error', 'Não é possível excluir: este profissional possui agendamentos vinculados. Inative-o em vez de excluir.');
-    }
-    bo_redirect($secao);
-}
-
-$nome = bo_str('nome');
-$funcao = bo_str('funcao');
-$documento = bo_str('documento');
-$status = bo_str('status') === 'inativo' ? 'inativo' : 'ativo';
-$email = bo_str('email');
-$celularDigitado = bo_str('celular') ?: bo_str('telefone');
-$celular = preg_replace('/\D/', '', $celularDigitado);
-$fotoUpload = bo_processar_upload_imagem('foto_arquivo', 'profissionais');
-$foto = $fotoUpload ?? bo_str('foto_atual');
-
-// Modalidades ministradas: só aceita valores cadastrados na tabela
-// `modalidades` (evita gravar texto arbitrário vindo de fora do checklist).
-$modalidadesValidas = [];
-if ($resMod = $conn->query('SELECT nome FROM modalidades')) {
-    while ($rowMod = $resMod->fetch_assoc()) {
-        $modalidadesValidas[] = $rowMod['nome'];
-    }
-}
-$modalidadesEnviadas = array_intersect((array) ($_POST['modalidades'] ?? []), $modalidadesValidas);
-$modalidades = implode(', ', $modalidadesEnviadas);
-
-if (!$nome || !$email || !$celular) {
-    bo_flash('error', 'Preencha nome, e-mail e celular.');
-    bo_redirect($secao);
-}
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    bo_flash('error', onefitTraduzir('Informe um e-mail válido.'));
-    bo_redirect($secao);
-}
-if (!bo_valida_celular($celular)) {
-    bo_flash('error', onefitTraduzir('Informe um celular/telefone válido, com DDD (10 ou 11 números).'));
-    bo_redirect($secao);
-}
-
-if ($acao === 'update') {
-    if (!$id) {
-        bo_flash('error', 'Profissional inválido.');
-        bo_redirect($secao);
-    }
-    $check = $conn->prepare('SELECT id_profissional FROM cadastro_profissional WHERE email = ? AND id_profissional <> ? LIMIT 1');
-    $check->bind_param('si', $email, $id);
-    $check->execute();
-    if ($check->get_result()->fetch_assoc()) {
-        $check->close();
-        bo_flash('error', 'Já existe outro profissional com este e-mail.');
-        bo_redirect($secao);
-    }
-    $check->close();
-
-    try {
-        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, modalidades=?, registro_profissional=?, status=?, email=?, celular=?, foto=? WHERE id_profissional=?');
-        $stmt->bind_param('ssssssssi', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $foto, $id);
-        $stmt->execute();
-        $stmt->close();
-    } catch (\mysqli_sql_exception $e) {
-        // Coluna "modalidades" ainda não existe neste banco (migração
-        // modalidades-profissional-migration.sql pendente): grava sem ela.
-        $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome=?, especialidade=?, registro_profissional=?, status=?, email=?, celular=?, foto=? WHERE id_profissional=?');
-        $stmt->bind_param('sssssssi', $nome, $funcao, $documento, $status, $email, $celular, $foto, $id);
-        $stmt->execute();
-        $stmt->close();
-    }
-    bo_flash('success', 'Profissional atualizado.');
-    bo_redirect($secao);
-}
-
-$check = $conn->prepare('SELECT id_profissional FROM cadastro_profissional WHERE email = ? LIMIT 1');
-$check->bind_param('s', $email);
-$check->execute();
-if ($check->get_result()->fetch_assoc()) {
-    $check->close();
-    bo_flash('error', 'Já existe um profissional com este e-mail.');
-    bo_redirect($secao);
-}
-$check->close();
+$idOperador = (int) $_SESSION['id_usuario'];
 
 try {
-    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, modalidades, registro_profissional, status, email, celular, foto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-    $stmt->bind_param('ssssssss', $nome, $funcao, $modalidades, $documento, $status, $email, $celular, $foto);
-    $stmt->execute();
-    $stmt->close();
-} catch (\mysqli_sql_exception $e) {
-    // Coluna "modalidades" ainda não existe neste banco (migração
-    // modalidades-profissional-migration.sql pendente): grava sem ela.
-    $stmt = $conn->prepare('INSERT INTO cadastro_profissional (nome, especialidade, registro_profissional, status, email, celular, foto) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    $stmt->bind_param('sssssss', $nome, $funcao, $documento, $status, $email, $celular, $foto);
-    $stmt->execute();
-    $stmt->close();
+    switch ($acao) {
+        case 'disponibilidade':
+            $disponivel = bo_str('disponivel');
+            bo_professor_alterar_disponibilidade($conn, $idOperador, $id, $disponivel);
+            bo_flash('success', $disponivel === '1'
+                ? 'Professor disponível para novos agendamentos.'
+                : 'Professor indisponível para novos agendamentos. Os agendamentos já marcados foram mantidos.');
+            break;
+        case 'update':
+            foreach (['especialidade', 'documento', 'descricao'] as $campoObrigatorio) {
+                if (!array_key_exists($campoObrigatorio, $_POST)) {
+                    throw new FuncionarioRecusado('O formulário de dados profissionais está incompleto. Nenhuma alteração foi feita.');
+                }
+            }
+            // Só um upload novo troca a foto; o caminho atual nunca vem do formulário.
+            bo_professor_atualizar_dados($conn, $idOperador, $id, $_POST, bo_processar_upload_imagem('foto_arquivo', 'profissionais'));
+            bo_flash('success', 'Dados profissionais atualizados.');
+            break;
+        case 'create':
+            bo_flash('error', 'Professores são cadastrados na tela Funcionários, com o cargo Professor.');
+            break;
+        case 'delete':
+            bo_flash('error', 'Cadastros profissionais não são excluídos. Para tirar o professor da agenda, marque-o como indisponível.');
+            break;
+        default:
+            bo_flash('error', 'Ação inválida.');
+    }
+} catch (FuncionarioRecusado $recusa) {
+    bo_flash('error', $recusa->getMessage());
+} catch (Throwable $erro) {
+    error_log('ONE FIT: falha na tela de professores. Código: ' . $erro->getCode());
+    bo_flash('error', 'Não foi possível concluir a operação. Nada foi alterado.');
 }
 
-bo_flash('success', 'Profissional criado.');
-bo_redirect($secao);
+bo_redirect('profissionais');

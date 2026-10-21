@@ -245,3 +245,147 @@ function bo_status_devolucao_labels(): array
         'concluida' => 'Devolução concluída',
     ];
 }
+
+/**
+ * Pedido a que um lançamento de cashback se refere. A tabela cashback não tem
+ * id_pedido: o vínculo vem da descrição que o próprio sistema grava (checkout:
+ * "Cashback do pedido #N" e "Uso de cashback no pedido #N"; devoluções:
+ * "Devolução do pedido #N"). Lançamentos manuais do admin não têm pedido.
+ */
+function bo_cashback_pedido_relacionado(string $descricao): ?int
+{
+    return preg_match('/^(?:Cashback do pedido|Uso de cashback no pedido|Devolução do pedido) #(\d+)$/uD', $descricao, $m) ? (int) $m[1] : null;
+}
+
+/**
+ * Pedidos do Marketplace para consulta no atendimento (painel da recepção):
+ * todos os pedidos, com itens, entrega, cashback do pedido, devolução e os
+ * eventos que têm data registrada. Só leitura. Do cliente, traz só nome e ID
+ * (sem e-mail, documento, telefone nem endereço de entrega).
+ *
+ * O sistema não registra status de pagamento de pedidos (o checkout é uma
+ * simulação) nem a data de cada mudança de status da entrega: a linha do
+ * tempo mostra só o que tem data gravada.
+ */
+function bo_carregar_pedidos_consulta(mysqli $conn): array
+{
+    $statusLabel = bo_status_pedido_labels();
+    $statusLogisticaLabel = ['aguardando' => onefitTraduzir('Aguardando'), 'preparando' => onefitTraduzir('Preparando'), 'despachado' => onefitTraduzir('Despachado'),
+        'entregue' => onefitTraduzir('Entregue'), 'devolvido' => onefitTraduzir('Devolvido'), 'extraviado' => onefitTraduzir('Extraviado')];
+    $formaLabel = ['pix' => 'PIX', 'cartao' => onefitTraduzir('Cartão'), 'cashback' => onefitTraduzir('Cashback')];
+    $data = static fn(?string $valor): string => $valor ? onefitData('d/m/Y H:i', strtotime($valor)) : '';
+
+    $pedidos = [];
+    $res = $conn->query('SELECT pe.id_pedido, pe.id_usuario, pe.data_pedido, pe.status, pe.valor_total, pe.forma_pagamento, u.nome AS cliente
+        FROM pedido pe JOIN usuarios u ON u.id_usuario = pe.id_usuario
+        ORDER BY pe.data_pedido DESC, pe.id_pedido DESC');
+    while ($row = $res->fetch_assoc()) {
+        $id = (int) $row['id_pedido'];
+        $forma = $formaLabel[$row['forma_pagamento']] ?? ucfirst((string) $row['forma_pagamento']);
+        $pedidos[$id] = [
+            'idPedido' => $id,
+            'transacao' => 'TRX-' . str_pad((string) $id, 4, '0', STR_PAD_LEFT),
+            'dataBanco' => (string) $row['data_pedido'],
+            'data' => $data($row['data_pedido']),
+            'statusBanco' => $row['status'],
+            'status' => onefitTraduzir($statusLabel[$row['status']] ?? ucfirst($row['status'])),
+            'valorTotal' => (float) $row['valor_total'],
+            'formaPagamento' => $forma,
+            'clienteId' => (int) $row['id_usuario'],
+            'cliente' => $row['cliente'],
+            'itens' => [],
+            'frete' => 0.0,
+            'cashbackUsado' => 0.0,
+            'cashbackConcedido' => 0.0,
+            'devolucaoCreditada' => 0.0,
+            'devolucao' => null,
+            'eventos' => [[(string) $row['data_pedido'], onefitTraduzir('Pedido realizado · pagamento: {forma}', ['{forma}' => $forma])]],
+        ];
+    }
+    if (!$pedidos) return [];
+
+    $res = $conn->query("SELECT pi.id_pedido, pi.quantidade, pi.preco_unitario, pi.subtotal, pi.valor_frete, pi.status_logistica, pi.codigo_rastreio,
+            pi.confirmado_recebimento, pi.confirmado_recebimento_em, pr.nome AS produto, COALESCE(v.nome, 'ONE FIT') AS vendedor, t.nome AS transportadora
+        FROM pedido_item pi
+        JOIN produtos pr ON pr.id_produto = pi.id_produto
+        LEFT JOIN usuarios v ON v.id_usuario = pi.id_vendedor
+        LEFT JOIN transportadoras t ON t.id_transportadora = pi.id_transportadora
+        ORDER BY pi.id_pedido, pi.id_item");
+    while ($row = $res->fetch_assoc()) {
+        $id = (int) $row['id_pedido'];
+        if (!isset($pedidos[$id])) continue;
+        $confirmado = (int) $row['confirmado_recebimento'] === 1;
+        $pedidos[$id]['itens'][] = [
+            'produto' => $row['produto'],
+            'vendedor' => $row['vendedor'],
+            'quantidade' => (int) $row['quantidade'],
+            'precoUnitario' => (float) $row['preco_unitario'],
+            'subtotal' => (float) $row['subtotal'],
+            'transportadora' => $row['transportadora'],
+            'statusLogisticaBanco' => $row['status_logistica'],
+            'statusLogistica' => $statusLogisticaLabel[$row['status_logistica']] ?? ucfirst($row['status_logistica']),
+            'codigoRastreio' => $row['codigo_rastreio'],
+            'recebidoEm' => $confirmado ? $data($row['confirmado_recebimento_em']) : null,
+        ];
+        $pedidos[$id]['frete'] += (float) $row['valor_frete'];
+        if ($confirmado && $row['confirmado_recebimento_em']) {
+            $pedidos[$id]['eventos'][] = [(string) $row['confirmado_recebimento_em'], onefitTraduzir('Recebimento confirmado pelo cliente: {produto}', ['{produto}' => $row['produto']])];
+        }
+    }
+
+    $devolucaoLabel = bo_status_devolucao_labels();
+    $res = $conn->query('SELECT id_pedido, motivo, observacao, status, data_solicitacao, data_analise, data_conclusao FROM pedido_devolucao');
+    while ($row = $res->fetch_assoc()) {
+        $id = (int) $row['id_pedido'];
+        if (!isset($pedidos[$id])) continue;
+        // motivo: até 80 caracteres do cliente; observacao: texto completo do cliente ou, na recusa, a justificativa do admin.
+        $pedidos[$id]['devolucao'] = [
+            'status' => onefitTraduzir($devolucaoLabel[$row['status']] ?? $row['status']),
+            'motivo' => $row['motivo'],
+            'observacao' => $row['observacao'] !== $row['motivo'] ? $row['observacao'] : '',
+            'solicitada' => $data($row['data_solicitacao']),
+        ];
+        $pedidos[$id]['eventos'][] = [(string) $row['data_solicitacao'], onefitTraduzir('Devolução solicitada')];
+        if ($row['data_analise']) {
+            $pedidos[$id]['eventos'][] = [(string) $row['data_analise'], onefitTraduzir($row['status'] === 'recusada' ? 'Devolução recusada' : 'Devolução aprovada')];
+        }
+        if ($row['data_conclusao']) {
+            $pedidos[$id]['eventos'][] = [(string) $row['data_conclusao'], onefitTraduzir('Devolução concluída')];
+        }
+    }
+
+    // Cashback do pedido: o lançamento precisa ser do próprio comprador.
+    $res = $conn->query("SELECT c.id_usuario, c.tipo, c.origem, c.status, c.valor, c.descricao, c.data_criacao, d.id_pedido AS pedido_devolucao
+        FROM cashback c LEFT JOIN pedido_devolucao d ON d.id_cashback = c.id_cashback
+        WHERE d.id_pedido IS NOT NULL OR c.descricao LIKE '%pedido #%'
+        ORDER BY c.data_criacao, c.id_cashback");
+    while ($row = $res->fetch_assoc()) {
+        $id = $row['pedido_devolucao'] !== null ? (int) $row['pedido_devolucao'] : bo_cashback_pedido_relacionado((string) $row['descricao']);
+        if ($id === null || !isset($pedidos[$id]) || $pedidos[$id]['clienteId'] !== (int) $row['id_usuario']) continue;
+        $valor = onefitMoeda((float) $row['valor']);
+        if ($row['tipo'] === 'debito') {
+            [$campo, $texto] = ['cashbackUsado', onefitTraduzir('Cashback usado no pedido: {valor}', ['{valor}' => $valor])];
+        } elseif ($row['origem'] === 'devolucao') {
+            [$campo, $texto] = ['devolucaoCreditada', onefitTraduzir('Valor do pedido creditado como cashback: {valor}', ['{valor}' => $valor])];
+        } else {
+            [$campo, $texto] = ['cashbackConcedido', onefitTraduzir('Cashback concedido pela compra: {valor}', ['{valor}' => $valor])];
+        }
+        // Cancelado: fica na linha do tempo, fora dos totais (mesma regra do saldo).
+        if ($row['status'] === 'cancelado') {
+            $texto .= ' (' . onefitTraduzir('lançamento cancelado') . ')';
+        } else {
+            $pedidos[$id][$campo] += (float) $row['valor'];
+        }
+        $pedidos[$id]['eventos'][] = [(string) $row['data_criacao'], $texto];
+    }
+
+    foreach ($pedidos as &$pedido) {
+        // Ordem cronológica; eventos com a mesma data ficam na ordem em que foram reunidos.
+        $ordem = array_keys($pedido['eventos']);
+        array_multisort(array_column($pedido['eventos'], 0), SORT_ASC, SORT_STRING, $ordem, SORT_ASC, $pedido['eventos']);
+        $pedido['eventos'] = array_map(static fn(array $e): array => ['data' => $data($e[0]), 'texto' => $e[1]], $pedido['eventos']);
+        $pedido['subtotalItens'] = array_sum(array_column($pedido['itens'], 'subtotal'));
+    }
+    unset($pedido);
+    return array_values($pedidos);
+}

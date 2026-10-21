@@ -104,6 +104,53 @@ function bo_processar_upload_imagem(string $inputName, string $subpasta): ?strin
     return BASE_URL . 'assets/img/uploads/' . $subpasta . '/' . $nomeArquivo;
 }
 
+function bo_foto_perfil_url(?string $foto): string
+{
+    $foto = trim($foto ?? '');
+    if (str_starts_with($foto, BASE_URL . 'assets/img/uploads/perfil/')) {
+        return bo_foto_perfil_ampliavel($foto);
+    }
+    return filter_var($foto, FILTER_VALIDATE_URL) &&
+        in_array(strtolower(parse_url($foto, PHP_URL_SCHEME) ?? ''), ['http', 'https'], true)
+        ? $foto
+        : '';
+}
+
+function bo_foto_perfil_ampliavel(?string $foto): string
+{
+    $prefix = BASE_URL . 'assets/img/uploads/perfil/';
+    if (!is_string($foto) || !str_starts_with($foto, $prefix)) return '';
+    $name = substr($foto, strlen($prefix));
+    if (!preg_match('/^[a-zA-Z0-9_-]+\.(?:jpe?g|png|webp)$/iD', $name)) return '';
+    $root = realpath(__DIR__ . '/../../../assets/img/uploads/perfil');
+    $file = $root ? realpath($root . DIRECTORY_SEPARATOR . $name) : false;
+    if (!$file || dirname($file) !== $root || !is_file($file)) return '';
+    $info = @getimagesize($file);
+    return $info && in_array($info['mime'], ['image/jpeg', 'image/png', 'image/webp'], true) ? $foto : '';
+}
+
+function bo_foto_perfil_upload(): ?string
+{
+    $arquivo = $_FILES['foto_arquivo'] ?? null;
+    if (!$arquivo || ($arquivo['error'] ?? null) === UPLOAD_ERR_NO_FILE) return null;
+    if (!is_array($arquivo) || !isset($arquivo['error'], $arquivo['tmp_name'], $arquivo['name'], $arquivo['size']) ||
+        !is_int($arquivo['error']) || $arquivo['error'] !== UPLOAD_ERR_OK ||
+        !is_string($arquivo['tmp_name']) || !is_string($arquivo['name']) || !is_uploaded_file($arquivo['tmp_name'])) {
+        throw new RuntimeException('Não foi possível receber a foto. Selecione o arquivo novamente.');
+    }
+    $tipos = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+    $ext = strtolower(pathinfo($arquivo['name'], PATHINFO_EXTENSION));
+    $info = @getimagesize($arquivo['tmp_name']);
+    if ($arquivo['size'] <= 0 || $arquivo['size'] > 3 * 1024 * 1024 || !$info ||
+        !isset($tipos[$ext]) || $tipos[$ext] !== mime_content_type($arquivo['tmp_name']) ||
+        $tipos[$ext] !== ($info['mime'] ?? '') || $info[0] * $info[1] > 40000000) {
+        throw new RuntimeException('Envie uma imagem JPG, PNG ou WEBP válida, de até 3 MB e 40 megapixels.');
+    }
+    $foto = bo_processar_upload_imagem('foto_arquivo', 'perfil');
+    if ($foto === null) throw new RuntimeException('Não foi possível salvar a foto. Tente novamente.');
+    return $foto;
+}
+
 /**
  * Selo "Somente consulta" no título das telas que o cargo só visualiza
  * (Alunos, Pagamentos, Modalidades e Cashback na recepção; Categorias e

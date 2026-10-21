@@ -22,12 +22,12 @@ O menu (`BO_PERFIS` em `assets/js/dashboard.js`) mostra só estas seções, e o 
 
 | Cargo | Seções | Observações |
 |---|---|---|
-| Recepcionista | Alunos, Pagamentos, Modalidades e Cashback (só consulta); Cadastro facial; Marketplace (link para a loja); Configurações | No cadastro facial, a própria conta, outras recepcionistas ativas e cargos não administrativos (D5). |
+| Recepcionista | Agendamentos; Alunos, Pagamentos, Modalidades e Cashback dos clientes (consulta); Cadastro facial; Marketplace ("Comprar produtos", a loja de sempre, e "Consultar pedidos e vendas", só consulta); Configurações | Agendamentos: busca alunos ativos, consulta horários e cria a reserva revalidada no servidor; o operador é registrado na auditoria. Cashback: busca individual por CPF autenticada, sem colocar o CPF na URL ou na página; demais indicadores e lançamentos seguem somente leitura. No cadastro facial, a própria conta, outras recepcionistas ativas e cargos não administrativos (D5). Pedidos: itens, valores, forma de pagamento, status, cashback do pedido, devolução e linha do tempo; do cliente, só nome e ID. As rotas de vendas, devoluções, produtos, cobranças e lançamento de cashback continuam recusando a recepcionista. |
 | Professor | Meu perfil, Agenda, Treino, Configurações | Treino: lista os alunos vinculados (`profissional_aluno`) e acrescenta exercícios à ficha (`treino_exercicio`) só de aluno ativo com vínculo **ativo** com o próprio cadastro profissional, conferido no banco a cada envio. Editar, excluir e limpar a ficha continuam com o aluno. Sem Dashboard, Histórico, Meu cashback e Minhas compras: as rotas `meus-pedidos.php` e `buscar-compras.php` também o recusam. |
 | Vendedor | Marketplace (vendas e logística, com link para a loja), Produtos, Categorias e Cashback (só consulta), Configurações | Produtos: só os próprios (`produtos.php` confere `id_vendedor` em editar, ativar/inativar e excluir; produto novo nasce do vendedor). Categorias: só as ativas. |
 | Admin e Diretor | sem mudança | Telas e gravações de antes (Alunos, Pagamentos, Cashbacks, Categorias e Modalidades viraram componentes compartilhados, com a mesma marcação). |
 
-O Cashback em consulta é a mesma tela do admin (saldo geral e lançamentos, com o ID do usuário). A tabela `cashback` não guarda produto nem pedido, então não há como limitar o vendedor ao cashback das próprias vendas.
+O Cashback em consulta é a mesma tela do admin (saldo geral e lançamentos, com o ID do usuário). Admin e recepção também podem consultar a conta de um aluno por CPF em uma rota autenticada e parametrizada; o CPF não é renderizado no resultado nem enviado na URL. A tabela `cashback` não guarda produto nem pedido, então não há como limitar o vendedor ao cashback das próprias vendas.
 
 ## Hierarquia: Diretor e Administrador
 
@@ -55,7 +55,7 @@ O **Diretor** (`diretor`) é um cargo próprio, acima do **Administrador** (`adm
 
 - **Cadastrar:** todos os campos obrigatórios de `usuarios`, com CPF válido (dígitos verificadores), e-mail válido e exclusivo, celular com DDD, nacionalidade ISO e UF. E-mail ou CPF já existentes são recusados; nenhuma conta existente é reaproveitada.
 - **Senha:** a conta nasce com o hash de uma senha aleatória que ninguém conhece (`usuarios.senha` continua obrigatória). Quem entra no painel recebe por e-mail um link de uso único (`recuperacao_senha_tokens`, 30 minutos) para definir a própria senha e um link de confirmação de e-mail (24 horas). A faxineira (sem painel) não recebe link.
-- **Editar:** dados pessoais e cargo entre os quatro atribuíveis. A senha nunca é alterada. Se o e-mail mudar, a confirmação é zerada e os links enviados ao e-mail antigo são cancelados.
+- **Editar:** dados pessoais e cargo entre os quatro atribuíveis. A senha nunca é alterada. Se o e-mail mudar, a confirmação é zerada e os links enviados ao e-mail antigo são cancelados. No professor, nome, e-mail e celular também atualizam o cadastro profissional vinculado (exibido na agenda); se o e-mail já for de outro cadastro profissional, nada é gravado.
 - **Ativar / inativar:** envia o status desejado (nunca alterna). Inativar cancela links pendentes; a revalidação de sessão tira a pessoa do painel na próxima requisição.
 - **Enviar link de acesso:** gera novos links (os anteriores deixam de valer) para conta ativa com painel.
 - **Matrícula:** funcionários nunca recebem matrícula.
@@ -66,6 +66,7 @@ O **Diretor** (`diretor`) é um cargo próprio, acima do **Administrador** (`adm
 - Nunca há vínculo por coincidência de e-mail. Se já existir um cadastro com o e-mail da conta, a tela pede o vínculo explícito.
 - Vincular só grava `id_usuario`; os demais dados do cadastro são preservados. Cadastros de outros professores não podem ser tomados.
 - O antigo vínculo automático por e-mail ao abrir o painel do professor (`section-profissional.php`) foi removido: abrir uma página não altera dados.
+- Funcionários é o único cadastro de professores. Com o cadastro profissional vinculado, o professor aparece na tela **Professores** (antiga Profissionais), onde se definem a disponibilidade para agendamentos e os dados profissionais. Ver `docs/professores.md`.
 
 ## Tela de alunos
 
@@ -120,6 +121,8 @@ php tests/papeis.php
 php tests/diretor.php                                 # hierarquia diretor > admin (serviço)
 powershell -File tests/papeis-http.ps1 -Script diretor-http.php      # hierarquia via HTTP, requisições forjadas do admin
 php tests/diretor-migracao.php                        # migração, recuperação e reversão (esquema do remoto)
+php tests/professores.php                             # tela Professores e regra da agenda (docs/professores.md)
+powershell -File tests/papeis-http.ps1 -Script professores-http.php
 ```
 
 Nenhum teste usa o `.env` da aplicação nem envia e-mail.

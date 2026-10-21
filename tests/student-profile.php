@@ -13,14 +13,14 @@ foreach (['', '0', '-1', 'NaN', 'Infinity', '1.72abc', '1,2,3', '1e999', '0.' . 
     check(bo_aluno_imc($invalid, 70)['valor'] === null, 'Altura inválida: ' . $invalid);
 }
 check(bo_aluno_imc(1.7, 501)['valor'] === null, 'Peso fora do limite');
-check(bo_aluno_upload() === null, 'Upload opcional');
-$_FILES['foto_arquivo'] = ['error' => UPLOAD_ERR_INI_SIZE];
-try { bo_aluno_upload(); throw new LogicException('Upload inválido aceito'); }
-catch (RuntimeException $expected) {}
-echo "IMC: limites, decimais, entradas inválidas e erro de upload OK\n";
 define('BASE_URL', 'http://localhost/AN25/OneFit/');
 require __DIR__ . '/../pages/dashboard/includes/helpers.php';
 require __DIR__ . '/../pages/dashboard/includes/admin-forms.php';
+check(bo_foto_perfil_upload() === null, 'Upload opcional');
+$_FILES['foto_arquivo'] = ['error' => UPLOAD_ERR_INI_SIZE];
+try { bo_foto_perfil_upload(); throw new LogicException('Upload inválido aceito'); }
+catch (RuntimeException $expected) {}
+echo "IMC: limites, decimais, entradas inválidas e erro de upload OK\n";
 $_SESSION = ['id_usuario' => 123, 'csrf_token' => 'test'];
 $usuarioDashboard = ['nome' => 'Aluno <teste>', 'email' => 'aluno@example.test', 'genero' => 'masculino', 'altura' => '1.72', 'peso' => '100', 'foto' => null];
 $preferenciasDisponiveis = true;
@@ -36,6 +36,26 @@ foreach (['aluno', 'admin', 'profissional', 'vendedor'] as $perfilLogado) {
     if ($perfilLogado === 'aluno') check(str_contains($html, '33,8 · Obesidade grau I'), 'IMC no resumo PHP');
 }
 echo "Renderização PHP e isolamento dos quatro perfis OK\n";
+
+check(bo_foto_perfil_url('javascript:alert(1)') === '', 'URL de foto com esquema não permitido');
+check(bo_foto_perfil_ampliavel(BASE_URL . 'assets/img/uploads/perfil/nao-existe.jpg') === '', 'Foto local inexistente');
+$usuarioDashboard['foto'] = 'https://example.test/conta-autenticada.webp';
+$_SESSION['nome'] = 'Conta autenticada';
+foreach (['aluno', 'recepcionista', 'profissional', 'professor', 'vendedor', 'admin', 'diretor'] as $perfilLogado) {
+    ob_start();
+    include __DIR__ . '/../pages/dashboard/components/header.php';
+    $html = ob_get_clean();
+    check(str_contains($html, 'data-bo-profile-avatar'), 'Avatar renderizado com foto para o cargo: ' . $perfilLogado);
+    check(str_contains($html, 'https://example.test/conta-autenticada.webp'), 'Foto vem do perfil carregado da sessão: ' . $perfilLogado);
+}
+$usuarioDashboard['foto'] = null;
+$perfilLogado = 'recepcionista';
+ob_start();
+include __DIR__ . '/../pages/dashboard/components/header.php';
+$html = ob_get_clean();
+check(!str_contains($html, 'data-bo-profile-avatar'), 'Sem foto mantém avatar padrão');
+check((bool) preg_match('/>\s*C\s*<\/button>/', $html), 'Sem foto mantém inicial do usuário');
+echo "Avatar do cabeçalho: cargos, origem da foto e fallback sem foto OK\n";
 if (in_array('--schema', $argv, true)) {
     require __DIR__ . '/../config/conn.php';
     $result = $conn->query('SHOW COLUMNS FROM usuarios');

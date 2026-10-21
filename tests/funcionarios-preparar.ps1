@@ -44,3 +44,15 @@ if ($LASTEXITCODE -ne 0 -or $segundaDiretor -notmatch 'aplicada; nada foi altera
 Write-Output 'Migracao do diretor: segunda execucao nao altera nada.'
 # Migracao, recuperacao e reversao num banco com a estrutura do remoto.
 Rodar @((Join-Path $PSScriptRoot 'diretor-migracao.php'))
+# Disponibilidade dos professores (20261021_professores_v1): regra anterior sem a coluna,
+# depois migracao local verificada e idempotente. Os demais testes rodam ja migrados.
+Rodar @((Join-Path $PSScriptRoot 'professores.php'), '--antes')
+$runnerProfessores = Join-Path $copia 'database/migrate-professores.php'
+Rodar (@($runnerProfessores, '--inspecionar') + $alvo)
+$confirmarProfessores = "--confirmar=$($fixture.database)"
+Rodar (@($runnerProfessores, '--aplicar') + $alvo + @($confirmarProfessores, $backups))
+$segundaProfessores = & $php $runnerProfessores --aplicar @alvo $confirmarProfessores $backups | Out-String
+if ($LASTEXITCODE -ne 0 -or $segundaProfessores -notmatch 'aplicada; nada foi alterado') { throw 'A segunda execucao da migracao de professores deveria ser idempotente.' }
+Write-Output 'Migracao de professores: segunda execucao nao altera nada.'
+# Recusas, aplicacao, chave unica e reversao num banco com a estrutura do remoto.
+Rodar @((Join-Path $PSScriptRoot 'professores-migracao.php'))

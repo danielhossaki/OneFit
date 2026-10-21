@@ -94,15 +94,20 @@ try {
     $painel = $nav->req('GET', 'pages/dashboard/dashboard.php');
     rcCheck($painel['status'] === 200 && str_contains($painel['body'], 'const BO_PERFIL_LOGADO = "recepcionista"'), 'Painel da recepção');
     rcCheck(str_contains($painel['body'], 'data-section="cadastro-facial"') && str_contains($painel['body'], 'assets/js/fotos-faciais.js'), 'Recepção tem o cadastro facial');
-    // Alunos, Pagamentos, Modalidades e Cashback: só consulta (detalhes em tests/secoes-cargos-http.php).
-    foreach (['usuarios', 'pagamentos', 'modalidades', 'cashbacks'] as $secao) {
+    rcCheck(str_contains($painel['body'], 'data-perfil="recepcionista" data-section="agenda"'), 'Recepção tem os agendamentos');
+    // Alunos, Pagamentos, Modalidades, Cashback e Marketplace (consulta de pedidos): só consulta
+    // (detalhes em tests/secoes-cargos-http.php e tests/recepcao-marketplace-http.php).
+    foreach (['usuarios', 'pagamentos', 'modalidades', 'cashbacks', 'marketplace'] as $secao) {
         rcCheck(str_contains($painel['body'], 'data-perfil="recepcionista" data-section="' . $secao . '"'), "Recepção consulta a seção $secao");
     }
     foreach (['funcionarios', 'planos', 'produtos', 'vendas', 'profissionais', 'categorias', 'comentarios', 'historico', 'treino'] as $secao) {
         rcCheck(!str_contains($painel['body'], 'data-section="' . $secao . '"'), "Recepção sem a seção $secao");
     }
     rcCheck(str_contains($painel['body'], $aluno['email']), 'Recepção vê o aluno na tela Alunos');
-    rcCheck(!str_contains($painel['body'], 'pages/dashboard/funcionalidades/'), 'Nenhum formulário das rotas do admin no painel da recepção');
+    preg_match_all('#action="[^"]*pages/dashboard/funcionalidades/([^"]+)"#', $painel['body'], $rotasRecepcao);
+    $rotasRecepcao = array_values(array_unique($rotasRecepcao[1]));
+    sort($rotasRecepcao);
+    rcCheck($rotasRecepcao === ['agenda-recepcao.php', 'cashbacks-consulta.php'], 'Recepção só tem busca de cashback e agendamento nas rotas operacionais');
     $token = $nav->csrf();
 
     // --- Cadastro facial autorizado ---------------------------------------------------------

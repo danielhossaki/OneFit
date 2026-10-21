@@ -30,7 +30,7 @@ if ($isAluno) {
     if (!$perfilAtual) { bo_flash('error', onefitTraduzir('Conta não encontrada.')); bo_redirect_perfil(); }
     if (bo_str('acao') === 'foto') {
         try {
-            $novaFoto = bo_aluno_upload();
+            $novaFoto = bo_foto_perfil_upload();
             if ($novaFoto === null) throw new RuntimeException(onefitTraduzir('Selecione uma foto.'));
             $salvarFoto = $conn->prepare('UPDATE usuarios SET foto = ? WHERE id_usuario = ?');
             $salvarFoto->bind_param('si', $novaFoto, $idAluno);
@@ -118,7 +118,7 @@ if ($check->get_result()->fetch_assoc()) {
 $check->close();
 
 try {
-    $fotoUpload = $isAluno ? bo_aluno_upload() : bo_processar_upload_imagem('foto_arquivo', 'perfil');
+    $fotoUpload = bo_foto_perfil_upload();
 } catch (RuntimeException $erro) {
     bo_flash('error', $erro->getMessage());
     bo_redirect_perfil();

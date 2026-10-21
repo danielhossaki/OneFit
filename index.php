@@ -1,7 +1,7 @@
 <?php
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/parametros.php');
 require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/config/conn.php');
-require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/pages/dashboard/includes/aluno-profile.php');
+require($_SERVER['DOCUMENT_ROOT'] . '/AN25/OneFit/pages/dashboard/includes/helpers.php');
 
 // WhatsApp da Home: substitua pelo número real com 55 + DDD + número, somente dígitos.
 $whatsappNumero = '5512996908833';
@@ -112,7 +112,7 @@ if ($r = $conn->query(
             'nome' => $row['nome_exibido'] ?: $row['nome'],
             'role' => $row['tempo_exibido']
                 ?: onefitTraduzir('Aluno há {tempo}', ['{tempo}' => onefit_tempo_aluno($row['data_cadastro'])]),
-            'foto' => bo_aluno_foto_url($row['foto'] ?? null),
+            'foto' => bo_foto_perfil_url($row['foto'] ?? null),
         ];
     }
 }

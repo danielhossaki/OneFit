@@ -201,6 +201,7 @@ function bo_campos_cadastro_profissional(string $idBase, array $cadastrosLivres)
                 </div>
             </div>
             <small class="text-muted d-block mt-2"><?php echo of_t('O vínculo nunca é feito pela coincidência de e-mail: escolha explicitamente o cadastro.'); ?></small>
+            <small class="text-muted d-block mt-1"><i class="bi bi-calendar2-check"></i> <?php echo of_t('Com o cadastro profissional vinculado, o professor aparece na tela Professores, disponível para agendamentos; lá você define a disponibilidade e os dados profissionais.'); ?></small>
         </fieldset>
     </div>
     <?php
@@ -287,7 +288,7 @@ function bo_modal_funcionario(?array $f, array $cadastrosLivres, string $secao, 
                         <?php if ($mostrarCadastro): ?>
                             <?php bo_campos_cadastro_profissional('funcCadastro' . $sufixo, $cadastrosLivres); ?>
                         <?php else: ?>
-                            <div class="col-12"><small class="text-muted"><i class="bi bi-link-45deg"></i> <?php echo of_t('Cadastro profissional já vinculado a esta conta.'); ?></small></div>
+                            <div class="col-12"><small class="text-muted"><i class="bi bi-link-45deg"></i> <?php echo of_t('Cadastro profissional já vinculado a esta conta.'); ?> <?php echo of_t('Nome, e-mail e celular salvos aqui também atualizam o cadastro profissional; a disponibilidade para agendamentos fica na tela Professores.'); ?></small></div>
                         <?php endif; ?>
 
                         <div class="col-12">
@@ -790,40 +791,46 @@ function bo_modal_plano(?array $p, string $secao): void
 }
 
 /* =======================================================================
- * PROFISSIONAIS
+ * PROFESSORES (regras em includes/professores.php)
  * ===================================================================== */
-function bo_modal_profissional(?array $p, string $secao, array $modalidadesOptions): void
+
+/**
+ * Dados profissionais de um professor. Nome, e-mail, celular e situação da
+ * conta são da tela Funcionários; a disponibilidade tem controle próprio na
+ * lista. A foto atual nunca vai no formulário: só um upload novo a troca.
+ */
+function bo_modal_professor(array $p, string $secao, array $modalidadesOptions): void
 {
-    $isEdit = $p !== null;
-    $modalId = $isEdit ? 'modalProfissionalEditar' . $p['id'] : 'modalProfissionalNovo';
+    $modalId = 'modalProfissionalEditar' . (int) $p['id'];
+    $sufixo = (int) $p['id'];
+    $modalidadesSelecionadas = array_map('trim', explode(',', $p['modalidades']));
     ?>
     <div class="modal fade bo-modal" id="<?php echo $modalId; ?>" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><?php echo of_t($isEdit ? 'Editar profissional' : onefitTraduzir('Novo Profissional')); ?></h5>
+                    <h5 class="modal-title"><?php echo of_t('Dados profissionais de {nome}', ['{nome}' => $p['nome']]); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
                 </div>
                 <form method="POST" action="<?php echo bo_form_action('profissionais.php'); ?>" enctype="multipart/form-data">
                     <div class="modal-body row g-3">
                         <?php echo bo_csrf_field(); ?>
                         <?php echo bo_hidden('secao', $secao); ?>
-                        <?php echo bo_hidden('acao', $isEdit ? 'update' : 'create'); ?>
-                        <?php if ($isEdit): ?><?php echo bo_hidden('id', $p['id']); ?><?php endif; ?>
-                        <?php echo bo_hidden('foto_atual', $p['foto'] ?? ''); ?>
-                        <div class="col-6">
-                            <label class="form-label"><?php echo of_t('Nome'); ?></label>
-                            <input type="text" class="form-control" name="nome" value="<?php echo bo_val($p['nome'] ?? ''); ?>" required>
+                        <?php echo bo_hidden('acao', 'update'); ?>
+                        <?php echo bo_hidden('id', (int) $p['id']); ?>
+                        <div class="col-12">
+                            <small class="text-muted"><i class="bi bi-person-vcard"></i> <?php echo of_t('Nome, e-mail, celular e situação da conta são alterados na tela Funcionários.'); ?></small>
                         </div>
                         <div class="col-6">
-                            <label class="form-label"><?php echo of_t('Função / especialidade'); ?></label>
-                            <input type="text" class="form-control" name="funcao" value="<?php echo bo_val($p['funcao'] ?? ''); ?>" required>
+                            <label class="form-label" for="profEspecialidade<?php echo $sufixo; ?>"><?php echo of_t('Especialidade'); ?></label>
+                            <input type="text" class="form-control" id="profEspecialidade<?php echo $sufixo; ?>" name="especialidade" maxlength="100" value="<?php echo bo_val($p['especialidade']); ?>">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="profDocumento<?php echo $sufixo; ?>"><?php echo of_t('Documento / registro'); ?></label>
+                            <input type="text" class="form-control" id="profDocumento<?php echo $sufixo; ?>" name="documento" maxlength="100" value="<?php echo bo_val($p['documento']); ?>">
                         </div>
                         <div class="col-12">
-                            <label class="form-label"><?php echo of_t('Modalidades ministradas'); ?></label>
-                            <?php
-                            $modalidadesSelecionadas = array_map('trim', explode(',', (string) ($p['modalidades'] ?? '')));
-                            ?>
+                            <span class="form-label d-block"><?php echo of_t('Modalidades ministradas'); ?></span>
                             <div class="bo-checklist">
                                 <?php foreach ($modalidadesOptions as $modalidadeOpt): ?>
                                     <label class="bo-checklist-item">
@@ -833,28 +840,13 @@ function bo_modal_profissional(?array $p, string $secao, array $modalidadesOptio
                                 <?php endforeach; ?>
                             </div>
                         </div>
-                        <div class="col-6">
-                            <label class="form-label"><?php echo of_t('Documento / registro'); ?></label>
-                            <input type="text" class="form-control" name="documento" value="<?php echo bo_val($p['documento'] ?? ''); ?>">
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label"><?php echo of_t('Status'); ?></label>
-                            <select class="form-select" name="status">
-                                <option value="ativo" <?php echo ($p['status'] ?? 'ativo') === 'ativo' ? 'selected' : ''; ?>><?php echo of_t('Ativo'); ?></option>
-                                <option value="inativo" <?php echo ($p['status'] ?? '') === 'inativo' ? 'selected' : ''; ?>><?php echo of_t('Inativo'); ?></option>
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label"><?php echo of_t('E-mail'); ?></label>
-                            <input type="email" class="form-control" name="email" value="<?php echo bo_val($p['email'] ?? ''); ?>" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label"><?php echo of_t('Celular'); ?></label>
-                            <input type="text" class="form-control" name="celular" value="<?php echo bo_val($p['celular'] ?? ''); ?>" placeholder="<?php echo of_t('DDD + número'); ?>" required>
+                        <div class="col-12">
+                            <label class="form-label" for="profDescricao<?php echo $sufixo; ?>"><?php echo of_t('Descrição'); ?></label>
+                            <textarea class="form-control" id="profDescricao<?php echo $sufixo; ?>" name="descricao" rows="3" maxlength="2000"><?php echo bo_val($p['descricao']); ?></textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label"><?php echo of_t('Foto'); ?></label>
-                            <input type="file" class="form-control" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
+                            <label class="form-label" for="profFoto<?php echo $sufixo; ?>"><?php echo of_t('Foto'); ?></label>
+                            <input type="file" class="form-control" id="profFoto<?php echo $sufixo; ?>" name="foto_arquivo" accept="image/png,image/jpeg,image/webp">
                         </div>
                     </div>
                     <div class="modal-footer">

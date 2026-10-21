@@ -70,6 +70,8 @@ hCheck(str_contains($admin->entrar('fixture1@example.test')['location'], 'pages/
 $painel = $admin->req('GET', 'pages/dashboard/dashboard.php');
 hCheck(str_contains($painel['body'], 'data-section="funcionarios"') && str_contains($painel['body'], 'data-bs-target="#modalFuncionarioNovo"'), 'Tela Funcionários com cadastro liberado (migração aplicada)');
 hCheck(str_contains($painel['body'], 'data-bo-table="funcionarios"') && str_contains($painel['body'], 'data-bo-filter="type" data-bo-target="funcionarios"'), 'Busca e filtros de cargo e situação');
+preg_match('#<section class="bo-content-section" data-perfil="admin" data-section="funcionarios">(.*?)</section>#s', $painel['body'], $secaoFuncionarios);
+hCheck(!str_contains($secaoFuncionarios[1] ?? '', 'Disponibilidade em Professores') && !str_contains($secaoFuncionarios[1] ?? '', 'disponivel_agendamento'), 'Disponibilidade de agenda não é duplicada na tela Funcionários');
 hCheck(!str_contains($painel['body'], 'modalFuncionarioEditar2"') && !str_contains($painel['body'], 'modalFuncionarioStatus2"'), 'Conta admin 2 sem ações na tela');
 $token = $admin->csrf();
 

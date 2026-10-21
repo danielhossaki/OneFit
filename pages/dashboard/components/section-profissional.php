@@ -13,9 +13,18 @@ $ofH = static function ($value): string {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 };
 
+require_once __DIR__ . '/../includes/agenda-service.php';
+
 $ofFeedback = null;
 $ofIdUsuario = (int) ($_SESSION['id_usuario'] ?? 0);
 $ofIdProfissional = 0;
+// Situação na agenda (conta, cadastro e disponibilidade definida pela administração), só para avisos.
+$ofSituacaoAgenda = ['recebe' => false, 'motivo' => 'sem_cadastro'];
+$ofMotivosBloqueio = [
+    'indisponivel' => 'A administração marcou você como indisponível para novos agendamentos. Os agendamentos já marcados continuam valendo.',
+    'cadastro_inativo' => 'Seu cadastro profissional está inativo: novos agendamentos estão bloqueados. Os agendamentos já marcados continuam valendo.',
+    'conta_inativa' => 'Sua conta está inativa: novos agendamentos estão bloqueados.',
+];
 $ofAlunosDisponiveis = [];
 $ofAlunosVinculados = [];
 $profAlunos = [];
@@ -42,6 +51,7 @@ try {
         $ofIdProfissional = 0;
     } else {
         $ofIdProfissional = (int) $ofCadastroProfissional['id_profissional'];
+        $ofSituacaoAgenda = bo_professor_situacao_por_id($conn, $ofIdProfissional) ?? $ofSituacaoAgenda;
     }
 
     if ($ofIdProfissional === 0) {
@@ -235,64 +245,47 @@ try {
                 throw new RuntimeException('Preencha corretamente os dados do agendamento.');
             }
 
-            $stmt = $conn->prepare(
-                "SELECT id_vinculo FROM profissional_aluno
-                 WHERE id_profissional = ? AND id_aluno = ? AND status = 'ativo' LIMIT 1"
-            );
-            $stmt->bind_param('ii', $ofIdProfissional, $idAluno);
-            $stmt->execute();
-            $vinculoAtivo = (bool) $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-            if (!$vinculoAtivo) {
-                throw new RuntimeException('Selecione um aluno vinculado e ativo.');
-            }
+            // Mesma trava, transação e regra do professor da agenda do aluno
+            // (bo_agenda_transacao + bo_agenda_inserir): indisponível, cadastro
+            // inativo ou conta inativa não recebem agendamento por aqui também.
+            try {
+                $proximoId = bo_agenda_transacao($conn, static function () use ($conn, $ofIdProfissional, $idAluno, $titulo, $tipo, $dataEvento, $horaInicio, $horaFim, $local, $observacao): int {
+                    $stmt = $conn->prepare(
+                        "SELECT id_vinculo FROM profissional_aluno
+                         WHERE id_profissional = ? AND id_aluno = ? AND status = 'ativo' LIMIT 1"
+                    );
+                    $stmt->bind_param('ii', $ofIdProfissional, $idAluno);
+                    $stmt->execute();
+                    $vinculoAtivo = (bool) $stmt->get_result()->fetch_assoc();
+                    $stmt->close();
+                    if (!$vinculoAtivo) {
+                        throw new RuntimeException('Selecione um aluno vinculado e ativo.');
+                    }
 
-            $stmt = $conn->prepare(
-                "SELECT id_agendamento FROM agendamento
-                 WHERE id_profissional = ? AND data_evento = ? AND hora_inicio = ?
-                   AND status NOT IN ('cancelado','concluido') LIMIT 1"
-            );
-            $stmt->bind_param('iss', $ofIdProfissional, $dataEvento, $horaInicio);
-            $stmt->execute();
-            $conflito = (bool) $stmt->get_result()->fetch_assoc();
-            $stmt->close();
-            if ($conflito) {
-                throw new RuntimeException('Já existe um agendamento nesse horário.');
-            }
+                    $stmt = $conn->prepare(
+                        "SELECT id_agendamento FROM agendamento
+                         WHERE id_profissional = ? AND data_evento = ? AND hora_inicio = ?
+                           AND status NOT IN ('cancelado','concluido') LIMIT 1"
+                    );
+                    $stmt->bind_param('iss', $ofIdProfissional, $dataEvento, $horaInicio);
+                    $stmt->execute();
+                    $conflito = (bool) $stmt->get_result()->fetch_assoc();
+                    $stmt->close();
+                    if ($conflito) {
+                        throw new RuntimeException('Já existe um agendamento nesse horário.');
+                    }
 
-            // Compatível com o dump original, em que id_agendamento não foi
-            // marcado como AUTO_INCREMENT.
-            $proximoId = 1;
-            $resultadoId = $conn->query('SELECT COALESCE(MAX(id_agendamento), 0) + 1 AS proximo FROM agendamento');
-            if ($resultadoId) {
-                $proximoId = (int) ($resultadoId->fetch_assoc()['proximo'] ?? 1);
+                    return bo_agenda_inserir($conn, ['id_usuario' => $idAluno, 'id_profissional' => $ofIdProfissional, 'titulo' => $titulo, 'tipo' => $tipo,
+                        'data_evento' => $dataEvento, 'hora_inicio' => $horaInicio, 'hora_fim' => $horaFim, 'local' => $local,
+                        'observacao' => $observacao, 'status' => 'agendado']);
+                });
+            } catch (AgendamentoRecusado $recusa) {
+                // Recusa pela regra do professor: explica o motivo com a situação atual.
+                $ofSituacaoAgenda = bo_professor_situacao_por_id($conn, $ofIdProfissional) ?? $ofSituacaoAgenda;
+                throw isset($ofMotivosBloqueio[$ofSituacaoAgenda['motivo']]) ? new RuntimeException($ofMotivosBloqueio[$ofSituacaoAgenda['motivo']]) : $recusa;
             }
-
-            $stmt = $conn->prepare(
-                "INSERT INTO agendamento
-                    (id_agendamento, id_usuario, id_profissional, titulo, tipo, data_evento,
-                     hora_inicio, hora_fim, local, observacao, status)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''), 'agendado')"
-            );
-            $stmt->bind_param(
-                'iiisssssss',
-                $proximoId,
-                $idAluno,
-                $ofIdProfissional,
-                $titulo,
-                $tipo,
-                $dataEvento,
-                $horaInicio,
-                $horaFim,
-                $local,
-                $observacao
-            );
-            if (!$stmt->execute()) {
-                throw new RuntimeException('Não foi possível criar o agendamento.');
-            }
-            $stmt->close();
             unset($_SESSION['operacoes_agendamento'][$operacaoAgendamento]);
-            // INSERT concluído em autocommit. A falha secundária não desfaz a aula.
+            // Agendamento já confirmado no banco. A falha secundária não desfaz a aula.
             try {
                 require_once __DIR__ . '/../../../config/notificacoes.php';
                 criarNotificacao($idAluno, 'Agendamento criado',
@@ -548,9 +541,19 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
         <div><h1><?php echo of_t('Agenda'); ?></h1><p><?php echo of_t('Cadastre horários disponíveis e gerencie os agendamentos.'); ?></p></div>
         <div class="bo-actions">
             <button type="button" class="btn-bo-outline" data-bs-toggle="modal" data-bs-target="#ofDisponibilidadeModal"><i class="bi bi-calendar-plus"></i> <?php echo of_t('Horário disponível'); ?></button>
-            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAgendamentoModal"><i class="bi bi-plus-lg"></i> <?php echo of_t('Agendar'); ?></button>
+            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAgendamentoModal" <?php echo $ofSituacaoAgenda['recebe'] ? '' : 'disabled'; ?>><i class="bi bi-plus-lg"></i> <?php echo of_t('Agendar'); ?></button>
         </div>
     </div>
+    <?php if ($ofIdProfissional > 0 && isset($ofMotivosBloqueio[$ofSituacaoAgenda['motivo']])): ?>
+        <!-- Só aviso: quem decide é o servidor (bo_agenda_inserir), em todo agendamento novo. -->
+        <div class="bo-notice is-fixo" data-of-agenda-bloqueada>
+            <i class="bi bi-calendar-x"></i>
+            <div>
+                <strong><?php echo of_t('Novos agendamentos bloqueados'); ?></strong>
+                <span><?php echo of_t($ofMotivosBloqueio[$ofSituacaoAgenda['motivo']]); ?></span>
+            </div>
+        </div>
+    <?php endif; ?>
     <div class="bo-filters"><div class="bo-daterange">
         <?php echo of_t('De'); ?> <input type="date" class="form-control" data-of-date-from>
         <?php echo of_t('até'); ?> <input type="date" class="form-control" data-of-date-to>
@@ -690,7 +693,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                 <div class="col-12"><label class="form-label"><?php echo of_t('Local'); ?></label><input class="form-control" name="local" maxlength="120"></div>
                 <div class="col-12"><label class="form-label"><?php echo of_t('Observação'); ?></label><textarea class="form-control" name="observacao" rows="2" maxlength="255"></textarea></div>
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Agendar'); ?></button></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning" <?php echo $ofSituacaoAgenda['recebe'] ? '' : 'disabled'; ?>><?php echo of_t('Agendar'); ?></button></div>
         </form>
     </div></div>
 </div>

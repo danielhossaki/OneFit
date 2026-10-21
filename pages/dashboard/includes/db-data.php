@@ -117,36 +117,109 @@ function bo_carregar_pagamentos(mysqli $conn): array
     return $pagamentos;
 }
 
-/** Tela "Cashbacks": resumo geral e lançamentos. Retorna ['resumo' => [...], 'transacoes' => [...]]. */
-function bo_carregar_cashbacks(mysqli $conn): array
+/**
+ * Origem de um lançamento de cashback, pela mesma regra que o grava:
+ *  - crédito 'produto' (checkout), 'mensalidade' ou 'uso' (lançamento manual
+ *    ou distribuição em massa do admin): cashback concedido;
+ *  - crédito 'devolucao' (devoluções concluídas): valor do pedido devolvido,
+ *    não é benefício;
+ *  - débito com pedido (checkout, "Uso de cashback no pedido #N"): uso em compra;
+ *  - outro débito (lançamento manual do admin): débito manual.
+ */
+function bo_cashback_origem(string $tipo, string $origem, ?int $pedido): string
 {
-    $cashbackResumo = ['saldoTotal' => 0, 'distribuidos' => 0, 'debitado' => 0, 'creditado' => 0];
-    if ($r = $conn->query("SELECT
-            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE 0 END) AS creditado,
-            SUM(CASE WHEN tipo = 'debito' THEN valor ELSE 0 END) AS debitado
-        FROM cashback WHERE status != 'cancelado'")) {
-        $row = $r->fetch_assoc();
-        $cashbackResumo['creditado'] = (float) $row['creditado'];
-        $cashbackResumo['distribuidos'] = (float) $row['creditado'];
-        $cashbackResumo['debitado'] = (float) $row['debitado'];
-        $cashbackResumo['saldoTotal'] = $cashbackResumo['creditado'] - $cashbackResumo['debitado'];
-    }
+    if ($tipo === 'debito') return $pedido !== null ? 'uso_compra' : 'debito_manual';
+    return ['produto' => 'compra', 'mensalidade' => 'mensalidade', 'devolucao' => 'devolucao'][$origem] ?? 'admin';
+}
 
+function bo_cashback_origem_labels(): array
+{
+    return [
+        'compra' => onefitTraduzir('Cashback de compra'),
+        'mensalidade' => onefitTraduzir('Cashback de mensalidade'),
+        'admin' => onefitTraduzir('Lançamento do admin'),
+        'devolucao' => onefitTraduzir('Devolução de pedido'),
+        'uso_compra' => onefitTraduzir('Uso em compra'),
+        'debito_manual' => onefitTraduzir('Débito manual do admin'),
+    ];
+}
+
+/**
+ * Tela "Cashbacks": indicadores, lançamentos e saldo por cliente, de todos os
+ * clientes (não do usuário logado). Lançamentos cancelados aparecem no
+ * histórico, mas ficam fora dos totais, como no saldo do checkout e do aluno.
+ * O saldo de cada cliente é créditos - débitos; o saldo disponível soma só os
+ * saldos positivos (um saldo negativo não fica disponível para ninguém).
+ * Valores somados em centavos para não acumular erro de ponto flutuante.
+ * $comClientes: inclui o nome do cliente (admin e recepção; o vendedor vê só o ID).
+ */
+function bo_carregar_cashbacks(mysqli $conn, bool $comClientes = false): array
+{
+    $centavos = ['concedido' => 0, 'devolucoes' => 0, 'utilizado' => 0, 'debitosManuais' => 0];
     $cashbackTransacoes = [];
-    $sql = "SELECT id_cashback, data_criacao, tipo, valor, id_usuario, descricao FROM cashback ORDER BY data_criacao DESC";
+    $porCliente = [];
+    $cancelados = 0;
+    $sql = 'SELECT c.id_cashback, c.data_criacao, c.tipo, c.origem, c.status, c.valor, c.id_usuario, c.descricao,
+                   d.id_pedido AS pedido_devolucao' . ($comClientes ? ', u.nome AS cliente' : '') . '
+            FROM cashback c
+            LEFT JOIN pedido_devolucao d ON d.id_cashback = c.id_cashback'
+        . ($comClientes ? ' LEFT JOIN usuarios u ON u.id_usuario = c.id_usuario' : '')
+        . ' ORDER BY c.data_criacao DESC, c.id_cashback DESC';
     if ($r = $conn->query($sql)) {
         while ($row = $r->fetch_assoc()) {
+            $usuarioId = (int) $row['id_usuario'];
+            $pedido = $row['pedido_devolucao'] !== null ? (int) $row['pedido_devolucao'] : bo_cashback_pedido_relacionado((string) $row['descricao']);
+            $origem = bo_cashback_origem($row['tipo'], $row['origem'], $pedido);
+            $cancelado = $row['status'] === 'cancelado';
+            $valorCentavos = (int) round((float) $row['valor'] * 100);
             $cashbackTransacoes[] = [
                 'id' => (int) $row['id_cashback'],
                 'data' => $row['data_criacao'],
                 'tipo' => $row['tipo'],
                 'valor' => (float) $row['valor'],
-                'usuarioId' => (int) $row['id_usuario'],
+                'usuarioId' => $usuarioId,
+                'cliente' => $comClientes ? ($row['cliente'] ?? '') : null,
                 'motivo' => $row['descricao'],
+                'origem' => $origem,
+                'pedido' => $pedido,
+                'cancelado' => $cancelado,
             ];
+            $porCliente[$usuarioId] ??= ['usuarioId' => $usuarioId, 'cliente' => $comClientes ? ($row['cliente'] ?? '') : null,
+                'creditos' => 0, 'debitos' => 0, 'movimentos' => 0, 'ultima' => $row['data_criacao']];
+            $porCliente[$usuarioId]['movimentos']++;
+            if ($cancelado) {
+                $cancelados++;
+                continue;
+            }
+            $porCliente[$usuarioId][$row['tipo'] === 'credito' ? 'creditos' : 'debitos'] += $valorCentavos;
+            $centavos[['compra' => 'concedido', 'mensalidade' => 'concedido', 'admin' => 'concedido', 'devolucao' => 'devolucoes',
+                'uso_compra' => 'utilizado', 'debito_manual' => 'debitosManuais'][$origem]] += $valorCentavos;
         }
     }
-    return ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes];
+
+    $saldoDisponivel = 0;
+    $saldoNegativo = 0;
+    $clientesComSaldo = 0;
+    $clientesSaldoNegativo = 0;
+    foreach ($porCliente as &$cliente) {
+        $saldo = $cliente['creditos'] - $cliente['debitos'];
+        if ($saldo > 0) { $saldoDisponivel += $saldo; $clientesComSaldo++; }
+        if ($saldo < 0) { $saldoNegativo += $saldo; $clientesSaldoNegativo++; }
+        $cliente = ['creditos' => $cliente['creditos'] / 100, 'debitos' => $cliente['debitos'] / 100, 'saldo' => $saldo / 100] + $cliente;
+    }
+    unset($cliente);
+    $clientes = array_values($porCliente);
+    usort($clientes, static fn(array $a, array $b): int => [$b['saldo'], $a['usuarioId']] <=> [$a['saldo'], $b['usuarioId']]);
+
+    $cashbackResumo = array_map(static fn(int $c): float => $c / 100, $centavos) + [
+        'saldoDisponivel' => $saldoDisponivel / 100,
+        'saldoNegativo' => $saldoNegativo / 100,
+        'clientesComSaldo' => $clientesComSaldo,
+        'clientesSaldoNegativo' => $clientesSaldoNegativo,
+        'movimentos' => count($cashbackTransacoes),
+        'cancelados' => $cancelados,
+    ];
+    return ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes, 'clientes' => $clientes];
 }
 
 /** Tela "Categorias"; $somenteAtivas para quem só consulta as categorias usadas no cadastro de produtos. */
@@ -187,47 +260,74 @@ if ($perfilLogado === 'admin') {
 
     // Cards da tela "Dashboard"
     $admDashboard = [
-        'usuariosAtivos' => 0, 'usuariosNovosMes' => 0,
+        'alunosTotal' => 0, 'alunosAtivos' => 0, 'alunosInativos' => 0, 'alunosNovosMes' => 0,
+        'funcionariosAtivos' => 0, 'funcionariosInativos' => 0,
+        'matriculasAtivas' => 0, 'matriculasVencidas' => 0, 'matriculasPendentes' => 0,
+        'pagamentosPendentes' => 0,
         'saldoDia' => 0, 'saldoSemana' => 0, 'saldoMes' => 0, 'saldoAno' => 0,
         'cashbackDia' => 0, 'cashbackSemana' => 0, 'cashbackMes' => 0, 'cashbackAno' => 0,
         'acessosLiberados' => 0, 'acessosBloqueados' => 0, 'totalUsuarios' => 0,
-        'profissionaisAtivos' => 0, 'profissionaisPendentes' => 0,
+        'profissionaisAtivos' => 0, 'profissionaisAgendaveis' => 0, 'profissionaisIndisponiveis' => 0,
+        'agendamentosProximos' => 0, 'agendamentosConcluidos' => 0, 'agendamentosCancelados' => 0,
     ];
 
     if ($r = $conn->query("SELECT
-            SUM(status = 'ativo') AS usuarios_ativos,
+            SUM(tipo_usuario = 'aluno') AS alunos_total,
+            SUM(tipo_usuario = 'aluno' AND status = 'ativo') AS alunos_ativos,
+            SUM(tipo_usuario = 'aluno' AND status <> 'ativo') AS alunos_inativos,
+            SUM(tipo_usuario = 'aluno' AND data_cadastro >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS alunos_novos_mes,
+            SUM(tipo_usuario <> 'aluno' AND status = 'ativo') AS funcionarios_ativos,
+            SUM(tipo_usuario <> 'aluno' AND status <> 'ativo') AS funcionarios_inativos,
             SUM(status != 'bloqueado') AS acessos_liberados,
             SUM(status = 'bloqueado') AS acessos_bloqueados,
-            SUM(data_cadastro >= DATE_FORMAT(CURDATE(), '%Y-%m-01')) AS usuarios_novos_mes,
             COUNT(*) AS total
         FROM usuarios")) {
         $row = $r->fetch_assoc();
-        $admDashboard['usuariosAtivos'] = (int) $row['usuarios_ativos'];
+        $admDashboard['alunosTotal'] = (int) $row['alunos_total'];
+        $admDashboard['alunosAtivos'] = (int) $row['alunos_ativos'];
+        $admDashboard['alunosInativos'] = (int) $row['alunos_inativos'];
+        $admDashboard['alunosNovosMes'] = (int) $row['alunos_novos_mes'];
+        $admDashboard['funcionariosAtivos'] = (int) $row['funcionarios_ativos'];
+        $admDashboard['funcionariosInativos'] = (int) $row['funcionarios_inativos'];
         $admDashboard['acessosLiberados'] = (int) $row['acessos_liberados'];
         $admDashboard['acessosBloqueados'] = (int) $row['acessos_bloqueados'];
-        $admDashboard['usuariosNovosMes'] = (int) $row['usuarios_novos_mes'];
         $admDashboard['totalUsuarios'] = (int) $row['total'];
     }
 
     if ($r = $conn->query("SELECT
-            SUM(CASE WHEN DATE(data_pagamento) = CURDATE() THEN valor ELSE 0 END) AS dia,
-            SUM(CASE WHEN YEARWEEK(data_pagamento, 1) = YEARWEEK(CURDATE(), 1) THEN valor ELSE 0 END) AS semana,
-            SUM(CASE WHEN YEAR(data_pagamento) = YEAR(CURDATE()) AND MONTH(data_pagamento) = MONTH(CURDATE()) THEN valor ELSE 0 END) AS mes,
-            SUM(CASE WHEN YEAR(data_pagamento) = YEAR(CURDATE()) THEN valor ELSE 0 END) AS ano
-        FROM pagamento WHERE status = 'aprovado'")) {
+            SUM(status = 'ativa' AND data_inicio <= CURDATE() AND data_fim >= CURDATE()) AS ativas,
+            SUM(status = 'vencida' OR (status = 'ativa' AND data_fim < CURDATE())) AS vencidas,
+            SUM(status = 'pendente') AS pendentes
+        FROM matricula")) {
+        $row = $r->fetch_assoc();
+        $admDashboard['matriculasAtivas'] = (int) $row['ativas'];
+        $admDashboard['matriculasVencidas'] = (int) $row['vencidas'];
+        $admDashboard['matriculasPendentes'] = (int) $row['pendentes'];
+    }
+
+    if ($r = $conn->query("SELECT
+            SUM(CASE WHEN status = 'aprovado' AND DATE(data_pagamento) = CURDATE() THEN valor ELSE 0 END) AS dia,
+            SUM(CASE WHEN status = 'aprovado' AND YEARWEEK(data_pagamento, 1) = YEARWEEK(CURDATE(), 1) THEN valor ELSE 0 END) AS semana,
+            SUM(CASE WHEN status = 'aprovado' AND YEAR(data_pagamento) = YEAR(CURDATE()) AND MONTH(data_pagamento) = MONTH(CURDATE()) THEN valor ELSE 0 END) AS mes,
+            SUM(CASE WHEN status = 'aprovado' AND YEAR(data_pagamento) = YEAR(CURDATE()) THEN valor ELSE 0 END) AS ano,
+            SUM(status IN ('pendente', 'atrasado')) AS pendentes
+        FROM pagamento WHERE status = 'aprovado' OR status IN ('pendente', 'atrasado')")) {
         $row = $r->fetch_assoc();
         $admDashboard['saldoDia'] = (float) $row['dia'];
         $admDashboard['saldoSemana'] = (float) $row['semana'];
         $admDashboard['saldoMes'] = (float) $row['mes'];
         $admDashboard['saldoAno'] = (float) $row['ano'];
+        $admDashboard['pagamentosPendentes'] = (int) $row['pendentes'];
     }
 
     if ($r = $conn->query("SELECT
-            SUM(CASE WHEN DATE(data_criacao) = CURDATE() THEN valor ELSE 0 END) AS dia,
-            SUM(CASE WHEN YEARWEEK(data_criacao, 1) = YEARWEEK(CURDATE(), 1) THEN valor ELSE 0 END) AS semana,
-            SUM(CASE WHEN YEAR(data_criacao) = YEAR(CURDATE()) AND MONTH(data_criacao) = MONTH(CURDATE()) THEN valor ELSE 0 END) AS mes,
-            SUM(CASE WHEN YEAR(data_criacao) = YEAR(CURDATE()) THEN valor ELSE 0 END) AS ano
-        FROM cashback WHERE tipo = 'credito'")) {
+            SUM(CASE WHEN DATE(c.data_criacao) = CURDATE() THEN c.valor ELSE 0 END) AS dia,
+            SUM(CASE WHEN YEARWEEK(c.data_criacao, 1) = YEARWEEK(CURDATE(), 1) THEN c.valor ELSE 0 END) AS semana,
+            SUM(CASE WHEN YEAR(c.data_criacao) = YEAR(CURDATE()) AND MONTH(c.data_criacao) = MONTH(CURDATE()) THEN c.valor ELSE 0 END) AS mes,
+            SUM(CASE WHEN YEAR(c.data_criacao) = YEAR(CURDATE()) THEN c.valor ELSE 0 END) AS ano
+        FROM cashback c LEFT JOIN pedido_devolucao d ON d.id_cashback = c.id_cashback
+        WHERE c.tipo = 'credito' AND COALESCE(c.origem, '') <> 'devolucao'
+          AND COALESCE(c.status, '') <> 'cancelado' AND d.id_cashback IS NULL")) {
         $row = $r->fetch_assoc();
         $admDashboard['cashbackDia'] = (float) $row['dia'];
         $admDashboard['cashbackSemana'] = (float) $row['semana'];
@@ -236,12 +336,14 @@ if ($perfilLogado === 'admin') {
     }
 
     if ($r = $conn->query("SELECT
-            SUM(status = 'ativo') AS ativos,
-            SUM(status = 'inativo') AS pendentes
-        FROM cadastro_profissional")) {
+            SUM(status IN ('agendado', 'confirmado') AND TIMESTAMP(data_evento, hora_inicio) BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY)) AS proximos,
+            SUM(status = 'concluido' AND data_evento BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE()) AS concluidos,
+            SUM(status = 'cancelado' AND data_evento BETWEEN DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND CURDATE()) AS cancelados
+        FROM agendamento")) {
         $row = $r->fetch_assoc();
-        $admDashboard['profissionaisAtivos'] = (int) $row['ativos'];
-        $admDashboard['profissionaisPendentes'] = (int) $row['pendentes'];
+        $admDashboard['agendamentosProximos'] = (int) $row['proximos'];
+        $admDashboard['agendamentosConcluidos'] = (int) $row['concluidos'];
+        $admDashboard['agendamentosCancelados'] = (int) $row['cancelados'];
     }
 
     // Tela "Comentários": depoimentos enviados pelos alunos (tabela ausente
@@ -301,7 +403,7 @@ if ($perfilLogado === 'admin') {
 
     // Telas "Pagamentos", "Cashbacks" e "Categorias"
     $pagamentos = bo_carregar_pagamentos($conn);
-    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes, 'clientes' => $cashbackClientes] = bo_carregar_cashbacks($conn, true);
     $categorias = bo_carregar_categorias($conn);
     $categoriasAtivasOptions = array_values(array_map(
         static fn(array $c): string => $c['nome'],
@@ -366,39 +468,26 @@ if ($perfilLogado === 'admin') {
     $modalidadesAdm = bo_carregar_modalidades($conn);
     $modalidadesOptions = array_map(static fn(array $m): string => $m['nome'], $modalidadesAdm);
 
-    // Tela "Profissionais"
-    $profissionaisAdm = [];
+    // Tela "Professores" (seção "profissionais"; includes/professores.php): contas com
+    // cargo professor e cadastro profissional vinculado. Falha de leitura deixa a
+    // tela sem dados e sem nenhuma ação de gravação.
+    require_once __DIR__ . '/professores.php';
+    $professores = [];
+    $professoresMigracao = false;
+    $professoresPendencias = ['semCadastro' => 0, 'semConta' => 0];
+    $professoresErro = false;
     try {
-        $sql = "SELECT id_profissional, nome, especialidade, modalidades, registro_profissional, status, email, celular, descricao, foto
-                FROM cadastro_profissional ORDER BY nome";
-        $r = $conn->query($sql);
-    } catch (\mysqli_sql_exception $e) {
-        // Coluna "modalidades" ainda não existe neste banco (migração
-        // modalidades-profissional-migration.sql pendente): consulta sem ela.
-        $sql = "SELECT id_profissional, nome, especialidade, registro_profissional, status, email, celular, descricao, foto
-                FROM cadastro_profissional ORDER BY nome";
-        $r = $conn->query($sql);
+        $professoresMigracao = bo_professores_migracao($conn);
+        $professores = bo_professores_listar($conn);
+        $professoresPendencias = bo_professores_pendencias($conn);
+    } catch (Throwable $erroProfessores) {
+        error_log('ONE FIT: falha ao carregar professores. Código: ' . $erroProfessores->getCode());
+        $professores = [];
+        $professoresErro = true;
     }
-    if ($r) {
-        while ($row = $r->fetch_assoc()) {
-            $profissionaisAdm[] = [
-                'id' => (int) $row['id_profissional'],
-                'nome' => $row['nome'],
-                'funcao' => $row['especialidade'],
-                'tituloCard' => $row['especialidade'],
-                'modalidades' => $row['modalidades'] ?? '',
-                'documento' => $row['registro_profissional'],
-                'status' => $row['status'],
-                'email' => $row['email'],
-                'telefone' => $row['celular'],
-                'celular' => $row['celular'],
-                'descricao' => $row['descricao'],
-                'experiencia' => '',
-                'foto' => $row['foto'],
-                'observacaoInterna' => '',
-            ];
-        }
-    }
+    $admDashboard['profissionaisAtivos'] = count(array_filter($professores, static fn(array $p): bool => $p['conta'] === 'ativo'));
+    $admDashboard['profissionaisAgendaveis'] = count(array_filter($professores, static fn(array $p): bool => $p['agenda']['recebe']));
+    $admDashboard['profissionaisIndisponiveis'] = count($professores) - $admDashboard['profissionaisAgendaveis'];
 }
 
 /* =======================================================================
@@ -632,7 +721,8 @@ if ($perfilLogado === 'vendedor') {
     // ou lançamentos de cashback continua exclusivo do admin.
     $categorias = bo_carregar_categorias($conn, true);
     $categoriasAtivasOptions = array_column($categorias, 'nome');
-    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
+    // Sem o nome dos clientes: o vendedor continua vendo só o ID de cada lançamento.
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes, 'clientes' => $cashbackClientes] = bo_carregar_cashbacks($conn);
     // Só para exibir o nome da transportadora escolhida em cada venda — o
     // cadastro de transportadoras em si é exclusivo do admin (globais).
     $transportadorasAtivas = array_values(array_filter(
@@ -643,15 +733,17 @@ if ($perfilLogado === 'vendedor') {
 
 /* =======================================================================
  * PERFIL: RECEPÇÃO
- * Alunos, Pagamentos, Modalidades e Cashback: só consulta (as rotas de
- * gravação continuam exclusivas do admin). O cadastro facial lê os
- * próprios dados em components/section-fotos-faciais.php.
+ * Alunos, Pagamentos, Modalidades, Cashback dos clientes e Pedidos do
+ * Marketplace: só consulta (as rotas de gravação continuam exclusivas do
+ * admin e do vendedor). O cadastro facial lê os próprios dados em
+ * components/section-fotos-faciais.php.
  * ===================================================================== */
 if ($perfilLogado === 'recepcionista') {
     $usuarios = bo_carregar_alunos($conn);
     $pagamentos = bo_carregar_pagamentos($conn);
-    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes, 'clientes' => $cashbackClientes] = bo_carregar_cashbacks($conn, true);
     $modalidadesAdm = bo_carregar_modalidades($conn);
+    $recepcaoPedidos = bo_carregar_pedidos_consulta($conn);
 }
 
 /**

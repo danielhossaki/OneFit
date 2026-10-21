@@ -15,7 +15,7 @@ As regras ficam em `config/papeis.php` (`onefitAvaliarCadastroFacial`) e são co
 
 - **Contas administrativas** (`admin` e `diretor`, inclusive a do próprio operador) só podem ser fotografadas por um **Diretor** ativo, o cargo que substituiu a lista restrita das decisões D2 e P6. Para admin e recepcionista, elas não aparecem na busca e o POST direto é recusado. As fotos já existentes continuam no banco.
 - Pessoa inexistente, inativa, de cargo desconhecido ou administrativa (para quem não é diretor) recebe a mesma resposta (404), sem revelar o motivo.
-- A recepcionista opera pelo **painel da recepção** (cadastro facial; Alunos, Pagamentos, Modalidades e Cashback só para consulta; configurações da própria conta; ver [funcionarios.md](funcionarios.md)). O servidor aplica as regras dela a cada requisição: nunca contas admin nem pessoas inativas. As rotas de gravação do admin continuam recusadas para ela.
+- A recepcionista opera pelo **painel da recepção** (Agendamentos; cadastro facial; Alunos, Pagamentos, Modalidades e Cashback só para consulta; configurações da própria conta; ver [funcionarios.md](funcionarios.md)). O servidor aplica as regras dela a cada requisição: nunca contas admin nem pessoas inativas. As rotas de gravação administrativa continuam recusadas para ela, exceto os fluxos explícitos de agendamento e consulta de cashback por CPF.
 - A foto não dá login nem muda a regra da catraca: a faxineira fotografada continua sem painel.
 - A busca lista só quem o operador pode fotografar. Nome, CPF e ID são pesquisáveis; o CPF não é enviado à interface.
 - A câmera exige HTTPS ou `localhost` e permissão no navegador.

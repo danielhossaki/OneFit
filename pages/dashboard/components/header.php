@@ -7,13 +7,9 @@
  *  - dropdown para alternar entre os perfis Administrador/Profissional/Aluno
  *    (usado para visualizar/testar as 3 telas sem precisar logar com 3
  *    contas diferentes; o item ativo é preenchido pelo JS em boRenderPerfilMenu())
- *  - avatar com a foto salva do aluno ou a inicial do perfil atual
+ *  - avatar com a foto salva da conta autenticada ou a inicial do perfil atual
  */
-$fotoAvatarAluno = '';
-if ($perfilLogado === 'aluno') {
-    require_once __DIR__ . '/../includes/aluno-profile.php';
-    $fotoAvatarAluno = bo_aluno_foto_url($usuarioDashboard['foto'] ?? null);
-}
+$fotoAvatar = bo_foto_perfil_url($usuarioDashboard['foto'] ?? null);
 ?>
 <header class="bo-header">
     <div class="d-flex align-items-center gap-2">
@@ -49,10 +45,10 @@ if ($perfilLogado === 'aluno') {
             </section>
         </div>
         <div class="bo-user-menu-wrap" id="boUserMenuWrap">
-            <button class="bo-avatar<?php echo $perfilLogado === 'aluno' ? ' bo-student-avatar' : ''; ?>" id="boAvatar" type="button" aria-label="<?php echo of_t('Abrir menu do usuário'); ?>" aria-expanded="false" aria-controls="boUserMenu">
+            <button class="bo-avatar bo-profile-avatar" id="boAvatar" type="button" aria-label="<?php echo of_t('Abrir menu do usuário'); ?>" aria-expanded="false" aria-controls="boUserMenu">
                 <?php echo htmlspecialchars(strtoupper(substr($_SESSION['nome'] ?? $perfilLogado, 0, 1)), ENT_QUOTES, 'UTF-8'); ?>
-                <?php if ($fotoAvatarAluno): ?>
-                    <img src="<?php echo htmlspecialchars($fotoAvatarAluno, ENT_QUOTES, 'UTF-8'); ?>" alt="" data-student-photo>
+                <?php if ($fotoAvatar): ?>
+                    <img src="<?php echo htmlspecialchars($fotoAvatar, ENT_QUOTES, 'UTF-8'); ?>" alt="" data-bo-profile-avatar>
                 <?php endif; ?>
             </button>
             <div class="bo-user-menu" id="boUserMenu" role="menu" aria-hidden="true">

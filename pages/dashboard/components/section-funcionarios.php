@@ -96,18 +96,7 @@ $idOperadorTela = (int) ($_SESSION['id_usuario'] ?? 0);
                             <td>#<?php echo str_pad((string) $f['id'], 4, '0', STR_PAD_LEFT); ?></td>
                             <td><?php echo bo_val($f['nome']); ?></td>
                             <td><?php echo bo_val($f['email']); ?></td>
-                            <td>
-                                <?php echo of_t($rotulosCargo[$f['tipo']] ?? 'Desconhecido'); ?>
-                                <?php if ($f['cargo'] === 'professor'): ?>
-                                    <br><small class="text-muted">
-                                        <?php if ($f['cadastros'] === 0): ?>
-                                            <?php echo of_t('Sem cadastro profissional'); ?>
-                                        <?php else: ?>
-                                            <?php echo of_t($f['cadastrosAtivos'] > 0 ? 'Cadastro profissional ativo' : 'Cadastro profissional inativo'); ?>
-                                        <?php endif; ?>
-                                    </small>
-                                <?php endif; ?>
-                            </td>
+                            <td><?php echo of_t($rotulosCargo[$f['tipo']] ?? 'Desconhecido'); ?></td>
                             <td><?php echo bo_badge($f['status'] === 'ativo', 'Ativo', $rotulosStatus[$f['status']] ?? 'Inativo'); ?></td>
                             <td>
                                 <?php echo of_t($f['painel'] ? 'Sim' : 'Não'); ?>

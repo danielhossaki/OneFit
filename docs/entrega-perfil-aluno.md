@@ -1,7 +1,7 @@
 Arquivos completos da atualização do perfil do aluno
 ==================================================
 
-As alterações já estão aplicadas no projeto. Para copiá-las para outra instalação, substitua ou crie cada arquivo no caminho indicado, relativo à raiz `OneFit`. O documento `entrega-perfil-aluno.md` reúne o conteúdo completo de cada arquivo, incluindo CSS, JavaScript, modal e backend.
+Registro da implementação inicial do perfil do aluno. Os trechos completos abaixo são um retrato histórico; use os arquivos atuais do projeto como fonte de verdade. A foto de perfil é resolvida em `pages/dashboard/includes/helpers.php` e exibida no cabeçalho para todos os cargos com acesso ao painel, a partir de `usuarios.foto`. As fotos faciais da catraca continuam separadas.
 
 Arquivos e responsabilidades:
 
@@ -10,15 +10,18 @@ Arquivos e responsabilidades:
 - `pages/dashboard/components/modal-student-profile.php`: formulário completo de edição com os campos pessoais existentes, altura, peso e foto.
 - `assets/css/student-profile.css`: estilo escuro e dourado, layout responsivo e rolagem do modal, limitado aos componentes do aluno.
 - `assets/js/student-profile.js`: cálculo instantâneo do IMC, validação, prévia e envio da foto.
-- `pages/dashboard/includes/aluno-profile.php`: normalização, cálculo PHP, classificação e validação do upload.
-- `pages/dashboard/actions/update-profile.php`: grava os dados ou apenas a foto do aluno autenticado usando a conexão, sessão, CSRF e UPDATE existentes.
+- `pages/dashboard/includes/aluno-profile.php`: normalização, cálculo PHP e classificação do IMC do aluno.
+- `pages/dashboard/includes/helpers.php`: resolução segura da foto de perfil e validação compartilhada do upload.
+- `pages/dashboard/actions/update-profile.php`: grava os dados ou apenas a foto do aluno autenticado usando a conexão, sessão, CSRF e UPDATE existentes; o formulário geral mantém a mesma coluna da foto para os demais cargos.
 - `pages/dashboard/actions/_shared.php`: após uma atualização do aluno, retorna à seção Meu perfil; mantém os outros redirecionamentos.
+
+O cabeçalho consulta a foto carregada da conta autenticada para aluno, recepcionista, professor/profissional, vendedor, administrador e diretor. A fotografia facial usada pela catraca não é consultada nesse fluxo.
 
 Banco de dados: não executar migração. A consulta ao banco confirmou `usuarios.altura DECIMAL(5,2)`, `usuarios.peso DECIMAL(5,2)` e `usuarios.foto VARCHAR(255)`. Altura e peso são normalizados para duas casas decimais, em conformidade com as colunas. IMC e classificação são calculados no PHP e não recebem colunas duplicadas.
 
 Fotos: JPG/JPEG, PNG e WEBP, até 3 MB e 40 megapixels. O backend verifica o upload recebido, a extensão, o MIME e as dimensões antes de usar o gravador existente. O arquivo fica em `assets/img/uploads/perfil/`, com nome aleatório; o caminho é persistido em `usuarios.foto`. A nova foto substitui a referência anterior na conta. Os arquivos antigos permanecem no diretório. Não é necessário alterar as configurações de upload já existentes no projeto.
 
-Salvar envia um POST e redireciona para Meu perfil, recarregando os dados do banco com o modal fechado. Campos vazios geram IMC “Não informado”; valores inválidos são recusados pelo backend. A classificação usa as faixas para adultos solicitadas e o IMC aparece com uma casa decimal.
+Salvar envia um POST e redireciona, recarregando os dados do banco e atualizando o avatar sem novo login. O nome de arquivo aleatório evita reutilizar o cache da foto anterior. Quando a imagem está ausente ou falha ao carregar, o cabeçalho mantém a inicial do usuário. Campos vazios geram IMC “Não informado”; valores inválidos são recusados pelo backend. A classificação usa as faixas para adultos solicitadas e o IMC aparece com uma casa decimal.
 
 Validação executada:
 

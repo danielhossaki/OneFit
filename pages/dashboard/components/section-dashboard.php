@@ -10,7 +10,7 @@ $boSections = [
         'categorias' => ['Categorias', 'As categorias cadastradas aparecerão aqui quando a integração com o banco estiver disponível.', 'bi-tags'],
         'produtos' => ['Produtos', 'Os produtos cadastrados aparecerão aqui quando a integração com o banco estiver disponível.', 'bi-box-seam'],
         'planos' => ['Cadastro de planos', 'Os planos cadastrados aparecerão aqui quando a integração com o banco estiver disponível.', 'bi-clipboard-check'],
-        'profissionais' => ['Profissionais', 'A equipe cadastrada aparecerá aqui quando a integração com o banco estiver disponível.', 'bi-person-badge'],
+        'profissionais' => ['Professores', 'A equipe cadastrada aparecerá aqui quando a integração com o banco estiver disponível.', 'bi-person-badge'],
     ],
     'profissional' => [
         'dashboard' => ['Dashboard', 'Acompanhe sua rotina com informações que vêm diretamente do sistema.', 'bi-speedometer2'],

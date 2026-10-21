@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../includes/aluno-profile.php';
 require_once __DIR__ . '/modal-student-profile.php';
 $imcAluno = bo_aluno_imc($usuarioDashboard['altura'], $usuarioDashboard['peso']);
-$fotoAluno = bo_aluno_foto_url($usuarioDashboard['foto']);
-$fotoAmpliavel = bo_aluno_foto_ampliavel($usuarioDashboard['foto']);
+$fotoAluno = bo_foto_perfil_url($usuarioDashboard['foto']);
+$fotoAmpliavel = bo_foto_perfil_ampliavel($usuarioDashboard['foto']);
 $resumoAluno = [
     ['Gênero', onefitTraduzir(ucfirst($usuarioDashboard['genero'] ?: 'Não informado')), 'bi-person'],
     ['Altura', bo_aluno_medida($usuarioDashboard['altura'], 3) ? number_format((float) $usuarioDashboard['altura'], 2, ',', '.') . ' m' : onefitTraduzir('Não informado'), 'bi-rulers'],

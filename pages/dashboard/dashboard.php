@@ -121,22 +121,18 @@ try {
 
 require __DIR__ . '/includes/db-data.php';
 
-// Busca de profissionais no header: usa a equipe cadastrada no banco
-// (populada em includes/db-data.php só para o perfil admin) ou consulta
-// direta para os demais perfis, restrita aos ativos.
-if ($perfilLogado === 'admin') {
-    $profissionaisPesquisa = array_values(array_map(
-        static fn(array $profissional): array => [
-            'id' => (int) $profissional['id'],
-            'nome' => $profissional['nome'],
-            'funcao' => $profissional['funcao'],
-            'especialidade' => $profissional['tituloCard'],
-        ],
-        array_filter($profissionaisAdm, static fn(array $profissional): bool => $profissional['status'] === 'ativo')
-    ));
-} else {
-    $profissionaisPesquisa = [];
-    $rBusca = $conn->query("SELECT id_profissional, nome, especialidade FROM cadastro_profissional WHERE status = 'ativo' ORDER BY nome");
+// Busca de professores no header (todos os perfis): contas com cargo
+// professor, ativas e com cadastro profissional ativo. É só a consulta do
+// perfil; a disponibilidade vale para a agenda (includes/agenda-service.php).
+require_once __DIR__ . '/includes/professores.php';
+$profissionaisPesquisa = [];
+try {
+    $rBusca = $conn->query(
+        'SELECT cp.id_profissional, cp.nome, cp.especialidade
+         FROM cadastro_profissional cp JOIN usuarios u ON u.id_usuario = cp.id_usuario
+         WHERE u.tipo_usuario IN (' . bo_professores_cargos_sql($conn) . ") AND u.status = 'ativo' AND cp.status = 'ativo'
+         ORDER BY cp.nome, cp.id_profissional"
+    );
     while ($rowBusca = $rBusca->fetch_assoc()) {
         $profissionaisPesquisa[] = [
             'id' => (int) $rowBusca['id_profissional'],
@@ -145,6 +141,9 @@ if ($perfilLogado === 'admin') {
             'especialidade' => $rowBusca['especialidade'],
         ];
     }
+} catch (Throwable $erroBusca) {
+    error_log('ONE FIT: falha ao carregar a busca de professores. Código: ' . $erroBusca->getCode());
+    $profissionaisPesquisa = [];
 }
 ?>
 
@@ -189,7 +188,8 @@ if ($perfilLogado === 'admin') {
         <?php if (!empty($_SESSION['bo_flash'])): ?>
             <?php $boFlash = $_SESSION['bo_flash'];
             unset($_SESSION['bo_flash']); ?>
-            <div class="bo-notice" style="<?php echo $boFlash['type'] === 'error' ? 'border-color:#dc3545;' : ''; ?>">
+            <div class="bo-notice bo-notice-flash<?php echo $boFlash['type'] === 'error' ? ' is-error' : ''; ?>"
+                role="<?php echo $boFlash['type'] === 'error' ? 'alert' : 'status'; ?>" aria-live="<?php echo $boFlash['type'] === 'error' ? 'assertive' : 'polite'; ?>">
                 <i class="bi <?php echo $boFlash['type'] === 'error' ? 'bi-exclamation-triangle' : 'bi-check-circle'; ?>"></i>
                 <div><span><?php echo of_t($boFlash['text']); ?></span></div>
             </div>

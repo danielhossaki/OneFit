@@ -538,6 +538,17 @@ function bo_funcionario_atualizar(mysqli $conn, int $idOperador, int $id, array 
                 $alteracoes['cadastro_profissional'] = bo_funcionario_vincular($conn, $id, $dados, bo_funcionario_vinculo_entrada($entrada));
             }
         }
+        // Nome, e-mail e celular do professor vêm da conta: o cadastro profissional
+        // vinculado (exibido na agenda e na tela Professores) acompanha a edição.
+        if ($dados['cargo'] === 'professor') {
+            $stmt = $conn->prepare('UPDATE cadastro_profissional SET nome = ?, email = ?, celular = ? WHERE id_usuario = ?');
+            $stmt->bind_param('sssi', $dados['nome'], $dados['email'], $dados['celular'], $id);
+            bo_funcionario_executar_unico($stmt, 'Já existe outro cadastro profissional com este e-mail. Nenhuma alteração foi feita.');
+            if ($stmt->affected_rows > 0) {
+                $alteracoes['cadastro_profissional_sincronizado'] = true;
+            }
+            $stmt->close();
+        }
 
         bo_auditoria_registrar($conn, 'editar', $idOperador, $id, ['alteracoes' => $alteracoes]);
         return ['email_alterado' => $emailAlterado];

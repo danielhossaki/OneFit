@@ -276,6 +276,21 @@ body {
     flex-shrink: 0;
 }
 
+.bo-profile-avatar {
+    position: relative;
+    overflow: hidden;
+    padding: 0;
+}
+
+.bo-profile-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
 .bo-avatar:focus-visible,
 .bo-search-result:focus-visible {
     outline: 3px solid rgba(var(--accent-rgb, 212,175,55), .42);
@@ -711,6 +726,7 @@ body {
 
 /* Aviso/banner de destaque (ex: "esta tela ainda usa dados de exemplo") */
 .bo-notice {
+    --bo-notice-padding-block: 17px;
     align-items: flex-start;
     background: linear-gradient(110deg, rgba(var(--accent-rgb, 212,175,55), .13), rgba(var(--accent-rgb, 212,175,55), .035));
     border: 1px solid rgba(var(--accent-rgb, 212,175,55), .28);
@@ -725,16 +741,39 @@ body {
     animation: bo-notice-fade 6s ease-in forwards;
     overflow: hidden;
 }
+.bo-notice.is-error { border-color: #dc3545; }
 
 @keyframes bo-notice-fade {
-    0% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
-    80% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: 17px; padding-bottom: 17px; }
+    0% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: var(--bo-notice-padding-block, 17px); padding-bottom: var(--bo-notice-padding-block, 17px); }
+    80% { opacity: 1; max-height: 200px; margin-bottom: 18px; padding-top: var(--bo-notice-padding-block, 17px); padding-bottom: var(--bo-notice-padding-block, 17px); }
     100% { opacity: 0; max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; border-width: 0; pointer-events: none; }
+}
+
+/* Aviso que explica a própria tela: fica visível (dentro da <section>). */
+.bo-notice.is-fixo {
+    animation: none;
 }
 
 .bo-notice>i {
     color: var(--gold-bright);
     font-size: 20px;
+}
+
+/* Tela Professores: interruptor de disponibilidade + situação na agenda. */
+.bo-disponibilidade {
+    align-items: center;
+    display: flex;
+    gap: 12px;
+    min-width: 220px;
+}
+
+.bo-disponibilidade form {
+    margin: 0;
+}
+
+.bo-disponibilidade strong,
+.bo-disponibilidade small {
+    display: block;
 }
 
 .bo-notice strong,
@@ -1566,12 +1605,19 @@ body {
     width: 18px;
 }
 
-.bo-toggle-input:checked {
+.bo-toggle-input:checked,
+.bo-toggle-input[aria-checked="true"] {
     background: rgba(var(--accent-rgb, 212,175,55), .24);
     border-color: var(--gold);
 }
 
-.bo-toggle-input:checked::after {
+/* Interruptor em <button role="switch"> (envia o formulário, sem JS). */
+button.bo-toggle-input {
+    padding: 0;
+}
+
+.bo-toggle-input:checked::after,
+.bo-toggle-input[aria-checked="true"]::after {
     background: var(--gold-bright);
     transform: translateX(20px);
 }
@@ -1729,13 +1775,13 @@ body {
     cursor: pointer;
 }
 
-[data-bo-compras] .bo-compra-aguardando { color: var(--accent, #d8b45a); background: rgba(216, 180, 90, .12); }
-[data-bo-compras] .bo-compra-preparando { color: var(--accent, #d8b45a); background: rgba(216, 180, 90, .12); }
-[data-bo-compras] .bo-compra-despachado { color: #6fa8dc; background: rgba(111, 168, 220, .12); }
-[data-bo-compras] .bo-compra-entregue { color: #55ba88; background: rgba(85, 186, 136, .12); }
-[data-bo-compras] .bo-compra-cancelado { color: #df8585; background: rgba(223, 133, 133, .12); }
-[data-bo-compras] .bo-compra-devolvido { color: #b19bd9; background: rgba(177, 155, 217, .12); }
-[data-bo-compras] .bo-compra-extraviado { color: #df8585; background: rgba(223, 133, 133, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-aguardando { color: var(--accent, #d8b45a); background: rgba(216, 180, 90, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-preparando { color: var(--accent, #d8b45a); background: rgba(216, 180, 90, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-despachado { color: #6fa8dc; background: rgba(111, 168, 220, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-entregue { color: #55ba88; background: rgba(85, 186, 136, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-cancelado { color: #df8585; background: rgba(223, 133, 133, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-devolvido { color: #b19bd9; background: rgba(177, 155, 217, .12); }
+:is([data-bo-compras], [data-bo-pedidos-consulta]) .bo-compra-extraviado { color: #df8585; background: rgba(223, 133, 133, .12); }
 
 /* =========================================================================
    19. CALENDÁRIO DA AGENDA (aluno) — navegação de mês/dia via link (GET),
@@ -2097,8 +2143,8 @@ html .dashboard-page :is(input[type="checkbox"], input[type="radio"]) { accent-c
 html .dashboard-page .form-check-input { background-color: var(--surface-1); border-color: var(--text-muted); }
 html .dashboard-page .form-check-input:checked { background-color: var(--accent); border-color: var(--accent); }
 html .dashboard-page .bo-toggle-input { background: var(--surface-2); border-color: var(--text-muted); }
-html .dashboard-page .bo-toggle-input:checked { background: var(--accent); border-color: var(--accent); }
-html .dashboard-page .bo-toggle-input:checked::after { background: var(--accent-ink); }
+html .dashboard-page :is(.bo-toggle-input:checked, .bo-toggle-input[aria-checked="true"]) { background: var(--accent); border-color: var(--accent); }
+html .dashboard-page :is(.bo-toggle-input:checked, .bo-toggle-input[aria-checked="true"])::after { background: var(--accent-ink); }
 html .dashboard-page :is(.bo-theme-choice.active, .bo-theme-choice:hover) { background: var(--theme-hover); border-color: var(--accent); }
 html .dashboard-page .bo-theme-choice > i:first-child { color: var(--ui-accent-text); }
 html .dashboard-page .bo-table-wrap { overflow-x: auto; }
@@ -2200,6 +2246,7 @@ html .dashboard-page .bo-notifications-item.is-unread { background: var(--theme-
 html .dashboard-page :is(.bo-notifications-item-link, .bo-notifications-heading button, .bo-search-result > i) { color: var(--ui-accent-text); }
 html .dashboard-page .bo-notifications-count { background: var(--accent); color: var(--accent-ink); }
 html .dashboard-page .bo-notice { background: var(--surface-1); border-color: var(--border); border-radius: var(--ui-radius-panel); }
+html .dashboard-page .bo-notice.is-error { border-color: var(--danger); }
 html .dashboard-page .bo-toast { max-width: calc(100vw - 32px); }
 html .dashboard-page .popover { --bs-popover-bg: var(--surface-2); --bs-popover-border-color: var(--border); --bs-popover-body-color: var(--text); --bs-popover-header-bg: var(--surface-1); --bs-popover-header-color: var(--text); }
 html .dashboard-page .tooltip { --bs-tooltip-bg: var(--surface-2); --bs-tooltip-color: var(--text); }
@@ -2305,3 +2352,85 @@ html .dashboard-page .bo-notifications-delete { border-radius: var(--ui-radius-c
 html .dashboard-page .bo-notifications-delete:is(:hover, :focus-visible) { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); outline-color: var(--danger); }
 html .dashboard-page .bo-confirm-actions { flex-wrap: wrap; }/* Seta nativa do select segue color-scheme e permanece visível em todos os temas. */
 html .dashboard-page .form-select { appearance: auto; background-image: none; padding-right: 14px; }html .dashboard-page .bo-notifications-item.is-unread { padding-left: 26px; }
+/* =========================================================================
+   Sidebar: categorias expansíveis. Só o painel admin (diretor e
+   administrador) tem grupos; ver boRenderSidebar() em dashboard.js.
+   ========================================================================= */
+.bo-nav-group { margin-bottom: 6px; }
+html .dashboard-page .bo-nav-group > .bo-nav-group-toggle { margin-bottom: 0; }
+html .dashboard-page .bo-nav-item .bo-nav-group-caret { font-size: 12px; margin-left: auto; transition: transform .2s ease; width: auto; }
+.bo-nav-group.is-open .bo-nav-group-caret { transform: rotate(180deg); }
+/* Grupo que contém a página aberta: destaque discreto, mesmo recolhido. */
+html .dashboard-page .bo-nav-group.has-active > .bo-nav-group-toggle { color: var(--text); font-weight: 600; }
+html .dashboard-page .bo-nav-group.has-active > .bo-nav-group-toggle > i:first-child { color: var(--ui-accent-text); }
+.bo-nav-group-items { border-left: 1px solid var(--border); margin: 4px 0 2px 24px; padding-left: 8px; }
+html .dashboard-page .bo-nav-item.bo-nav-subitem { margin-bottom: 4px; min-height: 40px; padding: 9px 12px; }
+html .dashboard-page .bo-nav-item.bo-nav-subitem i { font-size: 16px; }
+html .dashboard-page .bo-nav-item.bo-nav-subitem.active::before { top: 10px; bottom: 10px; }
+
+/* =========================================================================
+   Tela de Cashback: indicadores compactos e blocos com título, contagem e
+   filtros agrupados (section-cashbacks.php).
+   ========================================================================= */
+.bo-cashback-escopo { align-items: baseline; color: var(--text-muted); display: flex; font-size: 12px; gap: 6px; margin: 0 0 12px; }
+html .dashboard-page .bo-card.bo-cashback-card { display: flex; flex-direction: column; gap: 8px; padding: 20px 22px; }
+.bo-cashback-card .bo-card-label { align-items: center; display: flex; gap: 8px; justify-content: space-between; margin: 0; }
+.bo-cashback-card .bo-card-label i { color: var(--text-muted); font-size: 16px; }
+html .dashboard-page .bo-cashback-card .bo-card-value { font-size: clamp(22px, 1.9vw, 30px); font-variant-numeric: tabular-nums; margin: 0; }
+.bo-cashback-desc { color: var(--text-muted); font-size: 12px; line-height: 1.45; margin: 0; }
+.bo-cashback-desc > span { display: block; }
+.bo-bloco { margin-top: 36px; }
+.bo-bloco-topo { align-items: flex-end; display: flex; flex-wrap: wrap; gap: 12px 16px; justify-content: space-between; margin-bottom: 14px; }
+.bo-bloco-topo h2 { align-items: center; display: flex; font-size: 18px; gap: 10px; margin: 0; }
+.bo-bloco-topo p { color: var(--text-muted); font-size: 13px; margin: 4px 0 0; }
+.bo-bloco-topo .bo-filters { flex: 0 1 320px; margin: 0; }
+.bo-bloco-topo .bo-filters .form-control { width: 100%; }
+.bo-contagem { background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: 0; padding: 2px 10px; }
+.bo-filters.bo-filters-painel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 14px; padding: 14px; }
+html .dashboard-page .bo-filters.bo-filters-painel { border-radius: var(--ui-radius-panel); }
+.bo-filters-painel .bo-filters-busca { flex: 1 1 240px; max-width: 340px; }
+.bo-filters-painel .bo-filters-limpar { margin-left: auto; }
+.bo-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bo-valor-credito { color: var(--success); }
+.bo-valor-cancelado { color: var(--text-muted); text-decoration: line-through; }
+.bo-saldo-zero { color: var(--text-muted); }
+@media (max-width: 560px) {
+    .bo-filters-painel .bo-filters-busca { max-width: none; }
+    .bo-bloco-topo .bo-filters { flex: 1 1 100%; }
+    .bo-filters-painel .bo-filters-limpar { margin-left: 0; width: 100%; }
+}
+
+.bo-cashback-cpf-form { align-items: end; display: flex; flex-wrap: wrap; gap: 10px; }
+.bo-cashback-cpf-form .form-control { flex: 1 1 240px; max-width: 420px; }
+.bo-cashback-cpf-result { align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; padding: 12px 14px; }
+.bo-cashback-cpf-result > span { color: var(--text-muted); }
+.bo-recepcao-professores { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.bo-recepcao-professor { align-items: center; background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: space-between; padding: 12px 14px; }
+.bo-recepcao-professor span { font-size: 12px; }
+.bo-recepcao-professor .is-available { color: var(--success); }
+.bo-recepcao-professor .is-unavailable { color: var(--text-muted); }
+.bo-recepcao-booking { align-items: end; display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr) auto; margin-top: 18px; }
+.bo-recepcao-booking .form-label { grid-column: 1 / -1; margin: 0 0 -8px; }
+.bo-notice > i { flex: 0 0 auto; }
+.bo-notice > div { flex: 1 1 auto; min-width: 0; }
+.bo-notice span { overflow-wrap: anywhere; white-space: normal; }
+@media (max-width: 560px) {
+    .bo-notice { --bo-notice-padding-block: 14px; gap: 9px; padding: 14px; }
+    .bo-recepcao-booking { grid-template-columns: 1fr; }
+    .bo-recepcao-booking .form-label { grid-column: auto; }
+    .bo-recepcao-booking .btn-bo-gold { width: 100%; }
+}
+.bo-notice-flash {
+    --bo-notice-padding-block: 10px;
+    align-items: center;
+    gap: 10px;
+    line-height: 1.45;
+    padding: 10px 14px;
+}
+.bo-notice-flash > i {
+    font-size: 18px;
+    line-height: 1;
+}
+.bo-notice-flash span {
+    line-height: inherit;
+}

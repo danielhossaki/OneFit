@@ -1,4 +1,11 @@
 var ofT = globalThis.ofT || (text => text);
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-bo-profile-avatar]').forEach(img => {
+        const hideBrokenPhoto = () => { img.hidden = true; };
+        img.addEventListener('error', hideBrokenPhoto, { once: true });
+        if (img.complete && !img.naturalWidth) hideBrokenPhoto();
+    });
+});
 /* =========================================================================
    backoffice.js
    Toda a interatividade do painel: troca de perfil (admin/profissional/
@@ -194,23 +201,31 @@ document.addEventListener('DOMContentLoaded', () => {
    no HTML (ver components/section-*.php); se não existir, cai no
    fallback "Em construção" (ver boGoToSection). */
 const BO_PERFIS = {
+    // Diretor e administrador usam este painel. Só ele tem grupos: "menus" continua
+    // sendo a lista plana usada pela navegação, pela busca e pelas rotas; "grupo"
+    // apenas reúne itens num menu expansível da sidebar (boRenderSidebar).
     admin: {
         label: ofT('Administrador'),
+        grupos: {
+            clientes: { label: ofT('Clientes'), icon: 'bi-person-lines-fill' },
+            vendas: { label: ofT('Vendas'), icon: 'bi-bag' },
+            equipe: { label: ofT('Equipe'), icon: 'bi-briefcase' },
+        },
         menus: [
             { key: 'dashboard', label: ofT('Visão Geral'), icon: 'bi-speedometer2' },
-            { key: 'usuarios', label: ofT('Alunos'), icon: 'bi-people' },
-            { key: 'funcionarios', label: ofT('Funcionários'), icon: 'bi-person-vcard' },
+            { key: 'usuarios', label: ofT('Alunos'), icon: 'bi-people', grupo: 'clientes' },
+            { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card', grupo: 'clientes' },
             // Permissões e Funções foram desativadas: cargos vêm só de usuarios.tipo_usuario.
-            { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
-            { key: 'cashbacks', label: ofT('Cashbacks'), icon: 'bi-wallet2' },
+            { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck', grupo: 'vendas' },
+            { key: 'produtos', label: ofT('Produtos'), icon: 'bi-box-seam', grupo: 'vendas' },
+            { key: 'categorias', label: ofT('Categorias'), icon: 'bi-tags', grupo: 'vendas' },
+            { key: 'cashbacks', label: ofT('Cashbacks'), icon: 'bi-wallet2', grupo: 'vendas' },
+            { key: 'funcionarios', label: ofT('Funcionários'), icon: 'bi-person-vcard', grupo: 'equipe' },
+            { key: 'profissionais', label: ofT('Professores'), icon: 'bi-person-badge', grupo: 'equipe' },
             { key: 'comentarios', label: ofT('Comentários'), icon: 'bi-chat-quote' },
-            { key: 'categorias', label: ofT('Categorias'), icon: 'bi-tags' },
-            { key: 'produtos', label: ofT('Produtos'), icon: 'bi-box-seam' },
-            { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck' },
             { key: 'planos', label: ofT('Cadastro de Planos'), icon: 'bi-clipboard-check' },
-            { key: 'profissionais', label: ofT('Profissionais'), icon: 'bi-person-badge' },
-            { key: 'cadastro-facial', label: ofT('Cadastro facial'), icon: 'bi-camera' },
             { key: 'modalidades', label: ofT('Modalidades'), icon: 'bi-activity' },
+            { key: 'cadastro-facial', label: ofT('Cadastro facial'), icon: 'bi-camera' },
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
@@ -235,17 +250,18 @@ const BO_PERFIS = {
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
-    // Recepção: Alunos, Pagamentos, Modalidades e Cashback só para consulta; o servidor
-    // decide quem pode ser fotografado no cadastro facial.
+    // Recepção: agenda, consulta, cadastro facial e pedidos do Marketplace.
+    // Marketplace abre a tela com "Comprar produtos" (a loja) e "Consultar pedidos e vendas".
     recepcionista: {
         label: ofT('Recepção'),
         menus: [
+            { key: 'agenda', label: ofT('Agendamentos'), icon: 'bi-calendar3' },
             { key: 'usuarios', label: ofT('Alunos'), icon: 'bi-people' },
             { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
             { key: 'cadastro-facial', label: ofT('Cadastro facial'), icon: 'bi-camera' },
             { key: 'modalidades', label: ofT('Modalidades'), icon: 'bi-activity' },
-            { key: 'cashbacks', label: ofT('Cashback'), icon: 'bi-wallet2' },
-            { key: 'marketplace', label: ofT('Marketplace'), icon: 'bi-shop', href: BO_MARKETPLACE_URL },
+            { key: 'cashbacks', label: ofT('Cashback dos clientes'), icon: 'bi-wallet2' },
+            { key: 'marketplace', label: ofT('Marketplace'), icon: 'bi-shop' },
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
@@ -561,10 +577,15 @@ function boToast(msg) {
  * Reconstrói os itens do menu lateral (#boNav) de acordo com o perfil
  * ativo (boPerfilAtual), marcando o item da seção atual como "active".
  */
+// Grupos da sidebar abertos nesta visita (só o painel admin tem grupos).
+const boNavGruposAbertos = new Set();
+
 function boRenderSidebar() {
     const nav = document.getElementById('boNav');
     nav.innerHTML = '';
-    BO_PERFIS[boPerfilAtual].menus.forEach((item) => {
+    const perfil = BO_PERFIS[boPerfilAtual];
+    const grupos = {};
+    perfil.menus.forEach((item) => {
         const itemElement = document.createElement(item.href ? 'a' : 'button');
         if (item.href) {
             itemElement.href = item.href;
@@ -575,7 +596,68 @@ function boRenderSidebar() {
         itemElement.className = 'bo-nav-item' + (item.key === boSectionAtual ? ' active' : '');
         itemElement.setAttribute('data-section', item.key);
         itemElement.innerHTML = `<i class="bi ${item.icon}"></i><span>${item.label}</span>`;
-        nav.appendChild(itemElement);
+
+        const grupo = item.grupo && perfil.grupos ? perfil.grupos[item.grupo] : null;
+        if (!grupo) {
+            nav.appendChild(itemElement);
+            return;
+        }
+        // O grupo entra na posição do primeiro item dele; os demais vão para dentro.
+        if (!grupos[item.grupo]) {
+            grupos[item.grupo] = boCriarGrupoNav(item.grupo, grupo);
+            nav.appendChild(grupos[item.grupo]);
+        }
+        itemElement.classList.add('bo-nav-subitem');
+        grupos[item.grupo].querySelector('.bo-nav-group-items').appendChild(itemElement);
+    });
+    boSincronizarGruposNav();
+}
+
+/** Categoria expansível da sidebar: o botão só abre e fecha, nunca navega. */
+function boCriarGrupoNav(chave, grupo) {
+    const wrap = document.createElement('div');
+    wrap.className = 'bo-nav-group';
+    wrap.setAttribute('data-bo-nav-grupo', chave);
+    const botao = document.createElement('button');
+    botao.type = 'button';
+    botao.className = 'bo-nav-item bo-nav-group-toggle';
+    botao.setAttribute('aria-expanded', 'false');
+    botao.setAttribute('aria-controls', `boNavGrupo-${chave}`);
+    botao.innerHTML = `<i class="bi ${grupo.icon}"></i><span></span><i class="bi bi-chevron-down bo-nav-group-caret" aria-hidden="true"></i>`;
+    botao.querySelector('span').textContent = grupo.label;
+    const lista = document.createElement('div');
+    lista.className = 'bo-nav-group-items';
+    lista.id = `boNavGrupo-${chave}`;
+    lista.setAttribute('role', 'group');
+    lista.setAttribute('aria-label', grupo.label);
+    lista.hidden = true;
+    botao.addEventListener('click', () => {
+        if (boNavGruposAbertos.has(chave)) boNavGruposAbertos.delete(chave);
+        else boNavGruposAbertos.add(chave);
+        boSincronizarGruposNav(false);
+    });
+    wrap.append(botao, lista);
+    return wrap;
+}
+
+/**
+ * Marca o grupo que contém a página ativa. Ao navegar (abrirAtivo = true), deixa
+ * aberto só esse grupo, para a sidebar não acumular categorias expandidas; com
+ * abrirAtivo = false (clique no botão do grupo), respeita a escolha de abrir ou
+ * recolher, inclusive mais de um grupo.
+ */
+function boSincronizarGruposNav(abrirAtivo = true) {
+    const grupos = document.querySelectorAll('#boNav [data-bo-nav-grupo]');
+    if (abrirAtivo) boNavGruposAbertos.clear();
+    grupos.forEach((wrap) => {
+        const chave = wrap.getAttribute('data-bo-nav-grupo');
+        const temAtivo = Boolean(wrap.querySelector('.bo-nav-item.active[data-section]'));
+        if (temAtivo && abrirAtivo) boNavGruposAbertos.add(chave);
+        const aberto = boNavGruposAbertos.has(chave);
+        wrap.classList.toggle('is-open', aberto);
+        wrap.classList.toggle('has-active', temAtivo);
+        wrap.querySelector('.bo-nav-group-toggle').setAttribute('aria-expanded', aberto ? 'true' : 'false');
+        wrap.querySelector('.bo-nav-group-items').hidden = !aberto;
     });
 }
 
@@ -613,10 +695,12 @@ const BO_SEARCH_ALIASES = {
     treino: ['treinos', 'exercícios', 'exercicios', 'ficha'],
     agenda: ['agenda', 'agendamentos', 'horários', 'horarios'],
     configuracoes: ['configurações', 'configuracoes', 'ajustes', 'tema', 'conta'],
-    profissionais: ['profissionais', 'equipe', 'personal trainer', 'nutricionista'],
+    profissionais: ['professores', 'profissionais', 'disponibilidade', 'agendamentos', 'equipe', 'personal trainer', 'nutricionista'],
     usuarios: ['usuários', 'usuarios', 'alunos'],
     planos: ['planos', 'assinaturas'],
     pagamentos: ['pagamentos', 'financeiro'],
+    cashbacks: ['cashback', 'saldo dos clientes'],
+    marketplace: ['loja', 'comprar produtos', 'pedidos', 'vendas'],
 };
 
 let boSearchItems = [];
@@ -640,15 +724,20 @@ function boCloseSearch() {
 }
 
 function boGetSearchPages() {
-    const pages = BO_PERFIS[boPerfilAtual].menus.map((item) => ({
-        type: 'page',
-        key: item.key,
-        href: item.href,
-        title: item.label,
-        subtitle: item.href ? ofT('Abrir Marketplace') : ofT('Página do painel'),
-        icon: item.icon,
-        terms: [item.label, ...(BO_SEARCH_ALIASES[item.key] || [])],
-    }));
+    const grupos = BO_PERFIS[boPerfilAtual].grupos || {};
+    const pages = BO_PERFIS[boPerfilAtual].menus.map((item) => {
+        // Item dentro de um grupo da sidebar: o nome do grupo também encontra a página.
+        const grupo = item.grupo ? grupos[item.grupo] : null;
+        return {
+            type: 'page',
+            key: item.key,
+            href: item.href,
+            title: item.label,
+            subtitle: item.href ? ofT('Abrir Marketplace') : (grupo ? grupo.label : ofT('Página do painel')),
+            icon: item.icon,
+            terms: [item.label, ...(grupo ? [grupo.label] : []), ...(BO_SEARCH_ALIASES[item.key] || [])],
+        };
+    });
 
     if (!pages.some((page) => page.key === 'perfil')) {
         pages.unshift({
@@ -706,7 +795,7 @@ function boRenderSearch(query) {
     };
 
     if (boSearchItems.length) {
-        appendGroup(ofT('Profissionais'), professionals, 0);
+        appendGroup(ofT('Professores'), professionals, 0);
         appendGroup(ofT('Páginas'), pages, professionals.length);
     } else {
         const empty = document.createElement('span');
@@ -750,9 +839,9 @@ function boShowProfessional(id, updateRoute = true) {
         section.className = 'bo-content-section';
         document.querySelector('.bo-main').appendChild(section);
     }
-    section.innerHTML = `<div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-person-badge"></i> ${ofT('Profissional')}</span><h1></h1><p></p></div></div><div class="bo-settings-card bo-profile-settings"><div class="bo-settings-heading"><span class="bo-metric-icon"><i class="bi bi-person-workspace"></i></span><div><h2></h2><p></p></div></div></div>`;
+    section.innerHTML = `<div class="bo-page-title"><div><span class="bo-eyebrow"><i class="bi bi-person-badge"></i> ${ofT('Professor')}</span><h1></h1><p></p></div></div><div class="bo-settings-card bo-profile-settings"><div class="bo-settings-heading"><span class="bo-metric-icon"><i class="bi bi-person-workspace"></i></span><div><h2></h2><p></p></div></div></div>`;
     section.querySelector('.bo-page-title h1').textContent = professional.nome;
-    section.querySelector('.bo-page-title p').textContent = ofT('Perfil profissional disponível no painel {marca}.');
+    section.querySelector('.bo-page-title p').textContent = ofT('Perfil do professor no painel {marca}.');
     section.querySelector('.bo-settings-heading h2').textContent = professional.funcao;
     section.querySelector('.bo-settings-heading p').textContent = professional.especialidade || professional.funcao;
 
@@ -760,6 +849,7 @@ function boShowProfessional(id, updateRoute = true) {
     section.classList.add('active');
     boSectionAtual = 'profissional';
     document.querySelectorAll('#boNav .bo-nav-item').forEach((btn) => btn.classList.remove('active'));
+    boSincronizarGruposNav();
     document.getElementById('boSidebar').classList.remove('active');
     document.getElementById('boSidebarBackdrop').classList.remove('active');
 
@@ -785,6 +875,7 @@ function boGoToSection(sectionKey, updateRoute = true) {
     document.querySelectorAll('#boNav .bo-nav-item').forEach((btn) => {
         btn.classList.toggle('active', btn.getAttribute('data-section') === sectionKey);
     });
+    boSincronizarGruposNav();
 
     const prebuilt = sectionKey === 'configuracoes'
         ? document.getElementById('boSettingsSection')
@@ -987,20 +1078,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ---- Filtros de tabela ----
        Para cada <table data-bo-table="X">, procura os inputs/selects com
-       data-bo-target="X" (busca, status, tipo, data-de, data-até) e
+       data-bo-target="X" (busca, ID do usuário, status, tipo, data-de, data-até) e
        esconde/mostra as linhas conforme os atributos data-* de cada <tr>
-       (data-search, data-status, data-type, data-date) definidos no PHP. */
+       (data-search, data-user, data-status, data-type, data-date) definidos no PHP. */
     document.querySelectorAll('[data-bo-table]').forEach((table) => {
         const filterId = table.getAttribute('data-bo-table');
         const searchInput = document.querySelector(`[data-bo-filter="search"][data-bo-target="${filterId}"]`);
+        const userInput = document.querySelector(`[data-bo-filter="user"][data-bo-target="${filterId}"]`);
         const statusSelect = document.querySelector(`[data-bo-filter="status"][data-bo-target="${filterId}"]`);
         const typeSelect = document.querySelector(`[data-bo-filter="type"][data-bo-target="${filterId}"]`);
         const dateFrom = document.querySelector(`[data-bo-filter="date-from"][data-bo-target="${filterId}"]`);
         const dateTo = document.querySelector(`[data-bo-filter="date-to"][data-bo-target="${filterId}"]`);
         const emptyRow = table.querySelector('.bo-empty-row');
+        // Contador opcional ("14" ou "3 de 14") ao lado do título da tabela.
+        const counter = document.querySelector(`[data-bo-contagem="${filterId}"]`);
 
         const applyFilters = () => {
             const term = (searchInput ? searchInput.value : '').trim().toLowerCase();
+            // ID exato do usuário; aceita "155", "#155" e "#0155", como aparece na tabela.
+            const user = (userInput ? userInput.value : '').trim().replace(/^#/, '').replace(/^0+(?=\d)/, '');
             const status = statusSelect ? statusSelect.value : '';
             const type = typeSelect ? typeSelect.value : '';
             const from = dateFrom ? dateFrom.value : '';
@@ -1014,24 +1110,58 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rowDate = row.getAttribute('data-date') || '';
 
                 const matchesTerm = term === '' || haystack.toLowerCase().includes(term);
+                const matchesUser = user === '' || (row.getAttribute('data-user') || '') === user;
                 const matchesStatus = status === '' || rowStatus === status;
                 const matchesType = type === '' || rowType === type;
                 const matchesFrom = from === '' || rowDate === '' || rowDate >= from;
                 const matchesTo = to === '' || rowDate === '' || rowDate <= to;
 
-                const visible = matchesTerm && matchesStatus && matchesType && matchesFrom && matchesTo;
+                const visible = matchesTerm && matchesUser && matchesStatus && matchesType && matchesFrom && matchesTo;
                 row.style.display = visible ? '' : 'none';
                 if (visible) visibleCount += 1;
             });
 
             if (emptyRow) emptyRow.style.display = visibleCount === 0 ? '' : 'none';
+            if (counter) {
+                const total = table.querySelectorAll('tbody tr:not(.bo-empty-row)').length;
+                counter.textContent = visibleCount === total ? String(total)
+                    : ofT('{n} de {total}', { '{n}': String(visibleCount), '{total}': String(total) });
+            }
         };
 
-        [searchInput, statusSelect, typeSelect, dateFrom, dateTo].forEach((el) => {
+        [searchInput, userInput, statusSelect, typeSelect, dateFrom, dateTo].forEach((el) => {
             if (!el) return;
             el.addEventListener('input', applyFilters);
             el.addEventListener('change', applyFilters);
         });
+    });
+
+    /* ---- Filtros de uma tabela: "Limpar filtros" esvazia todos; "Ver histórico"
+       (saldo por cliente) limpa os demais e deixa só o ID do usuário, depois rola
+       até a tabela. Só filtram a tela, nada é enviado ao servidor. ---- */
+    const boLimparFiltros = (alvo, exceto = null) => {
+        document.querySelectorAll(`[data-bo-filter][data-bo-target="${alvo}"]`).forEach((campo) => {
+            if (campo === exceto || campo.value === '') return;
+            campo.value = '';
+            campo.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    };
+    document.body.addEventListener('click', (event) => {
+        const limpar = event.target.closest('[data-bo-limpar-filtros]');
+        if (limpar) {
+            boLimparFiltros(limpar.getAttribute('data-bo-limpar-filtros'));
+            return;
+        }
+        const botao = event.target.closest('[data-bo-filtrar-usuario]');
+        if (!botao) return;
+        const alvo = botao.getAttribute('data-bo-target');
+        const input = document.querySelector(`[data-bo-filter="user"][data-bo-target="${alvo}"]`);
+        const tabela = document.querySelector(`[data-bo-table="${alvo}"]`);
+        if (!input || !tabela) return;
+        boLimparFiltros(alvo, input);
+        input.value = botao.getAttribute('data-bo-filtrar-usuario');
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        (document.getElementById(botao.getAttribute('data-bo-rolar-para') || '') || tabela).scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     /* ---- Ações de tabela (delegadas no <body> pois as linhas são dinâmicas) ---- */

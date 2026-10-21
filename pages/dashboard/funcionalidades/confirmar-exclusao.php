@@ -23,13 +23,13 @@ if (empty($_SESSION['csrf_token'])) {
 
 // Recursos aceitos (evita que o link vire um redirecionador aberto para
 // qualquer handler.php arbitrário) e o rótulo da mensagem/ação no rodapé.
+// Cadastros profissionais não são excluídos (tela Professores: só disponibilidade).
 $recursosPermitidos = [
     'usuarios' => 'usuarios.php',
     'pagamentos' => 'pagamentos.php',
     'cashbacks' => 'cashbacks.php',
     'categorias' => 'categorias.php',
     'produtos' => 'produtos.php',
-    'profissionais' => 'profissionais.php',
 ];
 
 $recurso = (string) ($_GET['recurso'] ?? '');
