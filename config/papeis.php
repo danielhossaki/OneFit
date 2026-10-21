@@ -10,32 +10,41 @@
  * Transição profissional → professor: o ENUM do banco ainda grava
  * 'profissional'. Até a migração, os dois valores têm a mesma política e o
  * painel continua sendo o de chave 'profissional' (seções e menus atuais).
+ *
+ * Hierarquia administrativa: diretor > admin > demais cargos. O diretor é um
+ * cargo próprio (usuarios.tipo_usuario = 'diretor', migração 20261020_diretor_v1)
+ * que inclui tudo o que o admin pode fazer e, só ele, gere contas admin e
+ * diretor. Nenhum cargo inclui o diretor.
  */
 
 require_once __DIR__ . '/interface.php';
 
 /**
  * Política de cada cargo.
- *   login                 pode autenticar no sistema
- *   painel                chave do painel (BO_PERFIS / data-perfil); null = sem painel
- *   opera_cadastro_facial pode operar a tela de cadastro facial
- *   catraca               regra de acesso físico (usada pela integração da catraca)
- *   atribuivel_por_admin  um administrador comum pode atribuir o cargo na tela Funcionários
+ *   login                  pode autenticar no sistema
+ *   painel                 chave do painel (BO_PERFIS / data-perfil); null = sem painel
+ *   opera_cadastro_facial  pode operar a tela de cadastro facial
+ *   catraca                regra de acesso físico (usada pela integração da catraca)
+ *   atribuivel_por_admin   um administrador pode atribuir o cargo na tela Funcionários
+ *   atribuivel_por_diretor um diretor pode atribuir o cargo na tela Funcionários
+ *   inclui                 cargos cujas permissões este cargo também tem (só o diretor inclui o admin)
  */
 function onefitPoliticasPapeis(): array
 {
-    $professor = ['login' => true, 'painel' => 'profissional', 'opera_cadastro_facial' => false, 'catraca' => 'cadastro_profissional', 'atribuivel_por_admin' => true];
+    $professor = ['login' => true, 'painel' => 'profissional', 'opera_cadastro_facial' => false, 'catraca' => 'cadastro_profissional', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true];
     return [
-        'aluno' => ['login' => true, 'painel' => 'aluno', 'opera_cadastro_facial' => false, 'catraca' => 'matricula', 'atribuivel_por_admin' => false],
-        // Contas admin só são criadas/alteradas por administradores da lista restrita (onefitAdminRestrito).
-        'admin' => ['login' => true, 'painel' => 'admin', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => false],
-        'vendedor' => ['login' => true, 'painel' => 'vendedor', 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
+        'aluno' => ['login' => true, 'painel' => 'aluno', 'opera_cadastro_facial' => false, 'catraca' => 'matricula', 'atribuivel_por_admin' => false, 'atribuivel_por_diretor' => false],
+        // Autoridade superior: o painel e as rotas do admin, mais a gestão de contas admin e diretor.
+        'diretor' => ['login' => true, 'painel' => 'admin', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => false, 'atribuivel_por_diretor' => true, 'inclui' => ['admin']],
+        // Operação cotidiana; contas admin e diretor só são criadas ou alteradas por um diretor.
+        'admin' => ['login' => true, 'painel' => 'admin', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => false, 'atribuivel_por_diretor' => true],
+        'vendedor' => ['login' => true, 'painel' => 'vendedor', 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true],
         'professor' => $professor,
         // Valor legado gravado no banco: mesma política do professor, mas nunca atribuído a cadastros novos.
-        'profissional' => ['atribuivel_por_admin' => false] + $professor,
-        // O painel da recepção ainda não existe; sem painel, a conta não entra.
-        'recepcionista' => ['login' => true, 'painel' => null, 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
-        'faxineira' => ['login' => false, 'painel' => null, 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true],
+        'profissional' => ['atribuivel_por_admin' => false, 'atribuivel_por_diretor' => false] + $professor,
+        // Painel da recepção: só o cadastro facial (D5, validado no servidor) e as configurações da própria conta.
+        'recepcionista' => ['login' => true, 'painel' => 'recepcionista', 'opera_cadastro_facial' => true, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true],
+        'faxineira' => ['login' => false, 'painel' => null, 'opera_cadastro_facial' => false, 'catraca' => 'conta_ativa', 'atribuivel_por_admin' => true, 'atribuivel_por_diretor' => true],
     ];
 }
 
@@ -56,18 +65,34 @@ function onefitPapelCanonico(?string $papel): ?string
     return $papel === 'profissional' ? 'professor' : $papel;
 }
 
+/**
+ * O cargo está entre os permitidos, diretamente ou por inclusão (o diretor
+ * cumpre exigências de 'admin'; o admin nunca cumpre as de 'diretor').
+ */
 function onefitPapelPermitido(?string $papel, array $permitidos): bool
 {
     $canonico = onefitPapelCanonico($papel);
     if ($canonico === null) {
         return false;
     }
+    $cumpre = array_merge([$canonico], onefitPolitica($canonico)['inclui'] ?? []);
     foreach ($permitidos as $permitido) {
-        if (onefitPapelCanonico($permitido) === $canonico) {
+        if (in_array(onefitPapelCanonico($permitido), $cumpre, true)) {
             return true;
         }
     }
     return false;
+}
+
+function onefitPapelDiretor(?string $papel): bool
+{
+    return onefitPapelCanonico($papel) === 'diretor';
+}
+
+/** Cargo administrativo (admin ou diretor): a conta só é gerida por um diretor. */
+function onefitPapelAdministrativo(?string $papel): bool
+{
+    return onefitPapelPermitido($papel, ['admin']);
 }
 
 /** Painel que o cargo usa; null quando o cargo não entra no sistema. */
@@ -97,23 +122,51 @@ function onefitCargosAtribuiveisPorAdmin(): array
 /** Conta de funcionário que um administrador comum pode gerenciar (inclui o legado 'profissional'). */
 function onefitFuncionarioGerenciavelPorAdmin(?string $papel): bool
 {
-    return onefitPapelPermitido($papel, onefitCargosAtribuiveisPorAdmin());
-}
-
-/** Cargos listados na tela Funcionários: os gerenciáveis, o legado e admin (somente leitura). */
-function onefitPapeisFuncionarios(): array
-{
-    return array_values(array_unique(array_merge(onefitCargosAtribuiveisPorAdmin(), ['profissional', 'admin'])));
+    return onefitPodeGerenciarConta('admin', $papel);
 }
 
 /**
- * Administradores da lista restrita (decisão D2): os únicos que poderão criar,
- * promover ou alterar contas admin. A lista ainda não foi definida (pendência
- * P1), então ninguém é restrito e nenhuma tela altera contas admin.
+ * Cargos que o operador pode atribuir na tela Funcionários, pelo cargo dele no
+ * banco: diretor → os do admin, mais admin e diretor; admin → os comuns; demais → nenhum.
  */
-function onefitAdminRestrito(mysqli $db, int $idUsuario): bool
+function onefitCargosAtribuiveis(?string $papelOperador): array
 {
-    return false;
+    return match (onefitPapelCanonico($papelOperador)) {
+        'diretor' => onefitPapeisCom('atribuivel_por_diretor'),
+        'admin' => onefitPapeisCom('atribuivel_por_admin'),
+        default => [],
+    };
+}
+
+/** O operador pode gerenciar uma conta deste cargo (inclui o legado 'profissional' para quem gere professores). */
+function onefitPodeGerenciarConta(?string $papelOperador, ?string $papelAlvo): bool
+{
+    $cargos = onefitCargosAtribuiveis($papelOperador);
+    $alvo = onefitPapelCanonico($papelAlvo);
+    return $alvo !== null && in_array($alvo, array_map('onefitPapelCanonico', $cargos), true);
+}
+
+/** Cargos listados na tela Funcionários: os gerenciáveis, o legado, admin e diretor (estes, só leitura para o admin). */
+function onefitPapeisFuncionarios(): array
+{
+    return array_values(array_unique(array_merge(onefitCargosAtribuiveisPorAdmin(), ['profissional', 'admin', 'diretor'])));
+}
+
+/**
+ * Conta de diretor ativa, lida do banco (não da sessão). Substitui a antiga
+ * lista restrita de administradores (D2): a autoridade superior é o cargo diretor.
+ */
+function onefitDiretorAtivo(mysqli $db, int $idUsuario, bool $travar = false): bool
+{
+    $usuario = onefitBuscarSituacaoUsuario($db, $idUsuario, $travar);
+    return $usuario !== null && $usuario['status'] === 'ativo' && onefitPapelDiretor($usuario['tipo_usuario']);
+}
+
+/** Diretores ativos; com $travar, trava essas linhas até o fim da transação. */
+function onefitContarDiretoresAtivos(mysqli $db, bool $travar = false): int
+{
+    $resultado = $db->query("SELECT id_usuario FROM usuarios WHERE tipo_usuario = 'diretor' AND status = 'ativo'" . ($travar ? ' FOR UPDATE' : ''));
+    return $resultado->num_rows;
 }
 
 /**
@@ -143,14 +196,14 @@ function onefitSituacaoCatracaFuncionario(?string $papel, ?string $status, bool 
  * Cadastro facial (decisões D5 e D2/P6): quem cadastra ou substitui fotos de quem.
  * Recebe as linhas atuais do banco (tipo_usuario, status) do operador e da
  * pessoa fotografada; nunca o que a tela ou o formulário dizem.
- *   - operador: conta ativa de cargo que opera o cadastro facial (admin, recepcionista);
+ *   - operador: conta ativa de cargo que opera o cadastro facial (diretor, admin, recepcionista);
  *   - pessoa: conta ativa de cargo conhecido. A foto não libera a catraca, que segue a regra do cargo;
- *   - contas admin (inclusive a do próprio operador): só administradores da lista
- *     restrita. Enquanto a lista não existir (P1), ninguém (negar por padrão, P6);
+ *   - contas administrativas (admin e diretor, inclusive a do próprio operador): só um diretor
+ *     (a autoridade que substituiu a lista restrita de D2). Admin e recepcionista, nunca;
  *   - recepcionista: a si mesma, outras recepcionistas e os demais cargos não administrativos.
  * Retorna ['permitido' => bool, 'motivo' => string].
  */
-function onefitAvaliarCadastroFacial(?array $operador, ?array $pessoa, bool $operadorRestrito): array
+function onefitAvaliarCadastroFacial(?array $operador, ?array $pessoa): array
 {
     if (!$operador || ($operador['status'] ?? null) !== 'ativo' || !onefitPapelOperaCadastroFacial($operador['tipo_usuario'] ?? null)) {
         return ['permitido' => false, 'motivo' => 'operador_sem_permissao'];
@@ -165,7 +218,7 @@ function onefitAvaliarCadastroFacial(?array $operador, ?array $pessoa, bool $ope
     if ($papelPessoa === null) {
         return ['permitido' => false, 'motivo' => 'cargo_desconhecido'];
     }
-    if ($papelPessoa === 'admin' && !($operadorRestrito && onefitPapelCanonico($operador['tipo_usuario']) === 'admin')) {
+    if (onefitPapelAdministrativo($papelPessoa) && !onefitPapelDiretor($operador['tipo_usuario'])) {
         return ['permitido' => false, 'motivo' => 'conta_admin_restrita'];
     }
     return ['permitido' => true, 'motivo' => 'ok'];

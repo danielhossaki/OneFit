@@ -46,6 +46,9 @@ internal static class CatracaAutorizacaoTeste
 
             // Regra pura, sem banco.
             Check(!AutorizacaoCatraca.Decidir("x", "Admin", "ativo", true, true).Liberado, "Cargo com maiúscula é desconhecido");
+            Check(AutorizacaoCatraca.Decidir("x", "diretor", "ativo", false, false).Liberado, "Diretor ativo entra sem matrícula");
+            Check(!AutorizacaoCatraca.Decidir("x", "Diretor", "ativo", true, true).Liberado, "Diretor com maiúscula é desconhecido");
+            Check(!AutorizacaoCatraca.Decidir("x", "diretor", "bloqueado", true, true).Liberado, "Diretor bloqueado não entra");
             Check(!AutorizacaoCatraca.Decidir("x", null, "ativo", true, true).Liberado, "Cargo nulo nega");
             Check(!AutorizacaoCatraca.Decidir("x", "", "ativo", true, true).Liberado, "Cargo vazio nega");
             Check(!AutorizacaoCatraca.Decidir("x", "admin", null, true, true).Liberado, "Status nulo nega");

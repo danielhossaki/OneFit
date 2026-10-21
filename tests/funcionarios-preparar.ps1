@@ -35,3 +35,12 @@ Write-Output 'Segunda execucao: migracao ja aplicada, nada alterado.'
 Rodar @((Join-Path $PSScriptRoot 'funcionarios-migracao.php'), '--depois')
 # Mesmo script num banco descartavel com a estrutura do banco remoto (ENUM sem vendedor).
 Rodar @((Join-Path $PSScriptRoot 'funcionarios-migracao-remota.php'))
+# Cargo diretor (20261020_diretor_v1): so permite gravar 'diretor'; nenhuma conta muda de cargo.
+$runnerDiretor = Join-Path $copia 'database/migrate-diretor.php'
+Rodar (@($runnerDiretor, '--inspecionar') + $alvo)
+Rodar (@($runnerDiretor, '--aplicar') + $alvo + @($backups))
+$segundaDiretor = & $php $runnerDiretor --aplicar @alvo $backups | Out-String
+if ($LASTEXITCODE -ne 0 -or $segundaDiretor -notmatch 'aplicada; nada foi alterado') { throw 'A segunda execucao da migracao do diretor deveria ser idempotente.' }
+Write-Output 'Migracao do diretor: segunda execucao nao altera nada.'
+# Migracao, recuperacao e reversao num banco com a estrutura do remoto.
+Rodar @((Join-Path $PSScriptRoot 'diretor-migracao.php'))

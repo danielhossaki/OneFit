@@ -37,7 +37,7 @@ function contar(mysqli $db, string $sql): int
 }
 
 // --- Preparação do banco descartável ----------------------------------------
-$db->query("ALTER TABLE usuarios MODIFY tipo_usuario ENUM('aluno','profissional','admin','vendedor','professor','recepcionista','faxineira') DEFAULT 'aluno'");
+$db->query("ALTER TABLE usuarios MODIFY tipo_usuario ENUM('aluno','profissional','admin','vendedor','professor','recepcionista','faxineira','diretor') DEFAULT 'aluno'");
 $senha = password_hash('Fixture-only-123!', PASSWORD_DEFAULT);
 // Contas próprias desta execução (e-mail e CPF únicos): outros testes também
 // criam usuários no mesmo banco, então nada aqui depende de IDs fixos.
@@ -80,11 +80,14 @@ try {
     // --- Login ----------------------------------------------------------------
     $r = (new Navegador($base))->entrar('fixture6@example.test');
     httpCheck(str_ends_with($r['location'], 'login.php?msg=2'), 'Admin inativo não entra');
-    foreach (['faxineira' => 'faxineira', 'recepcionista' => 'recepcionista (sem painel ainda)'] as $papel => $rotulo) {
-        $r = (new Navegador($base))->entrar($semPainel[$papel]['email']);
-        httpCheck(str_ends_with($r['location'], 'login.php?msg=6'), "$rotulo não entra no painel");
+    $r = (new Navegador($base))->entrar($semPainel['faxineira']['email']);
+    httpCheck(str_ends_with($r['location'], 'login.php?msg=6'), 'faxineira não entra no painel');
+    $recepcao = new Navegador($base);
+    httpCheck(str_contains($recepcao->entrar($semPainel['recepcionista']['email'])['location'], 'pages/dashboard/dashboard.php'), 'recepcionista entra');
+    httpCheck(str_contains($recepcao->req('GET', 'pages/dashboard/dashboard.php')['body'], 'const BO_PERFIL_LOGADO = "recepcionista"'), 'recepcionista usa o painel da recepção');
+    foreach (['faxineira', 'recepcionista'] as $papel) {
         $r = (new Navegador($base))->entrar($semPainel[$papel]['email'], 'senha-errada');
-        httpCheck(str_ends_with($r['location'], 'login.php?msg=1'), "$rotulo com senha errada recebe a mensagem comum");
+        httpCheck(str_ends_with($r['location'], 'login.php?msg=1'), "$papel com senha errada recebe a mensagem comum");
     }
 
     $admin = new Navegador($base);
@@ -191,7 +194,8 @@ try {
     }
     httpCheck(count(array_unique(array_map('serialize', $respostas))) === 1 && $respostas[0][2] !== '', 'Mesma resposta para conta ativa, inativa, sem painel e inexistente');
     httpCheck($tokens(3) === $antes[3] + 1, 'Aluno ativo recebe link');
-    httpCheck($tokens(6) === $antes[6] && $tokens($idFax) === $antes[$idFax] && $tokens($idRec) === $antes[$idRec], 'Inativo, faxineira e recepcionista sem painel não recebem link');
+    httpCheck($tokens(6) === $antes[6] && $tokens($idFax) === $antes[$idFax], 'Inativo e faxineira (sem painel) não recebem link');
+    httpCheck($tokens($idRec) === $antes[$idRec] + 1, 'Recepcionista ativa (com painel) recebe link');
 } finally {
     $restaurar();
 }

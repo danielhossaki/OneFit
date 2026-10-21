@@ -16,15 +16,16 @@ function papeisCheck(bool $ok, string $message): void
 
 // --- Política de cada cargo -------------------------------------------------
 $politicas = onefitPoliticasPapeis();
-papeisCheck(array_keys($politicas) === ['aluno', 'admin', 'vendedor', 'professor', 'profissional', 'recepcionista', 'faxineira'], 'Cargos definidos (mais o valor legado profissional)');
+papeisCheck(array_keys($politicas) === ['aluno', 'diretor', 'admin', 'vendedor', 'professor', 'profissional', 'recepcionista', 'faxineira'], 'Cargos definidos (mais o valor legado profissional)');
 $esperado = [
     // papel => [painel, opera_cadastro_facial, catraca]
     'aluno' => ['aluno', false, 'matricula'],
+    'diretor' => ['admin', true, 'conta_ativa'],
     'admin' => ['admin', true, 'conta_ativa'],
     'vendedor' => ['vendedor', false, 'conta_ativa'],
     'professor' => ['profissional', false, 'cadastro_profissional'],
     'profissional' => ['profissional', false, 'cadastro_profissional'],
-    'recepcionista' => [null, true, 'conta_ativa'],
+    'recepcionista' => ['recepcionista', true, 'conta_ativa'],
     'faxineira' => [null, false, 'conta_ativa'],
 ];
 foreach ($esperado as $papel => [$painel, $operaFacial, $catraca]) {
@@ -33,29 +34,57 @@ foreach ($esperado as $papel => [$painel, $operaFacial, $catraca]) {
     papeisCheck($politicas[$papel]['catraca'] === $catraca, "Regra da catraca de $papel");
 }
 papeisCheck($politicas['faxineira']['login'] === false, 'Faxineira não faz login');
-papeisCheck(onefitPapeisCom('opera_cadastro_facial') === ['admin', 'recepcionista'], 'Só admin e recepcionista operam o cadastro facial');
+papeisCheck(onefitPapeisCom('opera_cadastro_facial') === ['diretor', 'admin', 'recepcionista'], 'Só diretor, admin e recepcionista operam o cadastro facial');
+// Todo painel da política tem menu (dashboard.js) e seções próprias (dashboard.php).
+$dashboardJs = file_get_contents(__DIR__ . '/../assets/js/dashboard.js');
+$dashboardPhp = file_get_contents(__DIR__ . '/../pages/dashboard/dashboard.php');
+foreach (array_unique(array_filter(array_column($politicas, 'painel'))) as $painelPolitica) {
+    papeisCheck(preg_match('/^ {4}' . preg_quote($painelPolitica, '/') . ': \{\r?$/m', $dashboardJs) === 1, "Painel $painelPolitica tem menu em dashboard.js");
+    papeisCheck(str_contains($dashboardPhp, "\$perfilLogado === '$painelPolitica'"), "Painel $painelPolitica tem seções em dashboard.php");
+}
 papeisCheck(!in_array('profissional', onefitPapeisCom('opera_cadastro_facial'), true), 'Professor não opera o cadastro facial');
 
-// --- Funcionários (Etapa 2) ---------------------------------------------------
+// --- Hierarquia: diretor > admin > demais cargos -------------------------------
+papeisCheck(onefitPapelPermitido('diretor', ['admin']), 'Diretor cumpre o que exige admin (rotas do painel administrativo)');
+papeisCheck(!onefitPapelPermitido('admin', ['diretor']), 'Admin não cumpre o que exige diretor');
+papeisCheck(onefitPapelPermitido('diretor', ['diretor']) && onefitPapelPermitido('admin', ['admin']), 'Cada um cumpre o próprio cargo');
+foreach (['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'faxineira', '', null, 'Diretor', 'DIRETOR', ' diretor', 'superadmin'] as $outro) {
+    papeisCheck(!onefitPapelPermitido($outro, ['admin']) && !onefitPapelPermitido($outro, ['diretor']), 'Sem poderes administrativos: ' . var_export($outro, true));
+    papeisCheck(!onefitPapelDiretor($outro) && !onefitPapelAdministrativo($outro), 'Não é cargo administrativo: ' . var_export($outro, true));
+}
+papeisCheck(onefitPapelDiretor('diretor') && !onefitPapelDiretor('admin'), 'Só o cargo diretor é diretor');
+papeisCheck(onefitPapelAdministrativo('diretor') && onefitPapelAdministrativo('admin'), 'Admin e diretor são cargos administrativos');
+papeisCheck(onefitPapelPermitido('vendedor', ['admin', 'vendedor']) && !onefitPapelPermitido('vendedor', ['diretor']), 'Inclusão não vale ao contrário');
+
+// --- Funcionários: o que cada nível atribui e gerencia -------------------------
 papeisCheck(onefitCargosAtribuiveisPorAdmin() === ['vendedor', 'professor', 'recepcionista', 'faxineira'], 'Cargos atribuíveis por admin comum');
-foreach (['admin', 'aluno', 'profissional', '', null, 'Professor', 'superadmin'] as $naoAtribuivel) {
-    papeisCheck(!in_array($naoAtribuivel, onefitCargosAtribuiveisPorAdmin(), true), 'Não atribuível: ' . var_export($naoAtribuivel, true));
+papeisCheck(onefitCargosAtribuiveis('admin') === onefitCargosAtribuiveisPorAdmin(), 'Admin atribui só os cargos comuns');
+papeisCheck(onefitCargosAtribuiveis('diretor') === ['diretor', 'admin', 'vendedor', 'professor', 'recepcionista', 'faxineira'], 'Diretor atribui também admin e diretor');
+foreach (['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'faxineira', '', null, 'gerente'] as $semNivel) {
+    papeisCheck(onefitCargosAtribuiveis($semNivel) === [], 'Não atribui cargo nenhum: ' . var_export($semNivel, true));
 }
-papeisCheck(onefitFuncionarioGerenciavelPorAdmin('profissional'), 'Conta legada profissional continua gerenciável como professor');
-foreach (['admin', 'aluno', '', null, 'gerente'] as $naoGerenciavel) {
-    papeisCheck(!onefitFuncionarioGerenciavelPorAdmin($naoGerenciavel), 'Não gerenciável por admin comum: ' . var_export($naoGerenciavel, true));
+foreach (['admin', 'diretor', 'aluno', 'profissional', '', null, 'Professor', 'superadmin'] as $naoAtribuivel) {
+    papeisCheck(!in_array($naoAtribuivel, onefitCargosAtribuiveisPorAdmin(), true), 'Não atribuível por admin: ' . var_export($naoAtribuivel, true));
 }
-papeisCheck(onefitPapeisFuncionarios() === ['vendedor', 'professor', 'recepcionista', 'faxineira', 'profissional', 'admin'], 'Cargos listados na tela Funcionários');
-// Lista restrita ainda não definida (P1): ninguém pode gerenciar contas admin.
-foreach ([1, 2, 6, 999] as $idQualquer) {
-    papeisCheck(onefitAdminRestrito(mysqli_init(), $idQualquer) === false, "Ninguém é admin restrito ($idQualquer)");
+papeisCheck(!in_array('aluno', onefitCargosAtribuiveis('diretor'), true) && !in_array('profissional', onefitCargosAtribuiveis('diretor'), true), 'Nem o diretor atribui aluno ou o legado profissional');
+papeisCheck(onefitFuncionarioGerenciavelPorAdmin('profissional') && onefitPodeGerenciarConta('diretor', 'profissional'), 'Conta legada profissional continua gerenciável como professor');
+foreach (['admin', 'diretor', 'aluno', '', null, 'gerente'] as $naoGerenciavel) {
+    papeisCheck(!onefitFuncionarioGerenciavelPorAdmin($naoGerenciavel) && !onefitPodeGerenciarConta('admin', $naoGerenciavel), 'Não gerenciável por admin comum: ' . var_export($naoGerenciavel, true));
 }
+papeisCheck(onefitPodeGerenciarConta('diretor', 'admin') && onefitPodeGerenciarConta('diretor', 'diretor'), 'Diretor gerencia contas admin e diretor');
+papeisCheck(!onefitPodeGerenciarConta('diretor', 'aluno') && !onefitPodeGerenciarConta('diretor', 'gerente'), 'Diretor não gerencia aluno nem cargo desconhecido nesta tela');
+foreach (['recepcionista', 'vendedor', 'professor', 'aluno', null] as $operadorComum) {
+    papeisCheck(!onefitPodeGerenciarConta($operadorComum, 'vendedor'), 'Sem gestão de funcionários: ' . var_export($operadorComum, true));
+}
+papeisCheck(onefitPapeisFuncionarios() === ['vendedor', 'professor', 'recepcionista', 'faxineira', 'profissional', 'admin', 'diretor'], 'Cargos listados na tela Funcionários');
 $catraca = [
     // [cargo, status, cadastro profissional ativo?, liberado, motivo]
     ['vendedor', 'ativo', false, true, 'ok'],
     ['recepcionista', 'ativo', false, true, 'ok'],
     ['faxineira', 'ativo', false, true, 'ok'],
     ['admin', 'ativo', false, true, 'ok'],
+    ['diretor', 'ativo', false, true, 'ok'],
+    ['diretor', 'inativo', false, false, 'conta_inativa'],
     ['faxineira', 'inativo', false, false, 'conta_inativa'],
     ['vendedor', 'bloqueado', false, false, 'conta_inativa'],
     ['professor', 'ativo', true, true, 'ok'],
@@ -70,34 +99,39 @@ foreach ($catraca as [$cargo, $status, $cadastroAtivo, $liberado, $motivo]) {
     papeisCheck(onefitSituacaoCatracaFuncionario($cargo, $status, $cadastroAtivo) === ['liberado' => $liberado, 'motivo' => $motivo], 'Catraca prevista: ' . var_export($cargo, true) . "/$status");
 }
 
-// --- Cadastro facial: operador x pessoa (D5, D2/P6) ---------------------------
+// --- Cadastro facial: operador x pessoa (D5; contas administrativas só pelo diretor) ---
 $conta = static fn(?string $cargo, string $status = 'ativo'): array => ['tipo_usuario' => $cargo, 'status' => $status];
 $naoAdmins = ['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'faxineira'];
-foreach (['admin', 'recepcionista'] as $operador) {
+foreach (['diretor', 'admin', 'recepcionista'] as $operador) {
     foreach ($naoAdmins as $pessoa) {
-        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa), false) === ['permitido' => true, 'motivo' => 'ok'], "Facial: $operador fotografa $pessoa ativo");
-        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'inativo'), false)['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa inativo");
-        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'bloqueado'), false)['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa bloqueado");
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa)) === ['permitido' => true, 'motivo' => 'ok'], "Facial: $operador fotografa $pessoa ativo");
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'inativo'))['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa inativo");
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($pessoa, 'bloqueado'))['motivo'] === 'pessoa_inativa', "Facial: $operador recusa $pessoa bloqueado");
     }
-    // Contas admin só pela lista restrita, que ainda não existe (P1): ninguém, nem o próprio admin.
-    papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta('admin'), false)['motivo'] === 'conta_admin_restrita', "Facial: $operador não fotografa admin");
-    papeisCheck(onefitAvaliarCadastroFacial($conta($operador), null, false)['motivo'] === 'pessoa_inexistente', "Facial: $operador recusa pessoa inexistente");
-    foreach ([null, '', 'gerente', 'Admin'] as $desconhecido) {
-        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($desconhecido), false)['motivo'] === 'cargo_desconhecido', "Facial: $operador recusa cargo " . var_export($desconhecido, true));
+    papeisCheck(onefitAvaliarCadastroFacial($conta($operador), null)['motivo'] === 'pessoa_inexistente', "Facial: $operador recusa pessoa inexistente");
+    foreach ([null, '', 'gerente', 'Admin', 'Diretor'] as $desconhecido) {
+        papeisCheck(onefitAvaliarCadastroFacial($conta($operador), $conta($desconhecido))['motivo'] === 'cargo_desconhecido', "Facial: $operador recusa cargo " . var_export($desconhecido, true));
     }
 }
-papeisCheck(onefitAvaliarCadastroFacial($conta('admin'), $conta('admin'), true)['permitido'], 'Facial: admin da lista restrita fotografa admin');
-papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista'), $conta('admin'), true)['motivo'] === 'conta_admin_restrita', 'Facial: "restrito" não vale para recepcionista');
+// Contas administrativas (inclusive a do próprio operador): só um diretor ativo.
+foreach (['admin', 'diretor'] as $administrativa) {
+    papeisCheck(onefitAvaliarCadastroFacial($conta('diretor'), $conta($administrativa))['permitido'], "Facial: diretor fotografa $administrativa");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('admin'), $conta($administrativa))['motivo'] === 'conta_admin_restrita', "Facial: admin não fotografa $administrativa");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista'), $conta($administrativa))['motivo'] === 'conta_admin_restrita', "Facial: recepcionista não fotografa $administrativa");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('diretor', 'inativo'), $conta($administrativa))['motivo'] === 'operador_sem_permissao', "Facial: diretor inativo não fotografa $administrativa");
+}
 foreach (['professor', 'profissional', 'aluno', 'vendedor', 'faxineira', 'gerente', '', null] as $semPermissao) {
-    papeisCheck(onefitAvaliarCadastroFacial($conta($semPermissao), $conta('aluno'), true)['motivo'] === 'operador_sem_permissao', 'Facial: ' . var_export($semPermissao, true) . ' não opera');
+    papeisCheck(onefitAvaliarCadastroFacial($conta($semPermissao), $conta('aluno'))['motivo'] === 'operador_sem_permissao', 'Facial: ' . var_export($semPermissao, true) . ' não opera');
 }
 foreach (['inativo', 'bloqueado'] as $statusOperador) {
-    papeisCheck(onefitAvaliarCadastroFacial($conta('admin', $statusOperador), $conta('aluno'), false)['motivo'] === 'operador_sem_permissao', "Facial: admin $statusOperador não opera");
-    papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista', $statusOperador), $conta('recepcionista'), false)['motivo'] === 'operador_sem_permissao', "Facial: recepcionista $statusOperador não opera");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('admin', $statusOperador), $conta('aluno'))['motivo'] === 'operador_sem_permissao', "Facial: admin $statusOperador não opera");
+    papeisCheck(onefitAvaliarCadastroFacial($conta('recepcionista', $statusOperador), $conta('recepcionista'))['motivo'] === 'operador_sem_permissao', "Facial: recepcionista $statusOperador não opera");
 }
-papeisCheck(onefitAvaliarCadastroFacial(null, $conta('aluno'), false)['motivo'] === 'operador_sem_permissao', 'Facial: sem operador');
+papeisCheck(onefitAvaliarCadastroFacial(null, $conta('aluno'))['motivo'] === 'operador_sem_permissao', 'Facial: sem operador');
 // A foto não muda a regra da catraca nem dá login: faxineira continua sem painel.
-papeisCheck(onefitPainelDoPapel('faxineira') === null && onefitPainelDoPapel('recepcionista') === null, 'Facial não concede painel');
+papeisCheck(onefitPainelDoPapel('faxineira') === null, 'Facial não concede painel');
+// Painel da recepção: só cadastro facial e configurações; nenhuma operação de admin.
+papeisCheck(onefitPainelDoPapel('recepcionista') === 'recepcionista' && !onefitPapelPermitido('recepcionista', ['admin']) && !onefitFuncionarioGerenciavelPorAdmin('admin'), 'Recepção tem painel próprio, sem poderes de admin');
 
 // --- Notificação de compra: rótulo pela política, sem "não é profissional, então é aluno" ---
 require_once __DIR__ . '/../config/notificacoes.php';
@@ -137,7 +171,8 @@ $casos = [
     [['tipo_usuario' => null, 'status' => 'ativo'], 'aluno', false, 'cargo_desconhecido', null],
     [['tipo_usuario' => 'gerente', 'status' => 'ativo'], 'aluno', false, 'cargo_desconhecido', null],
     [['tipo_usuario' => 'faxineira', 'status' => 'ativo'], 'faxineira', false, 'sem_acesso_ao_painel', null],
-    [['tipo_usuario' => 'recepcionista', 'status' => 'ativo'], 'recepcionista', false, 'sem_acesso_ao_painel', null],
+    [['tipo_usuario' => 'recepcionista', 'status' => 'ativo'], 'recepcionista', true, 'ok', 'recepcionista'],
+    [['tipo_usuario' => 'recepcionista', 'status' => 'bloqueado'], 'recepcionista', false, 'conta_inativa', null],
     [['tipo_usuario' => 'aluno', 'status' => 'ativo'], 'aluno', true, 'ok', 'aluno'],
     [['tipo_usuario' => 'aluno', 'status' => 'ativo'], 'admin', true, 'cargo_alterado', 'aluno'],
     [['tipo_usuario' => 'admin', 'status' => 'ativo'], 'aluno', true, 'cargo_alterado', 'admin'],
@@ -173,8 +208,15 @@ foreach (['pages', 'config', 'components', 'database'] as $pasta) {
         }
     }
 }
-// Único fluxo autorizado: a tela Funcionários (operador e alvo conferidos com trava).
-papeisCheck($gravacoesDeCargo === ['pages/dashboard/includes/funcionarios.php'], 'Gravação de cargo fora do fluxo autorizado: ' . implode(', ', $gravacoesDeCargo));
+// Fluxos autorizados: a tela Funcionários (operador e alvo conferidos com trava) e a
+// recuperação do diretor pela linha de comando (só admin ativo → diretor, só sem diretor ativo).
+sort($gravacoesDeCargo);
+papeisCheck($gravacoesDeCargo === ['database/diretor-recuperar.php', 'pages/dashboard/includes/funcionarios.php'], 'Gravação de cargo fora do fluxo autorizado: ' . implode(', ', $gravacoesDeCargo));
+$recuperacao = $ler('database/diretor-recuperar.php');
+papeisCheck(str_starts_with($recuperacao, "<?php") && str_contains($recuperacao, "if (PHP_SAPI !== 'cli') { http_response_code(404); exit; }"), 'Recuperação do diretor só pela linha de comando');
+papeisCheck(str_contains($recuperacao, 'onefitContarDiretoresAtivos($conn, true) > 0') && str_contains($recuperacao, "\$alvo['tipo_usuario'] !== 'admin'")
+    && str_contains($recuperacao, "UPDATE usuarios SET tipo_usuario = 'diretor' WHERE id_usuario = ? AND tipo_usuario = 'admin' AND status = 'ativo'"), 'Recuperação: só sem diretor ativo e só de admin ativo para diretor');
+papeisCheck(str_contains($recuperacao, "'PROMOVER-' . \$id") && str_contains($recuperacao, "onefitEnv('DB_NAME')"), 'Recuperação exige confirmação e o banco do .env');
 
 foreach (['pages/dashboard/funcionalidades/permissoes.php', 'pages/dashboard/funcionalidades/funcoes.php'] as $handler) {
     papeisCheck(!preg_match('/\b(INSERT|UPDATE|DELETE|REPLACE)\b/i', $ler($handler)), "$handler não grava no banco");

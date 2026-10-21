@@ -43,6 +43,143 @@ function bo_ciclo_por_duracao(?int $dias): string
     return 'Anual';
 }
 
+/*
+ * Telas compartilhadas entre perfis: o admin gerencia; a recepção (Alunos,
+ * Pagamentos, Modalidades, Cashback) e o vendedor (Categorias, Cashback) só
+ * consultam. A gravação continua nas rotas funcionalidades/*.php do admin.
+ */
+
+/** Tela "Alunos" (seção "usuarios"): só contas de aluno. Funcionários ficam na tela "Funcionários". */
+function bo_carregar_alunos(mysqli $conn): array
+{
+    $usuarios = [];
+    $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
+                   u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
+                   m.id_matricula, m.data_inicio, m.data_fim, m.id_plano, pl.nome AS plano_nome
+            FROM usuarios u
+            LEFT JOIN matricula m ON m.id_matricula = (
+                SELECT id_matricula FROM matricula
+                WHERE id_usuario = u.id_usuario
+                ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1
+            )
+            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
+            WHERE u.tipo_usuario = 'aluno'
+            ORDER BY u.nome";
+    if ($r = $conn->query($sql)) {
+        while ($row = $r->fetch_assoc()) {
+            $cidadeEstadoUsr = explode('/', $row['cidade_estado'] ?? '', 2);
+            $usuarios[] = [
+                'id' => (int) $row['id_usuario'],
+                'nome' => $row['nome'],
+                'email' => $row['email'],
+                'cpf' => $row['cpf'],
+                'status' => $row['status'] === 'ativo' ? 'ativo' : 'inativo',
+                'matricula' => $row['id_matricula'] ? 'MAT-' . str_pad($row['id_matricula'], 4, '0', STR_PAD_LEFT) : '—',
+                'dataInicial' => $row['data_inicio'] ?: '',
+                'dataFinal' => $row['data_fim'] ?: '',
+                'idPlano' => $row['id_plano'] ? (int) $row['id_plano'] : null,
+                'plano' => $row['plano_nome'] ?: '—',
+                'acesso' => $row['status'] === 'bloqueado' ? 'Bloqueado' : 'Liberado',
+                'observacao' => '',
+                'celular' => $row['celular'],
+                'genero' => $row['genero'],
+                'nascimento' => $row['data_nascimento'],
+                'nacionalidade' => $row['nacionalidade'],
+                'endereco' => $row['endereco'],
+                'cidade' => trim($cidadeEstadoUsr[0] ?? ''),
+                'estado' => trim($cidadeEstadoUsr[1] ?? ''),
+            ];
+        }
+    }
+    return $usuarios;
+}
+
+/** Tela "Pagamentos": cobranças das matrículas. */
+function bo_carregar_pagamentos(mysqli $conn): array
+{
+    $pagamentos = [];
+    $sql = "SELECT p.id_pagamento, COALESCE(p.data_pagamento, p.data_vencimento) AS data, p.forma_pagamento, p.valor, p.status, m.id_usuario
+            FROM pagamento p
+            JOIN matricula m ON m.id_matricula = p.id_matricula
+            ORDER BY data DESC";
+    if ($r = $conn->query($sql)) {
+        while ($row = $r->fetch_assoc()) {
+            $pagamentos[] = [
+                'id' => (int) $row['id_pagamento'],
+                'data' => $row['data'],
+                'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
+                'valor' => (float) $row['valor'],
+                'usuarioId' => (int) $row['id_usuario'],
+                'observacao' => bo_label_status_pagamento($row['status']),
+            ];
+        }
+    }
+    return $pagamentos;
+}
+
+/** Tela "Cashbacks": resumo geral e lançamentos. Retorna ['resumo' => [...], 'transacoes' => [...]]. */
+function bo_carregar_cashbacks(mysqli $conn): array
+{
+    $cashbackResumo = ['saldoTotal' => 0, 'distribuidos' => 0, 'debitado' => 0, 'creditado' => 0];
+    if ($r = $conn->query("SELECT
+            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE 0 END) AS creditado,
+            SUM(CASE WHEN tipo = 'debito' THEN valor ELSE 0 END) AS debitado
+        FROM cashback WHERE status != 'cancelado'")) {
+        $row = $r->fetch_assoc();
+        $cashbackResumo['creditado'] = (float) $row['creditado'];
+        $cashbackResumo['distribuidos'] = (float) $row['creditado'];
+        $cashbackResumo['debitado'] = (float) $row['debitado'];
+        $cashbackResumo['saldoTotal'] = $cashbackResumo['creditado'] - $cashbackResumo['debitado'];
+    }
+
+    $cashbackTransacoes = [];
+    $sql = "SELECT id_cashback, data_criacao, tipo, valor, id_usuario, descricao FROM cashback ORDER BY data_criacao DESC";
+    if ($r = $conn->query($sql)) {
+        while ($row = $r->fetch_assoc()) {
+            $cashbackTransacoes[] = [
+                'id' => (int) $row['id_cashback'],
+                'data' => $row['data_criacao'],
+                'tipo' => $row['tipo'],
+                'valor' => (float) $row['valor'],
+                'usuarioId' => (int) $row['id_usuario'],
+                'motivo' => $row['descricao'],
+            ];
+        }
+    }
+    return ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes];
+}
+
+/** Tela "Categorias"; $somenteAtivas para quem só consulta as categorias usadas no cadastro de produtos. */
+function bo_carregar_categorias(mysqli $conn, bool $somenteAtivas = false): array
+{
+    $categorias = [];
+    $sql = 'SELECT id_categoria, nome, status FROM categorias' . ($somenteAtivas ? " WHERE status = 'ativo'" : '') . ' ORDER BY nome';
+    if ($r = $conn->query($sql)) {
+        while ($row = $r->fetch_assoc()) {
+            $categorias[] = ['id' => (int) $row['id_categoria'], 'nome' => $row['nome'], 'status' => $row['status']];
+        }
+    }
+    return $categorias;
+}
+
+/** Tela "Modalidades" (tabela `modalidades`). */
+function bo_carregar_modalidades(mysqli $conn): array
+{
+    $modalidades = [];
+    if ($r = $conn->query('SELECT id_modalidade, nome, descricao, icone, status FROM modalidades ORDER BY nome')) {
+        while ($row = $r->fetch_assoc()) {
+            $modalidades[] = [
+                'id' => (int) $row['id_modalidade'],
+                'nome' => $row['nome'],
+                'descricao' => $row['descricao'],
+                'icone' => $row['icone'],
+                'status' => $row['status'],
+            ];
+        }
+    }
+    return $modalidades;
+}
+
 /* =======================================================================
  * PERFIL: ADMINISTRADOR
  * ===================================================================== */
@@ -136,47 +273,8 @@ if ($perfilLogado === 'admin') {
         $testemunhosAdmin[] = $row;
     }
 
-    // Tela "Alunos" (seção "usuarios"): só contas de aluno. Funcionários e
-    // administradores ficam na tela "Funcionários".
-    $usuarios = [];
-    $sql = "SELECT u.id_usuario, u.nome, u.email, u.cpf, u.status,
-                   u.celular, u.genero, u.data_nascimento, u.nacionalidade, u.endereco, u.cidade_estado,
-                   m.id_matricula, m.data_inicio, m.data_fim, m.id_plano, pl.nome AS plano_nome
-            FROM usuarios u
-            LEFT JOIN matricula m ON m.id_matricula = (
-                SELECT id_matricula FROM matricula
-                WHERE id_usuario = u.id_usuario
-                ORDER BY data_matricula DESC, id_matricula DESC LIMIT 1
-            )
-            LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-            WHERE u.tipo_usuario = 'aluno'
-            ORDER BY u.nome";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $cidadeEstadoUsr = explode('/', $row['cidade_estado'] ?? '', 2);
-            $usuarios[] = [
-                'id' => (int) $row['id_usuario'],
-                'nome' => $row['nome'],
-                'email' => $row['email'],
-                'cpf' => $row['cpf'],
-                'status' => $row['status'] === 'ativo' ? 'ativo' : 'inativo',
-                'matricula' => $row['id_matricula'] ? 'MAT-' . str_pad($row['id_matricula'], 4, '0', STR_PAD_LEFT) : '—',
-                'dataInicial' => $row['data_inicio'] ?: '',
-                'dataFinal' => $row['data_fim'] ?: '',
-                'idPlano' => $row['id_plano'] ? (int) $row['id_plano'] : null,
-                'plano' => $row['plano_nome'] ?: '—',
-                'acesso' => $row['status'] === 'bloqueado' ? 'Bloqueado' : 'Liberado',
-                'observacao' => '',
-                'celular' => $row['celular'],
-                'genero' => $row['genero'],
-                'nascimento' => $row['data_nascimento'],
-                'nacionalidade' => $row['nacionalidade'],
-                'endereco' => $row['endereco'],
-                'cidade' => trim($cidadeEstadoUsr[0] ?? ''),
-                'estado' => trim($cidadeEstadoUsr[1] ?? ''),
-            ];
-        }
-    }
+    // Tela "Alunos" (seção "usuarios"): só contas de aluno.
+    $usuarios = bo_carregar_alunos($conn);
 
     // As telas "Funções" e "Permissões" foram desativadas (config/papeis.php).
 
@@ -187,9 +285,12 @@ if ($perfilLogado === 'admin') {
     $cadastrosProfissionaisLivres = [];
     $funcionariosMigracao = ['ok' => false, 'faltando' => []];
     $funcionariosErro = false;
+    // Cargo da sessão (revalidado no banco por conn.php): só decide o que a tela mostra.
+    $funcionariosCargos = [];
     try {
         $funcionariosMigracao = bo_funcionarios_migracao($conn);
-        $funcionarios = bo_funcionarios_listar($conn);
+        $funcionariosCargos = array_values(array_filter(onefitCargosAtribuiveis($_SESSION['tipo_usuario'] ?? null), static fn(string $cargo): bool => bo_funcionarios_enum_aceita($conn, $cargo)));
+        $funcionarios = bo_funcionarios_listar($conn, $_SESSION['tipo_usuario'] ?? null, (int) ($_SESSION['id_usuario'] ?? 0));
         $cadastrosProfissionaisLivres = bo_cadastros_profissionais_livres($conn);
     } catch (Throwable $erroFuncionarios) {
         error_log('ONE FIT: falha ao carregar funcionários. Código: ' . $erroFuncionarios->getCode());
@@ -198,60 +299,10 @@ if ($perfilLogado === 'admin') {
         $funcionariosErro = true;
     }
 
-    // Tela "Pagamentos"
-    $pagamentos = [];
-    $sql = "SELECT p.id_pagamento, COALESCE(p.data_pagamento, p.data_vencimento) AS data, p.forma_pagamento, p.valor, p.status, m.id_usuario
-            FROM pagamento p
-            JOIN matricula m ON m.id_matricula = p.id_matricula
-            ORDER BY data DESC";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $pagamentos[] = [
-                'id' => (int) $row['id_pagamento'],
-                'data' => $row['data'],
-                'tipo' => bo_label_forma_pagamento($row['forma_pagamento']),
-                'valor' => (float) $row['valor'],
-                'usuarioId' => (int) $row['id_usuario'],
-                'observacao' => bo_label_status_pagamento($row['status']),
-            ];
-        }
-    }
-
-    // Tela "Cashbacks"
-    $cashbackResumo = ['saldoTotal' => 0, 'distribuidos' => 0, 'debitado' => 0, 'creditado' => 0];
-    if ($r = $conn->query("SELECT
-            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE 0 END) AS creditado,
-            SUM(CASE WHEN tipo = 'debito' THEN valor ELSE 0 END) AS debitado
-        FROM cashback WHERE status != 'cancelado'")) {
-        $row = $r->fetch_assoc();
-        $cashbackResumo['creditado'] = (float) $row['creditado'];
-        $cashbackResumo['distribuidos'] = (float) $row['creditado'];
-        $cashbackResumo['debitado'] = (float) $row['debitado'];
-        $cashbackResumo['saldoTotal'] = $cashbackResumo['creditado'] - $cashbackResumo['debitado'];
-    }
-
-    $cashbackTransacoes = [];
-    $sql = "SELECT id_cashback, data_criacao, tipo, valor, id_usuario, descricao FROM cashback ORDER BY data_criacao DESC";
-    if ($r = $conn->query($sql)) {
-        while ($row = $r->fetch_assoc()) {
-            $cashbackTransacoes[] = [
-                'id' => (int) $row['id_cashback'],
-                'data' => $row['data_criacao'],
-                'tipo' => $row['tipo'],
-                'valor' => (float) $row['valor'],
-                'usuarioId' => (int) $row['id_usuario'],
-                'motivo' => $row['descricao'],
-            ];
-        }
-    }
-
-    // Tela "Categorias"
-    $categorias = [];
-    if ($r = $conn->query('SELECT id_categoria, nome, status FROM categorias ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $categorias[] = ['id' => (int) $row['id_categoria'], 'nome' => $row['nome'], 'status' => $row['status']];
-        }
-    }
+    // Telas "Pagamentos", "Cashbacks" e "Categorias"
+    $pagamentos = bo_carregar_pagamentos($conn);
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
+    $categorias = bo_carregar_categorias($conn);
     $categoriasAtivasOptions = array_values(array_map(
         static fn(array $c): string => $c['nome'],
         array_filter($categorias, static fn(array $c): bool => $c['status'] === 'ativo')
@@ -312,18 +363,7 @@ if ($perfilLogado === 'admin') {
         }
     }
     // Tela "Modalidades"
-    $modalidadesAdm = [];
-    if ($r = $conn->query('SELECT id_modalidade, nome, descricao, icone, status FROM modalidades ORDER BY nome')) {
-        while ($row = $r->fetch_assoc()) {
-            $modalidadesAdm[] = [
-                'id' => (int) $row['id_modalidade'],
-                'nome' => $row['nome'],
-                'descricao' => $row['descricao'],
-                'icone' => $row['icone'],
-                'status' => $row['status'],
-            ];
-        }
-    }
+    $modalidadesAdm = bo_carregar_modalidades($conn);
     $modalidadesOptions = array_map(static fn(array $m): string => $m['nome'], $modalidadesAdm);
 
     // Tela "Profissionais"
@@ -364,106 +404,9 @@ if ($perfilLogado === 'admin') {
 /* =======================================================================
  * PERFIL: PROFISSIONAL
  * ===================================================================== */
-if ($perfilLogado === 'profissional') {
-
-    $idUsuarioLogado = (int) $_SESSION['id_usuario'];
-    $idProfissional = null;
-    $stmt = $conn->prepare('SELECT id_profissional, status FROM cadastro_profissional WHERE id_usuario = ? LIMIT 1');
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $cadProf = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    $idProfissional = $cadProf['id_profissional'] ?? null;
-
-    $profContrato = ['status' => $cadProf ? onefitTraduzir(ucfirst($cadProf['status'])) : '—', 'validade' => '—', 'saldoCashback' => 0];
-
-    $stmt = $conn->prepare("SELECT
-            SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END) AS saldo
-        FROM cashback WHERE id_usuario = ? AND status != 'cancelado'");
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-    $profContrato['saldoCashback'] = (float) ($row['saldo'] ?? 0);
-
-    // Tela "Histórico" — não há tabela de repasses/comissão por competência no banco
-    $profHistorico = [];
-
-    // Tela "Alunos" — vinculados por agendamentos já realizados com este profissional
-    $profAlunos = [];
-    if ($idProfissional) {
-        $stmt = $conn->prepare("SELECT DISTINCT u.id_usuario, u.nome, u.celular
-                FROM agendamento a
-                JOIN usuarios u ON u.id_usuario = a.id_usuario
-                WHERE a.id_profissional = ?
-                ORDER BY u.nome");
-        $stmt->bind_param('i', $idProfissional);
-        $stmt->execute();
-        $alunosRes = $stmt->get_result();
-        while ($aluno = $alunosRes->fetch_assoc()) {
-            $stmt2 = $conn->prepare("SELECT m.status, m.valor_contratado, pl.nome AS plano
-                    FROM matricula m
-                    LEFT JOIN cadastro_planos pl ON pl.id_plano = m.id_plano
-                    WHERE m.id_usuario = ?
-                    ORDER BY m.data_matricula DESC LIMIT 1");
-            $stmt2->bind_param('i', $aluno['id_usuario']);
-            $stmt2->execute();
-            $mat = $stmt2->get_result()->fetch_assoc();
-            $stmt2->close();
-            $profAlunos[] = [
-                'id' => (int) $aluno['id_usuario'],
-                'nome' => $aluno['nome'],
-                'contato' => $aluno['celular'],
-                'plano' => $mat['plano'] ?? '—',
-                'status' => ($mat['status'] ?? '') === 'ativa' ? 'ativo' : 'inativo',
-                'valor' => (float) ($mat['valor_contratado'] ?? 0),
-                'observacao' => '',
-            ];
-        }
-        $stmt->close();
-    }
-
-    // Tela "Agenda"
-    $profAgendados = [];
-    $profDisponiveis = []; // não há tabela de horários "livres" oferecidos pelo profissional no banco
-    if ($idProfissional) {
-        $stmt = $conn->prepare("SELECT a.titulo, a.tipo, a.data_evento, a.hora_inicio, u.nome, u.celular
-                FROM agendamento a
-                JOIN usuarios u ON u.id_usuario = a.id_usuario
-                WHERE a.id_profissional = ? AND a.status IN ('agendado','confirmado')
-                ORDER BY a.data_evento, a.hora_inicio");
-        $stmt->bind_param('i', $idProfissional);
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            $profAgendados[] = [
-                'aluno' => $row['nome'],
-                'contato' => $row['celular'],
-                'data' => onefitData('d/m/Y', strtotime($row['data_evento'])) . ' ' . substr($row['hora_inicio'], 0, 5),
-                'modalidade' => $row['titulo'] ?: ucfirst($row['tipo']),
-            ];
-        }
-        $stmt->close();
-    }
-
-    // Tela "Meu cashback"
-    $profCashbackHistorico = [];
-    $stmt = $conn->prepare('SELECT data_criacao, descricao, valor FROM cashback WHERE id_usuario = ? ORDER BY data_criacao DESC');
-    $stmt->bind_param('i', $idUsuarioLogado);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    while ($row = $res->fetch_assoc()) {
-        $profCashbackHistorico[] = [
-            'data' => onefitData('d/m/Y', strtotime($row['data_criacao'])),
-            'descricao' => $row['descricao'],
-            'valor' => (float) $row['valor'],
-        ];
-    }
-    $stmt->close();
-
-    // Tela "Minhas compras"
-    [$profPedidos, $profPedidosHistorico] = bo_carregar_pedidos($conn, $idUsuarioLogado);
-}
+// Meu perfil, Agenda e Treino: components/section-profissional.php lê os próprios
+// dados (vínculos, horários, agendamentos e fichas dos alunos vinculados). O painel
+// do professor não tem mais Dashboard, Histórico, Meu cashback nem Minhas compras.
 
 /* =======================================================================
  * PERFIL: ALUNO
@@ -678,13 +621,6 @@ if ($perfilLogado === 'aluno') {
 if ($perfilLogado === 'vendedor') {
     $idUsuarioLogado = (int) $_SESSION['id_usuario'];
 
-    $categoriasAtivasOptions = [];
-    if ($r = $conn->query("SELECT nome FROM categorias WHERE status = 'ativo' ORDER BY nome")) {
-        while ($row = $r->fetch_assoc()) {
-            $categoriasAtivasOptions[] = $row['nome'];
-        }
-    }
-
     $vendedorProdutos = bo_carregar_produtos_vendedor($conn, $idUsuarioLogado);
     $vendedorProdutosResumo = [
         'total' => count($vendedorProdutos),
@@ -692,12 +628,30 @@ if ($perfilLogado === 'vendedor') {
         'indisponiveis' => count(array_filter($vendedorProdutos, static fn(array $p): bool => $p['status'] === 'indisponivel')),
     ];
     $vendedorVendas = bo_carregar_vendas_vendedor($conn, $idUsuarioLogado);
+    // "Categorias" e "Cashback": só consulta. Criar, editar e excluir categorias
+    // ou lançamentos de cashback continua exclusivo do admin.
+    $categorias = bo_carregar_categorias($conn, true);
+    $categoriasAtivasOptions = array_column($categorias, 'nome');
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
     // Só para exibir o nome da transportadora escolhida em cada venda — o
     // cadastro de transportadoras em si é exclusivo do admin (globais).
     $transportadorasAtivas = array_values(array_filter(
         bo_carregar_transportadoras($conn),
         static fn(array $t): bool => $t['status'] === 'ativo'
     ));
+}
+
+/* =======================================================================
+ * PERFIL: RECEPÇÃO
+ * Alunos, Pagamentos, Modalidades e Cashback: só consulta (as rotas de
+ * gravação continuam exclusivas do admin). O cadastro facial lê os
+ * próprios dados em components/section-fotos-faciais.php.
+ * ===================================================================== */
+if ($perfilLogado === 'recepcionista') {
+    $usuarios = bo_carregar_alunos($conn);
+    $pagamentos = bo_carregar_pagamentos($conn);
+    ['resumo' => $cashbackResumo, 'transacoes' => $cashbackTransacoes] = bo_carregar_cashbacks($conn);
+    $modalidadesAdm = bo_carregar_modalidades($conn);
 }
 
 /**

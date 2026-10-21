@@ -214,23 +214,37 @@ const BO_PERFIS = {
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
+    // Vendedor: Categorias e Cashback só para consulta (as rotas de gravação são do admin).
     vendedor: {
         label: ofT('Vendedor'),
         menus: [
-            { key: 'vendas', label: ofT('Vendas Marketplace'), icon: 'bi-truck' },
-            { key: 'marketplace', label: ofT('Marketplace'), icon: 'bi-shop', href: BO_MARKETPLACE_URL },
+            { key: 'vendas', label: ofT('Marketplace'), icon: 'bi-shop' },
+            { key: 'produtos', label: ofT('Produtos'), icon: 'bi-box-seam' },
+            { key: 'categorias', label: ofT('Categorias'), icon: 'bi-tags' },
+            { key: 'cashbacks', label: ofT('Cashback'), icon: 'bi-wallet2' },
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],
     },
+    // Professor (painel "profissional"): perfil, agenda e a ficha de treino dos alunos vinculados.
     profissional: {
         label: ofT('Profissional'),
         menus: [
-            { key: 'dashboard', label: ofT('Dashboard'), icon: 'bi-speedometer2' },
-            { key: 'historico', label: ofT('Histórico'), icon: 'bi-clock-history' },
-            { key: 'alunos', label: ofT('Alunos'), icon: 'bi-people' },
+            { key: 'perfil', label: ofT('Meu perfil'), icon: 'bi-person-circle' },
             { key: 'agenda', label: ofT('Agenda'), icon: 'bi-calendar3' },
-            { key: 'cashback', label: ofT('Meu cashback'), icon: 'bi-wallet2' },
-            { key: 'compras', label: ofT('Minhas compras'), icon: 'bi-bag-check' },
+            { key: 'treino', label: ofT('Treino'), icon: 'bi-lightning-charge' },
+            { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
+        ],
+    },
+    // Recepção: Alunos, Pagamentos, Modalidades e Cashback só para consulta; o servidor
+    // decide quem pode ser fotografado no cadastro facial.
+    recepcionista: {
+        label: ofT('Recepção'),
+        menus: [
+            { key: 'usuarios', label: ofT('Alunos'), icon: 'bi-people' },
+            { key: 'pagamentos', label: ofT('Pagamentos'), icon: 'bi-credit-card' },
+            { key: 'cadastro-facial', label: ofT('Cadastro facial'), icon: 'bi-camera' },
+            { key: 'modalidades', label: ofT('Modalidades'), icon: 'bi-activity' },
+            { key: 'cashbacks', label: ofT('Cashback'), icon: 'bi-wallet2' },
             { key: 'marketplace', label: ofT('Marketplace'), icon: 'bi-shop', href: BO_MARKETPLACE_URL },
             { key: 'configuracoes', label: ofT('Configurações'), icon: 'bi-gear' },
         ],

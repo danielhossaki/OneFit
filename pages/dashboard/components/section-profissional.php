@@ -1,9 +1,12 @@
 <?php
 /**
- * Área do profissional ligada ao banco.
+ * Área do professor ligada ao banco: Agenda e Treino (Meu perfil e
+ * Configurações vêm de section-configuracoes.php).
  *
- * A regra desta área permanece neste arquivo para não exigir alterações nas
- * actions, no JavaScript global ou nos demais componentes do dashboard.
+ * As ações (POST com prof_action) são tratadas aqui, depois que dashboard.php
+ * confirmou no banco que a sessão é de um professor. Cada uma age só sobre
+ * dados do próprio cadastro profissional: vínculos, horários, agendamentos e
+ * exercícios acrescentados à ficha de alunos com vínculo ativo.
  */
 
 $ofH = static function ($value): string {
@@ -15,6 +18,11 @@ $ofIdUsuario = (int) ($_SESSION['id_usuario'] ?? 0);
 $ofIdProfissional = 0;
 $ofAlunosDisponiveis = [];
 $ofAlunosVinculados = [];
+$profAlunos = [];
+$profAgendados = [];
+$profDisponiveis = [];
+// Ficha de treino de cada aluno com vínculo ativo, por id do aluno.
+$ofTreinos = [];
 
 try {
     if (!isset($conn) || !($conn instanceof mysqli)) {
@@ -37,13 +45,7 @@ try {
     }
 
     if ($ofIdProfissional === 0) {
-        $ofAlunosDisponiveis = [];
-        $ofAlunosVinculados = [];
-        $profContrato = ['saldoCashback' => 0.0];
-        $profHistorico = [];
-        $profAgendados = [];
-        $profDisponiveis = [];
-        $profCashbackHistorico = [];
+        // Sem cadastro profissional: nenhuma ação e nenhum dado de alunos.
     } else {
 
     // Relações ausentes no dump original. IF NOT EXISTS torna a preparação
@@ -334,36 +336,43 @@ try {
                 error_log('ONE FIT: falha ao notificar agendamento cancelado #' . $idAgendamento . '; código ' . $erroNotificacao->getCode());
             }
             $ofFeedback = ['type' => 'success', 'message' => 'Agendamento cancelado.'];
-        } elseif ($ofAction === 'usar_cashback') {
-            $valorTexto = str_replace(',', '.', trim((string) ($_POST['valor'] ?? '')));
-            $valor = filter_var($valorTexto, FILTER_VALIDATE_FLOAT);
-            if ($valor === false || $valor <= 0) {
-                throw new RuntimeException(onefitTraduzir('Informe um valor de cashback válido.'));
+        } elseif ($ofAction === 'adicionar_treino') {
+            // Só para aluno ativo com vínculo ativo com este professor, conferido no
+            // banco a cada envio. O professor só acrescenta exercícios: editar,
+            // excluir e limpar a ficha continuam com o próprio aluno.
+            $idAluno = filter_input(INPUT_POST, 'id_aluno', FILTER_VALIDATE_INT);
+            if (!$idAluno) {
+                throw new RuntimeException('Selecione um aluno vinculado e ativo.');
             }
-
             $stmt = $conn->prepare(
-                "SELECT COALESCE(SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END), 0) AS saldo
-                 FROM cashback WHERE id_usuario = ? AND status != 'cancelado'"
+                "SELECT pa.id_vinculo FROM profissional_aluno pa
+                 JOIN usuarios u ON u.id_usuario = pa.id_aluno
+                 WHERE pa.id_profissional = ? AND pa.id_aluno = ? AND pa.status = 'ativo'
+                   AND u.tipo_usuario = 'aluno' AND u.status = 'ativo' LIMIT 1"
             );
-            $stmt->bind_param('i', $ofIdUsuario);
+            $stmt->bind_param('ii', $ofIdProfissional, $idAluno);
             $stmt->execute();
-            $saldo = (float) ($stmt->get_result()->fetch_assoc()['saldo'] ?? 0);
+            $vinculoAtivo = (bool) $stmt->get_result()->fetch_assoc();
             $stmt->close();
-            if ($valor > $saldo) {
-                throw new RuntimeException('Saldo de cashback insuficiente.');
+            if (!$vinculoAtivo) {
+                throw new RuntimeException('Selecione um aluno vinculado e ativo.');
             }
-
-            $descricao = 'Uso de cashback pelo profissional';
-            $stmt = $conn->prepare(
-                "INSERT INTO cashback (id_usuario, id_pagamento, valor, tipo, origem, descricao, status)
-                 VALUES (?, NULL, ?, 'debito', 'uso', ?, 'utilizado')"
-            );
-            $stmt->bind_param('ids', $ofIdUsuario, $valor, $descricao);
-            if (!$stmt->execute()) {
-                throw new RuntimeException('Não foi possível utilizar o cashback.');
+            try {
+                // Mesma validação e mesma proteção contra envio repetido (token) da ficha do aluno.
+                bo_treino_alterar($conn, $idAluno, [
+                    'acao' => 'salvar',
+                    'id' => 0,
+                    'token' => $_POST['token'] ?? '',
+                    'dia_semana' => $_POST['dia_semana'] ?? '',
+                    'nome' => $_POST['nome'] ?? '',
+                    'series' => $_POST['series'] ?? null,
+                    'repeticoes' => $_POST['repeticoes'] ?? null,
+                    'carga' => $_POST['carga'] ?? null,
+                ]);
+            } catch (DomainException $erroTreino) {
+                throw new RuntimeException($erroTreino->getMessage());
             }
-            $stmt->close();
-            $ofFeedback = ['type' => 'success', 'message' => 'Cashback utilizado com sucesso.'];
+            $ofFeedback = ['type' => 'success', 'message' => 'Exercício adicionado ao treino do aluno.'];
         } else {
             throw new RuntimeException('Ação inválida.');
         }
@@ -373,8 +382,7 @@ try {
     $stmt = $conn->prepare(
         "SELECT pa.id_vinculo, pa.id_aluno, pa.status, pa.observacao,
                 u.nome, u.email, u.celular,
-                COALESCE(cp.nome, 'Sem plano') AS plano,
-                COALESCE(m.valor_contratado, 0) AS valor
+                COALESCE(cp.nome, 'Sem plano') AS plano
          FROM profissional_aluno pa
          JOIN usuarios u ON u.id_usuario = pa.id_aluno
          LEFT JOIN matricula m ON m.id_matricula = (
@@ -391,6 +399,11 @@ try {
     }
     $stmt->close();
     $profAlunos = $ofAlunosVinculados;
+    foreach ($ofAlunosVinculados as $vinculo) {
+        if ($vinculo['status'] === 'ativo') {
+            $ofTreinos[(int) $vinculo['id_aluno']] = bo_treino_carregar($conn, (int) $vinculo['id_aluno']);
+        }
+    }
 
     $stmt = $conn->prepare(
         "SELECT u.id_usuario, u.nome, u.email
@@ -447,32 +460,6 @@ try {
         $profDisponiveis[] = $row;
     }
     $stmt->close();
-
-    $stmt = $conn->prepare(
-        "SELECT COALESCE(SUM(CASE WHEN tipo = 'credito' THEN valor ELSE -valor END), 0) AS saldo
-         FROM cashback WHERE id_usuario = ? AND status != 'cancelado'"
-    );
-    $stmt->bind_param('i', $ofIdUsuario);
-    $stmt->execute();
-    $profContrato['saldoCashback'] = (float) ($stmt->get_result()->fetch_assoc()['saldo'] ?? 0);
-    $stmt->close();
-
-    $profCashbackHistorico = [];
-    $stmt = $conn->prepare(
-        "SELECT data_criacao, descricao, valor, tipo FROM cashback
-         WHERE id_usuario = ? AND status != 'cancelado' ORDER BY data_criacao DESC, id_cashback DESC"
-    );
-    $stmt->bind_param('i', $ofIdUsuario);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
-    while ($row = $resultado->fetch_assoc()) {
-        $profCashbackHistorico[] = [
-            'data' => onefitData('d/m/Y', strtotime($row['data_criacao'])),
-            'descricao' => $row['descricao'],
-            'valor' => $row['tipo'] === 'debito' ? -(float) $row['valor'] : (float) $row['valor'],
-        ];
-    }
-    $stmt->close();
     }
 } catch (Throwable $e) {
     // Mensagens próprias (RuntimeException) aparecem; erro de banco não expõe SQL nem tabelas.
@@ -497,55 +484,10 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div>
 <?php endif; ?>
 
-<!-- ===== PROFISSIONAL · Dashboard ===== -->
-<section class="bo-content-section" data-perfil="profissional" data-section="dashboard">
+<!-- ===== PROFESSOR · Treino (alunos vinculados e ficha de cada um) ===== -->
+<section class="bo-content-section" data-perfil="profissional" data-section="treino">
     <div class="bo-page-title">
-        <div><h1><?php echo of_t('Dashboard'); ?></h1><p><?php echo of_t('Resumo do seu contrato e saldo com a {marca}.'); ?></p></div>
-    </div>
-    <div class="row g-3">
-        <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label"><?php echo of_t('Status de contrato'); ?></div>
-            <div class="bo-card-value"><?php echo $ofH($profContrato['status'] ?? '—'); ?></div>
-        </div></div>
-        <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label"><?php echo of_t('Validade de contrato'); ?></div>
-            <div class="bo-card-value"><?php echo $ofH($profContrato['validade'] ?? '—'); ?></div>
-        </div></div>
-        <div class="col-12 col-md-4"><div class="bo-card">
-            <div class="bo-card-label"><?php echo of_t('Saldo de cashback'); ?></div>
-            <div class="bo-card-value"><?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></div>
-        </div></div>
-    </div>
-</section>
-
-<!-- ===== PROFISSIONAL · Histórico ===== -->
-<section class="bo-content-section" data-perfil="profissional" data-section="historico">
-    <div class="bo-page-title">
-        <div><h1><?php echo of_t('Histórico'); ?></h1><p><?php echo of_t('Histórico de competências e valores recebidos.'); ?></p></div>
-        <button type="button" class="btn-bo-outline" data-bo-export="profHistorico"><i class="bi bi-download"></i> <?php echo of_t('Exportar'); ?></button>
-    </div>
-    <div class="bo-table-wrap"><div class="table-responsive">
-        <table class="bo-table" data-bo-table="profHistorico">
-            <thead><tr><th><?php echo of_t('Competência'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Tipo'); ?></th><th><?php echo of_t('Cashback'); ?></th></tr></thead>
-            <tbody>
-                <?php foreach (($profHistorico ?? []) as $h): ?>
-                    <tr>
-                        <td><?php echo $ofH($h['competencia'] ?? '—'); ?></td>
-                        <td><?php echo bo_money((float) ($h['valor'] ?? 0)); ?></td>
-                        <td><?php echo of_t(ucfirst((string) ($h['tipo'] ?? '—'))); ?></td>
-                        <td><?php echo bo_money((float) ($h['cashback'] ?? 0)); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                <tr class="bo-empty-row" <?php echo empty($profHistorico) ? '' : 'style="display:none"'; ?>><td colspan="4"><?php echo of_t('Nenhum registro encontrado.'); ?></td></tr>
-            </tbody>
-        </table>
-    </div></div>
-</section>
-
-<!-- ===== PROFISSIONAL · Alunos ===== -->
-<section class="bo-content-section" data-perfil="profissional" data-section="alunos">
-    <div class="bo-page-title">
-        <div><h1><?php echo of_t('Alunos'); ?></h1><p><?php echo of_t('Cadastre, edite ou remova vínculos com alunos já registrados.'); ?></p></div>
+        <div><h1><?php echo of_t('Treino'); ?></h1><p><?php echo of_t('Consulte os seus alunos e adicione exercícios à ficha de treino de cada um.'); ?></p></div>
         <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofAlunoModal" data-of-new-student>
             <i class="bi bi-plus-lg"></i> <?php echo of_t('Adicionar aluno'); ?>
         </button>
@@ -558,7 +500,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div>
     <div class="bo-table-wrap"><div class="table-responsive">
         <table class="bo-table" data-bo-table="profAlunos">
-            <thead><tr><th><?php echo of_t('Nome'); ?></th><th><?php echo of_t('Plano'); ?></th><th><?php echo of_t('Status'); ?></th><th><?php echo of_t('Valor'); ?></th><th><?php echo of_t('Ações'); ?></th></tr></thead>
+            <thead><tr><th><?php echo of_t('Nome'); ?></th><th><?php echo of_t('Plano'); ?></th><th><?php echo of_t('Status'); ?></th><th><?php echo of_t('Exercícios'); ?></th><th><?php echo of_t('Ações'); ?></th></tr></thead>
             <tbody>
                 <?php foreach ($profAlunos as $a): ?>
                     <tr data-search="<?php echo $ofH(strtolower(($a['nome'] ?? '') . ' ' . ($a['email'] ?? '') . ' ' . ($a['plano'] ?? ''))); ?>"
@@ -569,8 +511,14 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                         </td>
                         <td><?php echo $ofH($a['plano'] ?? onefitTraduzir('Sem plano')); ?></td>
                         <td><?php echo bo_badge($a['status'] === 'ativo'); ?></td>
-                        <td><?php echo bo_money((float) ($a['valor'] ?? 0)); ?></td>
+                        <td><?php echo $a['status'] === 'ativo' ? count($ofTreinos[(int) $a['id_aluno']] ?? []) : '—'; ?></td>
                         <td><div class="bo-table-actions">
+                            <?php if ($a['status'] === 'ativo'): ?>
+                                <button type="button" class="btn-bo-icon" title="<?php echo of_t('Treino do aluno'); ?>"
+                                    data-bs-toggle="modal" data-bs-target="#ofTreinoModal<?php echo (int) $a['id_aluno']; ?>">
+                                    <i class="bi bi-lightning-charge"></i>
+                                </button>
+                            <?php endif; ?>
                             <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar vínculo'); ?>"
                                 data-bs-toggle="modal" data-bs-target="#ofAlunoModal" data-of-edit-student
                                 data-id="<?php echo (int) $a['id_vinculo']; ?>"
@@ -579,7 +527,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
                                 data-observation="<?php echo $ofH($a['observacao'] ?? ''); ?>">
                                 <i class="bi bi-pencil"></i>
                             </button>
-                            <form method="post" action="?section=alunos" class="d-inline" data-of-confirm="<?php echo of_t('Remover este aluno da sua lista?'); ?>">
+                            <form method="post" action="?section=treino" class="d-inline" data-of-confirm="<?php echo of_t('Remover este aluno da sua lista?'); ?>">
                                 <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
                                 <input type="hidden" name="prof_action" value="excluir_vinculo">
                                 <input type="hidden" name="id_vinculo" value="<?php echo (int) $a['id_vinculo']; ?>">
@@ -594,7 +542,7 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div></div>
 </section>
 
-<!-- ===== PROFISSIONAL · Agenda ===== -->
+<!-- ===== PROFESSOR · Agenda ===== -->
 <section class="bo-content-section" data-perfil="profissional" data-section="agenda">
     <div class="bo-page-title">
         <div><h1><?php echo of_t('Agenda'); ?></h1><p><?php echo of_t('Cadastre horários disponíveis e gerencie os agendamentos.'); ?></p></div>
@@ -652,39 +600,10 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div>
 </section>
 
-<!-- ===== PROFISSIONAL · Cashback ===== -->
-<section class="bo-content-section" data-perfil="profissional" data-section="cashback">
-    <div class="bo-page-title">
-        <div><h1><?php echo of_t('Meu cashback'); ?></h1><p><?php echo of_t('Saldo disponível e histórico de créditos e débitos.'); ?></p></div>
-        <div class="bo-actions">
-            <button type="button" class="btn-bo-outline" data-bo-export="profCashback"><i class="bi bi-download"></i> <?php echo of_t('Exportar'); ?></button>
-            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#ofCashbackModal"><i class="bi bi-wallet2"></i> <?php echo of_t('Utilizar cashback'); ?></button>
-        </div>
-    </div>
-    <div class="row g-3 mb-3"><div class="col-12 col-md-4"><div class="bo-card">
-        <div class="bo-card-label"><?php echo of_t('Saldo total'); ?></div>
-        <div class="bo-card-value"><?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></div>
-    </div></div></div>
-    <div class="bo-table-wrap"><div class="table-responsive">
-        <table class="bo-table" data-bo-table="profCashback">
-            <thead><tr><th><?php echo of_t('Data'); ?></th><th><?php echo of_t('Descrição'); ?></th><th><?php echo of_t('Valor'); ?></th></tr></thead>
-            <tbody>
-                <?php foreach ($profCashbackHistorico as $h): ?>
-                    <tr><td><?php echo $ofH($h['data']); ?></td><td><?php echo $ofH($h['descricao']); ?></td><td><?php echo bo_money((float) $h['valor']); ?></td></tr>
-                <?php endforeach; ?>
-                <tr class="bo-empty-row" <?php echo empty($profCashbackHistorico) ? '' : 'style="display:none"'; ?>><td colspan="3"><?php echo of_t('Nenhum registro encontrado.'); ?></td></tr>
-            </tbody>
-        </table>
-    </div></div>
-</section>
-
-<!-- ===== PROFISSIONAL · Compras ===== -->
-<?php $perfilCompras = 'profissional'; $comprasPedidos = $profPedidos ?? []; $comprasHistorico = $profPedidosHistorico ?? []; require __DIR__ . '/section-compras.php'; ?>
-
 <!-- Modal: vínculo de aluno -->
 <div class="modal fade" id="ofAlunoModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <form method="post" action="?section=alunos" id="ofAlunoForm">
+        <form method="post" action="?section=treino" id="ofAlunoForm">
             <div class="modal-header">
                 <h5 class="modal-title" id="ofAlunoModalTitle"><?php echo of_t('Adicionar aluno'); ?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
@@ -776,23 +695,80 @@ $_SESSION['operacoes_agendamento'][$ofOperacaoAgendamento] = true;
     </div></div>
 </div>
 
-<!-- Modal: cashback -->
-<div class="modal fade" id="ofCashbackModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
-        <form method="post" action="?section=cashback">
-            <div class="modal-header"><h5 class="modal-title"><?php echo of_t('Utilizar cashback'); ?></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-            <div class="modal-body">
-                <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
-                <input type="hidden" name="prof_action" value="usar_cashback">
-                <label class="form-label"><?php echo of_t('Valor'); ?></label>
-                <input type="number" class="form-control" name="valor" min="0.01" step="0.01"
-                    max="<?php echo $ofH(number_format((float) ($profContrato['saldoCashback'] ?? 0), 2, '.', '')); ?>" required>
-                <small class="text-secondary"><?php echo of_t('Saldo disponível:'); ?> <?php echo bo_money((float) ($profContrato['saldoCashback'] ?? 0)); ?></small>
-            </div>
-            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button><button type="submit" class="btn btn-warning"><?php echo of_t('Confirmar uso'); ?></button></div>
-        </form>
-    </div></div>
-</div>
+<!-- Modais: ficha de treino de cada aluno com vínculo ativo (consulta e inclusão de exercício) -->
+<?php foreach ($profAlunos as $a): ?>
+    <?php if ($a['status'] !== 'ativo') continue; ?>
+    <?php $ofIdAlunoTreino = (int) $a['id_aluno']; $ofFicha = $ofTreinos[$ofIdAlunoTreino] ?? []; ?>
+    <div class="modal fade" id="ofTreinoModal<?php echo $ofIdAlunoTreino; ?>" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content">
+            <form method="post" action="?section=treino">
+                <div class="modal-header">
+                    <h5 class="modal-title"><?php echo of_t('Treino de {nome}', ['{nome}' => $a['nome']]); ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php echo of_t('Fechar'); ?>"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="bo-section-heading"><?php echo of_t('Ficha atual'); ?></div>
+                    <div class="bo-table-wrap"><div class="table-responsive">
+                        <table class="bo-table">
+                            <thead><tr><th><?php echo of_t('Dia da semana'); ?></th><th><?php echo of_t('Exercício'); ?></th><th><?php echo of_t('Séries'); ?></th><th><?php echo of_t('Repetições'); ?></th><th><?php echo of_t('Carga'); ?></th></tr></thead>
+                            <tbody>
+                                <?php foreach ($ofFicha as $exercicio): ?>
+                                    <tr>
+                                        <td><?php echo of_t(bo_treino_dias()[$exercicio['dia_semana']] ?? '—'); ?></td>
+                                        <td><?php echo of_t($exercicio['nome']); ?></td>
+                                        <td><?php echo (int) $exercicio['series']; ?></td>
+                                        <td><?php echo (int) $exercicio['repeticoes']; ?></td>
+                                        <td><?php echo (int) $exercicio['carga']; ?> kg</td>
+                                    </tr>
+                                <?php endforeach; ?>
+                                <?php if (!$ofFicha): ?><tr><td colspan="5"><?php echo of_t('Nenhum exercício na ficha.'); ?></td></tr><?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div></div>
+
+                    <div class="bo-section-heading"><?php echo of_t('Adicionar exercício'); ?></div>
+                    <div class="row g-3">
+                        <input type="hidden" name="csrf_token" value="<?php echo $ofH($ofCsrf); ?>">
+                        <input type="hidden" name="prof_action" value="adicionar_treino">
+                        <input type="hidden" name="id_aluno" value="<?php echo $ofIdAlunoTreino; ?>">
+                        <?php // Token do envio: reenviar o mesmo formulário não duplica o exercício. ?>
+                        <input type="hidden" name="token" value="<?php echo bin2hex(random_bytes(16)); ?>">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label" for="ofTreinoDia<?php echo $ofIdAlunoTreino; ?>"><?php echo of_t('Dia da semana'); ?></label>
+                            <select class="form-select" name="dia_semana" id="ofTreinoDia<?php echo $ofIdAlunoTreino; ?>" required>
+                                <?php foreach (bo_treino_dias() as $valor => $dia): ?>
+                                    <option value="<?php echo $valor; ?>"><?php echo of_t($dia); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <label class="form-label" for="ofTreinoNome<?php echo $ofIdAlunoTreino; ?>"><?php echo of_t('Exercício'); ?></label>
+                            <select class="form-select" name="nome" id="ofTreinoNome<?php echo $ofIdAlunoTreino; ?>" required>
+                                <option value=""><?php echo of_t('Selecione um exercício'); ?></option>
+                                <?php foreach (bo_treino_catalogo() as $grupo => $nomes): ?>
+                                    <optgroup label="<?php echo of_t($grupo); ?>">
+                                        <?php foreach ($nomes as $nome): ?><option value="<?php echo $ofH($nome); ?>"><?php echo of_t($nome); ?></option><?php endforeach; ?>
+                                    </optgroup>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <?php foreach (['series' => ['Séries', 1, 10, 3], 'repeticoes' => ['Repetições', 1, 50, 12], 'carga' => ['Carga (kg)', 0, 300, 0]] as $campo => [$rotulo, $minimo, $maximo, $padrao]): ?>
+                            <div class="col-12 col-sm-4">
+                                <label class="form-label" for="ofTreino-<?php echo $campo . $ofIdAlunoTreino; ?>"><?php echo of_t($rotulo); ?></label>
+                                <input type="number" class="form-control" name="<?php echo $campo; ?>" id="ofTreino-<?php echo $campo . $ofIdAlunoTreino; ?>"
+                                    min="<?php echo $minimo; ?>" max="<?php echo $maximo; ?>" step="1" value="<?php echo $padrao; ?>" required>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo of_t('Cancelar'); ?></button>
+                    <button type="submit" class="btn btn-warning"><?php echo of_t('Adicionar exercício'); ?></button>
+                </div>
+            </form>
+        </div></div>
+    </div>
+<?php endforeach; ?>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {

@@ -5,7 +5,8 @@
  * recebimento de um item, e solicitar devolução de um pedido já enviado.
  */
 
-$bo_papeis_permitidos = ['admin', 'vendedor', 'aluno', 'profissional'];
+// O professor não tem a tela "Minhas compras" no painel; a rota também o recusa.
+$bo_papeis_permitidos = ['admin', 'vendedor', 'aluno'];
 require __DIR__ . '/_shared.php';
 require __DIR__ . '/../includes/compras.php';
 bo_check_csrf();

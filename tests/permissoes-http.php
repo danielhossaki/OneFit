@@ -46,7 +46,7 @@ function pmAlteradas(array $antes, array $depois): string
 // Contas próprias desta execução, uma por cargo que entra no painel, e uma vítima.
 $run = random_int(100000, 899999);
 $contas = [];
-foreach (['aluno', 'professor', 'profissional', 'vendedor', 'admin', 'vitima'] as $i => $cargo) {
+foreach (['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'admin', 'diretor', 'vitima'] as $i => $cargo) {
     $email = "perm{$run}{$cargo}@example.test";
     $senha = password_hash('Fixture-only-123!', PASSWORD_DEFAULT);
     $cpf = sprintf('%011d', $run * 100 + $i);
@@ -66,7 +66,7 @@ $idMatricula = bo_matricula_inserir_pendente($db, $vitima['id'], $idPlano, 100.0
 $db->commit();
 
 $navegadores = [];
-foreach (['aluno', 'professor', 'profissional', 'vendedor', 'admin'] as $cargo) {
+foreach (['aluno', 'professor', 'profissional', 'vendedor', 'recepcionista', 'admin', 'diretor'] as $cargo) {
     $nav = new Navegador($base);
     pmCheck(str_contains($nav->entrar($contas[$cargo]['email'])['location'], 'pages/dashboard/dashboard.php'), "$cargo entra no painel");
     $navegadores[$cargo] = ['nav' => $nav, 'csrf' => $nav->csrf()];
@@ -131,13 +131,13 @@ pmCheck($negadas >= 100, "Tentativas sem permissão recusadas ($negadas)");
 
 // Rotas fora de _shared.php.
 $antes = pmRetrato($db);
-foreach (['professor', 'vendedor', 'admin'] as $cargo) {
+foreach (['professor', 'vendedor', 'recepcionista', 'admin', 'diretor'] as $cargo) {
     $r = $navegadores[$cargo]['nav']->req('POST', 'pages/dashboard/funcionalidades/treino.php', ['csrf_token' => $navegadores[$cargo]['csrf'], 'id_usuario' => (string) $vitima['id']]);
     pmCheck($r['status'] === 403, "Treino do aluno por $cargo: 403");
     $r = $navegadores[$cargo]['nav']->req('POST', 'pages/dashboard/actions/fotos-faciais.php', ['csrf_token' => $navegadores[$cargo]['csrf'], 'acao' => 'desativar', 'id_usuario' => (string) $vitima['id'], 'id_foto_facial' => '1']);
-    pmCheck($cargo === 'admin' || $r['status'] === 403, "Fotos faciais por $cargo: 403");
+    pmCheck(in_array($cargo, ['admin', 'diretor', 'recepcionista'], true) || $r['status'] === 403, "Fotos faciais por $cargo: 403");
 }
-foreach (['aluno', 'professor', 'vendedor'] as $cargo) {
+foreach (['aluno', 'professor', 'vendedor', 'recepcionista'] as $cargo) {
     $r = $navegadores[$cargo]['nav']->req('GET', 'pages/dashboard/funcionalidades/confirmar-exclusao.php?recurso=usuarios&id=' . $vitima['id']);
     pmCheck($r['status'] === 302 && str_ends_with($r['location'], 'pages/dashboard/dashboard.php'), "Confirmação de exclusão por $cargo: recusada");
     foreach (onefitTemas() as $tema) {
@@ -148,10 +148,13 @@ foreach (['aluno', 'professor', 'vendedor'] as $cargo) {
 pmCheck(($alteradas = pmAlteradas($antes, pmRetrato($db))) === '', "Rotas fora de _shared.php alteraram: $alteradas");
 
 // O painel de quem não é admin não traz dados de outras pessoas, nem pedindo a seção do admin.
-foreach (['aluno', 'professor', 'vendedor'] as $cargo) {
+// Exceção prevista: a recepção consulta Alunos e Pagamentos (tests/secoes-cargos-http.php) e
+// vê o e-mail do aluno; o código da cobrança não aparece para nenhum desses cargos.
+foreach (['aluno', 'professor', 'vendedor', 'recepcionista'] as $cargo) {
     foreach (['usuarios', 'funcionarios', 'pagamentos', 'cadastro-facial'] as $secao) {
         $r = $navegadores[$cargo]['nav']->req('GET', "pages/dashboard/dashboard.php?section=$secao");
-        pmCheck($r['status'] === 200 && !str_contains($r['body'], $vitima['email']) && !str_contains($r['body'], $codigoVitima), "Painel do $cargo (?section=$secao) sem dados da vítima");
+        $semEmail = $cargo === 'recepcionista' || !str_contains($r['body'], $vitima['email']);
+        pmCheck($r['status'] === 200 && $semEmail && !str_contains($r['body'], $codigoVitima), "Painel do $cargo (?section=$secao) sem dados da vítima");
     }
 }
 $painelAdmin = $navegadores['admin']['nav']->req('GET', 'pages/dashboard/dashboard.php?section=usuarios');

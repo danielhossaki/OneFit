@@ -112,7 +112,7 @@ $id = $pessoa('profissional'); $cadastro($id, 'ativo'); $caso($id, true, 'ok', '
 $id = $pessoa('professor', 'inativo'); $cadastro($id, 'ativo'); $caso($id, false, 'conta inativa ou bloqueada', 'professor inativo');
 $id = $pessoa('aluno'); $cadastro($id, 'ativo'); $caso($id, false, $semMatricula, 'aluno com cadastro profissional não vira professor');
 // Demais cargos: só conta ativa, sem matrícula.
-foreach (['admin', 'recepcionista', 'vendedor', 'faxineira'] as $cargo) {
+foreach (['diretor', 'admin', 'recepcionista', 'vendedor', 'faxineira'] as $cargo) {
     $id = $pessoa($cargo); $caso($id, true, 'ok', "$cargo ativo sem matrícula");
     $id = $pessoa($cargo, 'inativo'); $caso($id, false, 'conta inativa ou bloqueada', "$cargo inativo");
 }

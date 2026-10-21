@@ -34,7 +34,6 @@ function bo_foto_facial_situacao(mysqli $conn, int $id, bool $travar = false): ?
 function bo_fotos_faciais_listar(mysqli $conn, int $idOperador, string $termo): array
 {
     $operador = bo_foto_facial_situacao($conn, $idOperador);
-    $restrito = onefitAdminRestrito($conn, $idOperador);
     $termo = mb_substr(trim($termo), 0, 100, 'UTF-8');
     $busca = '%' . $termo . '%';
     $cargos = array_keys(onefitPoliticasPapeis());
@@ -52,7 +51,7 @@ function bo_fotos_faciais_listar(mysqli $conn, int $idOperador, string $termo): 
     $stmt->execute();
     $pessoas = [];
     foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $linha) {
-        if (!onefitAvaliarCadastroFacial($operador, $linha, $restrito)['permitido']) {
+        if (!onefitAvaliarCadastroFacial($operador, $linha)['permitido']) {
             continue;
         }
         $pessoas[] = [
@@ -112,7 +111,7 @@ function bo_foto_facial_cadastrar(mysqli $conn, int $idOperador, int $idPessoa, 
         $stmt->close();
         $operador = $linhas[$idOperador] ?? null;
         $pessoa = $linhas[$idPessoa] ?? null;
-        $avaliacao = onefitAvaliarCadastroFacial($operador, $pessoa, onefitAdminRestrito($conn, $idOperador));
+        $avaliacao = onefitAvaliarCadastroFacial($operador, $pessoa);
         if (!$avaliacao['permitido']) {
             throw $avaliacao['motivo'] === 'operador_sem_permissao'
                 ? new FotoFacialRecusada(onefitTraduzir('Você não tem permissão para gerenciar fotos faciais.'), 403)

@@ -5,10 +5,12 @@
  * vínculo com cadastro_profissional e envio do link de acesso.
  *
  * Todos os funcionários ficam em `usuarios` (tipo_usuario). Cada operação:
- *  - roda numa transação e confere de novo, no banco e com trava, se o
- *    operador é admin ativo e se a conta alvo é um funcionário gerenciável;
- *  - só aceita cargos atribuíveis pela política central (config/papeis.php),
- *    nunca o que o formulário diz sobre a conta;
+ *  - roda numa transação e confere de novo, no banco e com trava, o cargo do
+ *    operador (admin ou diretor ativo) e se ele pode gerenciar a conta alvo;
+ *  - só aceita cargos atribuíveis pelo cargo do operador (config/papeis.php):
+ *    o admin gere os cargos comuns; contas admin e diretor, só um diretor;
+ *    nunca o que o formulário diz sobre a conta ou sobre quem opera;
+ *  - nunca deixa o sistema sem um diretor ativo;
  *  - registra auditoria em `auditoria_eventos`, sem senha nem token;
  *  - nega por padrão: migração pendente, erro de banco ou dado inválido
  *    interrompem a operação sem gravar nada.
@@ -37,6 +39,7 @@ function bo_funcionarios_rotulos_cargo(): array
         'vendedor' => 'Vendedor',
         'faxineira' => 'Faxineira',
         'admin' => 'Administrador',
+        'diretor' => 'Diretor',
     ];
 }
 
@@ -102,10 +105,42 @@ function bo_funcionarios_exigir_migracao(mysqli $conn): void
     }
 }
 
-function bo_funcionarios_exigir_operador(mysqli $conn, int $idOperador): void
+/** O ENUM do banco já aceita o cargo (diretor depende da migração 20261020_diretor_v1). */
+function bo_funcionarios_enum_aceita(mysqli $conn, string $cargo): bool
 {
-    if (!onefitExigirPapel($conn, $idOperador, ['admin'], true)) {
+    $tipo = $conn->query(
+        "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'usuarios' AND COLUMN_NAME = 'tipo_usuario'"
+    )->fetch_row()[0] ?? '';
+    return in_array($cargo, bo_enum_valores((string) $tipo), true);
+}
+
+/** Trava a conta do operador e devolve o cargo dele no banco: admin ou diretor ativo. */
+function bo_funcionarios_exigir_operador(mysqli $conn, int $idOperador): string
+{
+    $operador = onefitBuscarSituacaoUsuario($conn, $idOperador, true);
+    if (!$operador || $operador['status'] !== 'ativo' || !onefitPapelAdministrativo($operador['tipo_usuario'])) {
         throw new FuncionarioRecusado('Você não tem permissão para gerenciar funcionários.');
+    }
+    return onefitPapelCanonico($operador['tipo_usuario']);
+}
+
+/** O operador pode atribuir este cargo? Admin e diretor só por um diretor. */
+function bo_funcionarios_exigir_cargo(mysqli $conn, string $papelOperador, string $cargo): void
+{
+    if (!in_array($cargo, onefitCargosAtribuiveis($papelOperador), true)) {
+        throw new FuncionarioRecusado('Selecione um cargo permitido para o seu nível: só um Diretor atribui os cargos Administrador e Diretor.');
+    }
+    if (!bo_funcionarios_enum_aceita($conn, $cargo)) {
+        throw new FuncionarioRecusado('A migração do cargo Diretor ainda não foi aplicada neste banco. Nenhuma alteração foi feita.');
+    }
+}
+
+/** Depois da mudança, o sistema continua com pelo menos um diretor ativo (linhas travadas). */
+function bo_funcionarios_exigir_diretor_ativo(mysqli $conn): void
+{
+    if (onefitContarDiretoresAtivos($conn, true) < 1) {
+        throw new FuncionarioRecusado('O sistema precisa de pelo menos um Diretor ativo. Nada foi alterado.');
     }
 }
 
@@ -134,7 +169,8 @@ function bo_funcionario_dados(array $entrada, ?array $atual = null): array
             throw new FuncionarioRecusado('Preencha todos os campos obrigatórios.');
         }
     }
-    if (!in_array($dados['cargo'], onefitCargosAtribuiveisPorAdmin(), true)) {
+    // Cargo de funcionário conhecido; se o operador pode atribuí-lo é conferido na transação.
+    if (!in_array($dados['cargo'], onefitCargosAtribuiveis('diretor'), true)) {
         throw new FuncionarioRecusado('Selecione um cargo permitido: professor, recepcionista, vendedor ou faxineira.');
     }
     if (mb_strlen($dados['nome'], 'UTF-8') < 3 || mb_strlen($dados['nome'], 'UTF-8') > 150) {
@@ -225,8 +261,8 @@ function bo_funcionario_executar_unico(mysqli_stmt $stmt, string $mensagemDuplic
     }
 }
 
-/** Trava e devolve a conta alvo, que precisa ser de um funcionário gerenciável por admin comum. */
-function bo_funcionario_alvo(mysqli $conn, int $idOperador, int $id): array
+/** Trava e devolve a conta alvo, que precisa ser gerenciável pelo cargo do operador. */
+function bo_funcionario_alvo(mysqli $conn, int $idOperador, string $papelOperador, int $id): array
 {
     if ($id <= 0) {
         throw new FuncionarioRecusado('Funcionário não encontrado.');
@@ -246,11 +282,10 @@ function bo_funcionario_alvo(mysqli $conn, int $idOperador, int $id): array
     if ($id === $idOperador) {
         throw new FuncionarioRecusado('Você não pode alterar a sua própria conta nesta tela.');
     }
-    if (onefitPapelPermitido($alvo['tipo_usuario'], ['admin'])) {
-        // D2: só administradores da lista restrita, fluxo que ainda não existe.
-        throw new FuncionarioRecusado('Contas de administrador só podem ser alteradas por administradores autorizados.');
+    if (onefitPapelAdministrativo($alvo['tipo_usuario']) && !onefitPapelDiretor($papelOperador)) {
+        throw new FuncionarioRecusado('Contas de administrador e de diretor só podem ser alteradas por um Diretor.');
     }
-    if (!onefitFuncionarioGerenciavelPorAdmin($alvo['tipo_usuario'])) {
+    if (!onefitPodeGerenciarConta($papelOperador, $alvo['tipo_usuario'])) {
         throw new FuncionarioRecusado('Esta conta não é de um funcionário gerenciável nesta tela.');
     }
     return $alvo;
@@ -391,7 +426,8 @@ function bo_funcionario_criar(mysqli $conn, int $idOperador, array $entrada, ?ca
 
     [$id, $tokens] = bo_funcionarios_transacao($conn, static function () use ($conn, $idOperador, $dados, $vinculo): array {
         bo_funcionarios_exigir_migracao($conn);
-        bo_funcionarios_exigir_operador($conn, $idOperador);
+        $papelOperador = bo_funcionarios_exigir_operador($conn, $idOperador);
+        bo_funcionarios_exigir_cargo($conn, $papelOperador, $dados['cargo']);
         bo_funcionario_exigir_unicos($conn, $dados['email'], $dados['cpf'], null);
 
         // Senha aleatória que ninguém conhece; o funcionário define a dele pelo link.
@@ -437,9 +473,12 @@ function bo_funcionario_atualizar(mysqli $conn, int $idOperador, int $id, array 
 {
     return bo_funcionarios_transacao($conn, static function () use ($conn, $idOperador, $id, $entrada): array {
         bo_funcionarios_exigir_migracao($conn);
-        bo_funcionarios_exigir_operador($conn, $idOperador);
-        $alvo = bo_funcionario_alvo($conn, $idOperador, $id);
+        $papelOperador = bo_funcionarios_exigir_operador($conn, $idOperador);
+        $alvo = bo_funcionario_alvo($conn, $idOperador, $papelOperador, $id);
         $dados = bo_funcionario_dados($entrada, $alvo);
+        if (onefitPapelCanonico($alvo['tipo_usuario']) !== $dados['cargo']) {
+            bo_funcionarios_exigir_cargo($conn, $papelOperador, $dados['cargo']);
+        }
         bo_funcionario_exigir_unicos($conn, $dados['email'], $dados['cpf'], $id);
 
         // Mantém o valor legado 'profissional' enquanto o cargo continuar sendo professor.
@@ -460,6 +499,9 @@ function bo_funcionario_atualizar(mysqli $conn, int $idOperador, int $id, array 
         $gravado = onefitBuscarSituacaoUsuario($conn, $id, true);
         if (!$gravado || $gravado['tipo_usuario'] !== $cargoGravar) {
             throw new RuntimeException('Cargo gravado difere do solicitado.');
+        }
+        if (onefitPapelDiretor($alvo['tipo_usuario'])) {
+            bo_funcionarios_exigir_diretor_ativo($conn);
         }
         // Link enviado ao e-mail antigo, ou para um cargo que deixou de entrar no painel, não vale mais.
         if ($emailAlterado || onefitPainelDoPapel($cargoGravar) === null) {
@@ -510,12 +552,15 @@ function bo_funcionario_alterar_status(mysqli $conn, int $idOperador, int $id, s
     }
     bo_funcionarios_transacao($conn, static function () use ($conn, $idOperador, $id, $novoStatus): void {
         bo_funcionarios_exigir_migracao($conn);
-        bo_funcionarios_exigir_operador($conn, $idOperador);
-        $alvo = bo_funcionario_alvo($conn, $idOperador, $id);
+        $papelOperador = bo_funcionarios_exigir_operador($conn, $idOperador);
+        $alvo = bo_funcionario_alvo($conn, $idOperador, $papelOperador, $id);
         $stmt = $conn->prepare('UPDATE usuarios SET status = ? WHERE id_usuario = ? AND tipo_usuario = ?');
         $stmt->bind_param('sis', $novoStatus, $id, $alvo['tipo_usuario']);
         $stmt->execute();
         $stmt->close();
+        if (onefitPapelDiretor($alvo['tipo_usuario'])) {
+            bo_funcionarios_exigir_diretor_ativo($conn);
+        }
         if ($novoStatus !== 'ativo') {
             bo_funcionario_invalidar_links($conn, $id);
         }
@@ -529,8 +574,8 @@ function bo_funcionario_vincular_cadastro(mysqli $conn, int $idOperador, int $id
     $vinculo = bo_funcionario_vinculo_entrada($entrada);
     return bo_funcionarios_transacao($conn, static function () use ($conn, $idOperador, $id, $vinculo): int {
         bo_funcionarios_exigir_migracao($conn);
-        bo_funcionarios_exigir_operador($conn, $idOperador);
-        $alvo = bo_funcionario_alvo($conn, $idOperador, $id);
+        $papelOperador = bo_funcionarios_exigir_operador($conn, $idOperador);
+        $alvo = bo_funcionario_alvo($conn, $idOperador, $papelOperador, $id);
         if (onefitPapelCanonico($alvo['tipo_usuario']) !== 'professor') {
             throw new FuncionarioRecusado('Só professores têm cadastro profissional.');
         }
@@ -545,8 +590,8 @@ function bo_funcionario_reenviar_acesso(mysqli $conn, int $idOperador, int $id, 
 {
     [$alvo, $tokens] = bo_funcionarios_transacao($conn, static function () use ($conn, $idOperador, $id): array {
         bo_funcionarios_exigir_migracao($conn);
-        bo_funcionarios_exigir_operador($conn, $idOperador);
-        $alvo = bo_funcionario_alvo($conn, $idOperador, $id);
+        $papelOperador = bo_funcionarios_exigir_operador($conn, $idOperador);
+        $alvo = bo_funcionario_alvo($conn, $idOperador, $papelOperador, $id);
         if ($alvo['status'] !== 'ativo') {
             throw new FuncionarioRecusado('Ative a conta antes de enviar o link de acesso.');
         }
@@ -560,8 +605,11 @@ function bo_funcionario_reenviar_acesso(mysqli $conn, int $idOperador, int $id, 
     return ($enviar ?? 'bo_funcionario_enviar_acesso')($alvo['email'], $alvo['nome'], $tokens) ? 'enviado' : 'falha_envio';
 }
 
-/** Lista para a tela Funcionários (gerenciáveis, legado e admins somente leitura). */
-function bo_funcionarios_listar(mysqli $conn): array
+/**
+ * Lista para a tela Funcionários. $papelOperador (cargo da sessão, revalidado no banco) só decide
+ * o que a tela mostra como editável; o servidor confere de novo em cada operação.
+ */
+function bo_funcionarios_listar(mysqli $conn, ?string $papelOperador = 'admin', int $idOperador = 0): array
 {
     $papeis = onefitPapeisFuncionarios();
     $marcadores = implode(',', array_fill(0, count($papeis), '?'));
@@ -598,8 +646,8 @@ function bo_funcionarios_listar(mysqli $conn): array
             'cargo' => onefitPapelCanonico($row['tipo_usuario']),
             'status' => $row['status'],
             'emailVerificado' => (int) $row['email_verificado'] === 1,
-            'admin' => onefitPapelPermitido($row['tipo_usuario'], ['admin']),
-            'gerenciavel' => onefitFuncionarioGerenciavelPorAdmin($row['tipo_usuario']),
+            'admin' => onefitPapelAdministrativo($row['tipo_usuario']),
+            'gerenciavel' => onefitPodeGerenciarConta($papelOperador, $row['tipo_usuario']) && (int) $row['id_usuario'] !== $idOperador,
             'painel' => onefitPainelDoPapel($row['tipo_usuario']) !== null,
             'cadastros' => (int) $row['cadastros'],
             'cadastrosAtivos' => (int) $row['cadastros_ativos'],

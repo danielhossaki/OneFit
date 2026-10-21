@@ -33,6 +33,12 @@ try {
         echo json_encode(['error' => onefitTraduzir('Sua sessão expirou. Entre novamente.')]);
         exit;
     }
+    // Mesmos cargos de meus-pedidos.php: o professor não tem a tela "Minhas compras".
+    if (!onefitPapelPermitido($_SESSION['tipo_usuario'] ?? null, ['admin', 'vendedor', 'aluno'])) {
+        http_response_code(403);
+        echo json_encode(['error' => onefitTraduzir('Acesso negado.')]);
+        exit;
+    }
     require __DIR__ . '/../includes/helpers.php';
     require __DIR__ . '/../includes/admin-forms.php';
     require __DIR__ . '/../includes/compras.php';

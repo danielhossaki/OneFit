@@ -161,10 +161,12 @@ try {
     fhCheck($db->query("SELECT senha FROM usuarios WHERE id_usuario = {$faxineira['id']}")->fetch_row()[0] === $senhaAntes, 'Link antigo não troca a senha da faxineira');
     fhCheck(str_contains($r['body'], 'Este link é inválido, expirou ou já foi utilizado.'), 'Link antigo recebe a mensagem genérica');
 
-    // --- Recepcionista: política dá cadastro facial, mas ainda não há painel ---------
+    // --- Recepcionista: painel da recepção com o cadastro facial (detalhes em recepcao-http.php) ---
     $recep = new Navegador($base);
-    fhCheck(!str_contains($recep->entrar($recepcionista['email'])['location'], 'dashboard.php'), 'Recepcionista sem painel não entra (painel da recepção pendente)');
-    fhCheck($recep->req('GET', $api)['status'] === 401, 'Recepcionista não chega ao endpoint sem sessão');
+    fhCheck((new Navegador($base))->req('GET', $api)['status'] === 401, 'Sem sessão não chega ao endpoint');
+    fhCheck(str_contains($recep->entrar($recepcionista['email'])['location'], 'dashboard.php'), 'Recepcionista entra no painel da recepção');
+    $listaRecep = array_column(fhJson($recep->req('GET', $api))['pessoas'] ?? [], 'id');
+    fhCheck(in_array($aluno['id'], $listaRecep, true) && !in_array(1, $listaRecep, true) && !in_array(2, $listaRecep, true), 'Recepcionista lista não admins, sem contas admin');
 
     // --- Sessão antiga: aluno que vira faxineira perde o acesso na hora ------------
     $alunoNav = new Navegador($base);

@@ -1505,3 +1505,32 @@ Nenhuma foto foi substituída.|No photo was replaced.|No se reemplazó ninguna f
 Não foi possível concluir a operação. Tente novamente.|The operation could not be completed. Please try again.|No se pudo completar la operación. Inténtelo de nuevo.
 O pagamento online ainda não está disponível. Nenhuma cobrança foi confirmada por esta tela: a confirmação do pagamento é feita pela academia.|Online payment is not available yet. No charge was confirmed on this screen: payment confirmation is done by the gym.|El pago en línea aún no está disponible. Ningún cobro fue confirmado en esta pantalla: la confirmación del pago la realiza el gimnasio.
 O pagamento online ainda não está disponível. O código Pix abaixo é apenas demonstrativo e nenhuma cobrança é confirmada por esta tela: a confirmação do pagamento é feita pela academia.|Online payment is not available yet. The Pix code below is for demonstration only and no charge is confirmed on this screen: payment confirmation is done by the gym.|El pago en línea aún no está disponible. El código Pix de abajo es solo demostrativo y ningún cobro se confirma en esta pantalla: la confirmación del pago la realiza el gimnasio.
+Recepção|Reception|Recepción
+Cadastro facial|Facial registration|Registro facial
+Diretor|Director|Director
+Contas de administrador e de diretor|Administrator and director accounts|Cuentas de administrador y de director
+Como Diretor, você também cria e altera contas de administrador e de diretor. O sistema mantém sempre pelo menos um Diretor ativo, e a sua própria conta não é alterada nesta tela.|As Director, you also create and change administrator and director accounts. The system always keeps at least one active Director, and your own account is not changed on this screen.|Como Director, usted también crea y modifica cuentas de administrador y de director. El sistema siempre mantiene al menos un Director activo, y su propia cuenta no se modifica en esta pantalla.
+Aparecem aqui só para consulta. Criar, promover ou alterar administradores e diretores é exclusivo de um Diretor.|They are shown here for reference only. Creating, promoting or changing administrators and directors is reserved to a Director.|Se muestran aquí solo para consulta. Crear, promover o modificar administradores y directores es exclusivo de un Director.
+Sua própria conta não é alterada nesta tela.|Your own account is not changed on this screen.|Su propia cuenta no se modifica en esta pantalla.
+Somente um Diretor pode alterar esta conta.|Only a Director can change this account.|Solo un Director puede modificar esta cuenta.
+Selecione um cargo permitido para o seu nível: só um Diretor atribui os cargos Administrador e Diretor.|Select a role allowed for your level: only a Director assigns the Administrator and Director roles.|Seleccione un cargo permitido para su nivel: solo un Director asigna los cargos Administrador y Director.
+A migração do cargo Diretor ainda não foi aplicada neste banco. Nenhuma alteração foi feita.|The Director role migration has not been applied to this database yet. No changes were made.|La migración del cargo Director aún no se aplicó en esta base de datos. No se realizó ningún cambio.
+O sistema precisa de pelo menos um Diretor ativo. Nada foi alterado.|The system needs at least one active Director. Nothing was changed.|El sistema necesita al menos un Director activo. No se modificó nada.
+Contas de administrador e de diretor só podem ser alteradas por um Diretor.|Administrator and director accounts can only be changed by a Director.|Las cuentas de administrador y de director solo pueden ser modificadas por un Director.
+Somente consulta|View only|Solo consulta
+Consulte os alunos cadastrados e a situação da matrícula.|View the registered students and their enrollment status.|Consulte los alumnos registrados y la situación de su matrícula.
+Consulte os pagamentos e a situação de cada cobrança.|View payments and the status of each charge.|Consulte los pagos y la situación de cada cobro.
+Consulte o saldo, a distribuição e os lançamentos de cashback.|View the cashback balance, distribution and entries.|Consulte el saldo, la distribución y los movimientos de cashback.
+Categorias disponíveis para cadastrar e organizar os seus produtos.|Categories available to register and organize your products.|Categorías disponibles para registrar y organizar sus productos.
+Nenhuma categoria cadastrada.|No categories registered.|No hay categorías registradas.
+Consulte as modalidades oferecidas pela academia.|View the activities offered by the gym.|Consulte las modalidades que ofrece el gimnasio.
+Suas vendas no marketplace e a logística de envio.|Your marketplace sales and shipping logistics.|Sus ventas en el marketplace y la logística de envío.
+Cadastre e mantenha os seus produtos do marketplace.|Register and maintain your marketplace products.|Registre y mantenga sus productos del marketplace.
+Consulte os seus alunos e adicione exercícios à ficha de treino de cada um.|View your students and add exercises to each one's workout plan.|Consulte a sus alumnos y agregue ejercicios a la ficha de entrenamiento de cada uno.
+Exercícios|Exercises|Ejercicios
+Treino do aluno|Student's workout|Entrenamiento del alumno
+Treino de {nome}|{nome}'s workout|Entrenamiento de {nome}
+Ficha atual|Current plan|Ficha actual
+Nenhum exercício na ficha.|No exercises in the plan.|No hay ejercicios en la ficha.
+Exercício adicionado ao treino do aluno.|Exercise added to the student's workout.|Ejercicio agregado al entrenamiento del alumno.
+Acesso negado.|Access denied.|Acceso denegado.

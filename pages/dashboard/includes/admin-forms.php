@@ -206,7 +206,8 @@ function bo_campos_cadastro_profissional(string $idBase, array $cadastrosLivres)
     <?php
 }
 
-function bo_modal_funcionario(?array $f, array $cadastrosLivres, string $secao): void
+/** $cargos: os que o operador pode atribuir (onefitCargosAtribuiveis); o servidor confere de novo. */
+function bo_modal_funcionario(?array $f, array $cadastrosLivres, string $secao, ?array $cargos = null): void
 {
     $isEdit = $f !== null;
     $sufixo = $isEdit ? 'Editar' . (int) $f['id'] : 'Novo';
@@ -261,7 +262,7 @@ function bo_modal_funcionario(?array $f, array $cadastrosLivres, string $secao):
                         <div class="col-md-6">
                             <label class="form-label" for="funcCargo<?php echo $sufixo; ?>"><?php echo of_t('Cargo'); ?></label>
                             <select class="form-select" id="funcCargo<?php echo $sufixo; ?>" name="cargo" required>
-                                <?php foreach (onefitCargosAtribuiveisPorAdmin() as $cargo): ?>
+                                <?php foreach ($cargos ?? onefitCargosAtribuiveisPorAdmin() as $cargo): ?>
                                     <option value="<?php echo bo_val($cargo); ?>" <?php echo $cargoAtual === $cargo ? 'selected' : ''; ?>><?php echo of_t($rotulos[$cargo]); ?></option>
                                 <?php endforeach; ?>
                             </select>

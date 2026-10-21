@@ -28,7 +28,7 @@ function papeisDbSituacao(mysqli $db, int $id): array
 }
 
 // Cargos novos só no banco descartável, para exercitar a política.
-$db->query("ALTER TABLE usuarios MODIFY tipo_usuario ENUM('aluno','profissional','admin','vendedor','professor','recepcionista','faxineira') DEFAULT 'aluno'");
+$db->query("ALTER TABLE usuarios MODIFY tipo_usuario ENUM('aluno','profissional','admin','vendedor','professor','recepcionista','faxineira','diretor') DEFAULT 'aluno'");
 $original = [];
 foreach ([1, 2, 3, 4] as $id) {
     $original[$id] = papeisDbSituacao($db, $id);
@@ -66,12 +66,15 @@ try {
     onefitSessaoRevalidar($db);
     papeisDbCheck(!isset($_SESSION['id_usuario']), 'Conta apagada perde a sessão');
 
-    foreach (['faxineira', 'recepcionista'] as $semPainel) {
-        $db->query("UPDATE usuarios SET tipo_usuario = '$semPainel' WHERE id_usuario = 2");
-        $_SESSION = ['id_usuario' => 2, 'tipo_usuario' => 'admin'];
-        onefitSessaoRevalidar($db);
-        papeisDbCheck(!isset($_SESSION['id_usuario']), "Conta que virou $semPainel perde a sessão");
-    }
+    $db->query("UPDATE usuarios SET tipo_usuario = 'faxineira' WHERE id_usuario = 2");
+    $_SESSION = ['id_usuario' => 2, 'tipo_usuario' => 'admin'];
+    onefitSessaoRevalidar($db);
+    papeisDbCheck(!isset($_SESSION['id_usuario']), 'Conta que virou faxineira perde a sessão');
+    // A recepção tem painel próprio: a sessão continua, já com o cargo novo lido do banco.
+    $db->query("UPDATE usuarios SET tipo_usuario = 'recepcionista' WHERE id_usuario = 2");
+    $_SESSION = ['id_usuario' => 2, 'tipo_usuario' => 'admin'];
+    onefitSessaoRevalidar($db);
+    papeisDbCheck(($_SESSION['id_usuario'] ?? null) === 2 && ($_SESSION['tipo_usuario'] ?? null) === 'recepcionista', 'Admin que virou recepcionista perde o cargo de admin na hora');
 
     $db->query("UPDATE usuarios SET status = 'bloqueado' WHERE id_usuario = 1");
     $_SESSION = ['id_usuario' => 1, 'tipo_usuario' => 'admin'];

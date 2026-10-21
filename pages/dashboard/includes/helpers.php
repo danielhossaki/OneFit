@@ -103,3 +103,14 @@ function bo_processar_upload_imagem(string $inputName, string $subpasta): ?strin
 
     return BASE_URL . 'assets/img/uploads/' . $subpasta . '/' . $nomeArquivo;
 }
+
+/**
+ * Selo "Somente consulta" no título das telas que o cargo só visualiza
+ * (Alunos, Pagamentos, Modalidades e Cashback na recepção; Categorias e
+ * Cashback no vendedor). A tela não traz botões nem formulários de gravação,
+ * e as rotas de gravação recusam esses cargos no servidor.
+ */
+function bo_selo_somente_consulta(): string
+{
+    return '<span class="bo-eyebrow" data-bo-somente-consulta><i class="bi bi-eye"></i> ' . of_t('Somente consulta') . '</span>';
+}

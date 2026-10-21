@@ -153,14 +153,14 @@ function notificarCompraBackoffice(mysqli $db, int $pedidoId): int
     $stmt->close();
     $tipoComprador = $pedido ? notificacaoTipoComprador($pedido['tipo_usuario']) : null;
     if ($tipoComprador === null) return 0;
-    $ids = $db->query("SELECT id_usuario FROM usuarios WHERE tipo_usuario = 'admin' AND status = 'ativo'")->fetch_all(MYSQLI_ASSOC);
+    $ids = $db->query("SELECT id_usuario FROM usuarios WHERE tipo_usuario IN ('admin', 'diretor') AND status = 'ativo'")->fetch_all(MYSQLI_ASSOC);
     $count = 0;
     foreach ($ids as $admin) {
         $id = (int) $admin['id_usuario'];
         $db->begin_transaction();
         try {
             // Lock and recheck permission; never trust a role supplied by the buyer/session.
-            $check = $db->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario = 'admin' AND status = 'ativo' FOR UPDATE");
+            $check = $db->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario IN ('admin', 'diretor') AND status = 'ativo' FOR UPDATE");
             $check->bind_param('i', $id);
             $check->execute();
             $allowed = (bool) $check->get_result()->fetch_assoc();

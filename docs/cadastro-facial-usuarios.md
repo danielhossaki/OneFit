@@ -8,13 +8,14 @@ As regras ficam em `config/papeis.php` (`onefitAvaliarCadastroFacial`) e são co
 
 | Operador | Pode fotografar |
 |---|---|
+| `diretor` ativo | todos os cargos ativos, inclusive contas `admin` e `diretor` (e a própria) |
 | `admin` ativo | alunos, professores (inclusive o valor legado `profissional`), vendedores, recepcionistas e faxineiras ativos |
 | `recepcionista` ativa | a si mesma, outras recepcionistas ativas e os mesmos cargos não administrativos |
 | professor, vendedor, aluno, faxineira, conta inativa | ninguém (403) |
 
-- **Contas admin** (inclusive a do próprio operador) só podem ser fotografadas por administradores da lista restrita (decisões D2 e P6). Como a lista ainda não foi definida (P1), ninguém fotografa contas admin: elas não aparecem na busca e o POST direto é recusado. As fotos de admin já existentes continuam no banco.
-- Pessoa inexistente, inativa, de cargo desconhecido ou admin recebe a mesma resposta (404), sem revelar o motivo.
-- A recepcionista já tem a permissão na política, mas **ainda não entra no sistema**, porque o painel da recepção não existe. As regras dela estão implementadas e testadas no serviço; pela tela, hoje só o admin opera.
+- **Contas administrativas** (`admin` e `diretor`, inclusive a do próprio operador) só podem ser fotografadas por um **Diretor** ativo, o cargo que substituiu a lista restrita das decisões D2 e P6. Para admin e recepcionista, elas não aparecem na busca e o POST direto é recusado. As fotos já existentes continuam no banco.
+- Pessoa inexistente, inativa, de cargo desconhecido ou administrativa (para quem não é diretor) recebe a mesma resposta (404), sem revelar o motivo.
+- A recepcionista opera pelo **painel da recepção** (cadastro facial; Alunos, Pagamentos, Modalidades e Cashback só para consulta; configurações da própria conta; ver [funcionarios.md](funcionarios.md)). O servidor aplica as regras dela a cada requisição: nunca contas admin nem pessoas inativas. As rotas de gravação do admin continuam recusadas para ela.
 - A foto não dá login nem muda a regra da catraca: a faxineira fotografada continua sem painel.
 - A busca lista só quem o operador pode fotografar. Nome, CPF e ID são pesquisáveis; o CPF não é enviado à interface.
 - A câmera exige HTTPS ou `localhost` e permissão no navegador.
@@ -38,7 +39,7 @@ O reconhecimento facial só identifica a pessoa; a entrada é decidida por `Auto
 
 - **Aluno:** conta ativa e matrícula `ativa` com datas válidas e a data de hoje entre `data_inicio` e `data_fim`.
 - **Professor** (e `profissional`): conta ativa e `cadastro_profissional.status = 'ativo'`.
-- **Admin, recepcionista, vendedor e faxineira:** conta ativa, sem matrícula.
+- **Diretor, admin, recepcionista, vendedor e faxineira:** conta ativa, sem matrícula.
 - **Pessoa inexistente, conta inativa ou bloqueada, cargo desconhecido ou falha no banco:** negado.
 
 A catraca está em **modo de validação**: só exibe a decisão (`[Validação] Acesso autorizado/negado`), sem acionar nenhuma liberação física. Ela só lê `usuarios`, `matricula` e `cadastro_profissional` e **não grava fotos**: o antigo botão "Cadastrar foto no banco" agora orienta a usar esta tela, que aplica as permissões e o limite de fotos. Detalhes, limites do reconhecimento e o roteiro da demonstração estão em [catraca.md](catraca.md).

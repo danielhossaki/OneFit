@@ -23,7 +23,7 @@ try {
         $_SESSION['idioma'] = $value;
     } elseif ($key === 'tema_cores' && in_array($value, onefitTemas(), true)) {
         $conn->begin_transaction();
-        $stmt = $conn->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario = 'admin' AND status = 'ativo' FOR UPDATE");
+        $stmt = $conn->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario IN ('admin', 'diretor') AND status = 'ativo' FOR UPDATE");
         $stmt->bind_param('i', $id); $stmt->execute();
         $allowed = (bool) $stmt->get_result()->fetch_assoc(); $stmt->close();
         if (!$allowed) { $conn->rollback(); interfaceFalha(403, onefitTraduzir('Acesso não autorizado.')); }

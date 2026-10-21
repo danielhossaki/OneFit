@@ -14,6 +14,10 @@
  * e das funções de includes/helpers.php: bo_badge(), bo_money(), bo_json()
  */
 require __DIR__ . '/section-fotos-faciais.php';
+// Alunos, Pagamentos, Cashbacks, Categorias e Modalidades são componentes
+// compartilhados com a recepção e o vendedor, que só consultam.
+$boPerfilSecao = 'admin';
+$boSomenteLeitura = false;
 ?>
 
 <!-- ===== ADMIN · Visão Geral (dashboard com indicadores gerais) ===== -->
@@ -76,82 +80,7 @@ require __DIR__ . '/section-fotos-faciais.php';
     </div>
 </section>
 
-<!-- ===== ADMIN · Alunos (data-section "usuarios"; só contas tipo_usuario = 'aluno') ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="usuarios">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Alunos'); ?></h1>
-            <p><?php echo of_t('Gerencie os alunos cadastrados. Funcionários ficam na tela Funcionários.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalUsuarioNovo">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Novo aluno'); ?>
-        </button>
-    </div>
-    <?php bo_modal_usuario(null, 'usuarios', $planos); ?>
-
-    <!-- Filtros: busca por texto + status (ligados à tabela pelo data-bo-target="usuarios") -->
-    <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:320px" placeholder="<?php echo of_t('Buscar por ID, nome e email'); ?>"
-            data-bo-filter="search" data-bo-target="usuarios">
-        <select class="form-select" style="max-width:180px" data-bo-filter="status" data-bo-target="usuarios">
-            <option value=""><?php echo of_t('Todos os status'); ?></option>
-            <option value="ativo"><?php echo of_t('Ativo'); ?></option>
-            <option value="inativo"><?php echo of_t('Inativo'); ?></option>
-        </select>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table" data-bo-table="usuarios">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th><?php echo of_t('Nome'); ?></th>
-                        <th><?php echo of_t('E-mail'); ?></th>
-                        <th><?php echo of_t('Status'); ?></th>
-                        <th><?php echo of_t('Plano'); ?></th>
-                        <th><?php echo of_t('Nº matrícula'); ?></th>
-                        <th><?php echo of_t('Data inicial'); ?></th>
-                        <th><?php echo of_t('Final de contrato'); ?></th>
-                        <th><?php echo of_t('Ações'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($usuarios as $u): ?>
-                        <tr data-status="<?php echo $u['status']; ?>"
-                            data-search="<?php echo strtolower($u['id'] . ' ' . $u['nome'] . ' ' . $u['email'] . ' ' . $u['cpf']); ?>">
-                            <td>#<?php echo str_pad($u['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo $u['nome']; ?></td>
-                            <td><?php echo $u['email']; ?></td>
-                            <td><?php echo bo_badge($u['status'] === 'ativo'); ?></td>
-                            <td><?php echo htmlspecialchars($u['plano']); ?></td>
-                            <td><?php echo $u['matricula']; ?></td>
-                            <td><?php echo onefitData('d/m/Y', strtotime($u['dataInicial'])); ?></td>
-                            <td><?php echo onefitData('d/m/Y', strtotime($u['dataFinal'])); ?></td>
-                            <td>
-                                <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalUsuarioEditar<?php echo $u['id']; ?>">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <?php bo_form_toggle('usuarios', $u['id'], 'usuarios', $u['status'] === 'ativo'); ?>
-                                    <?php echo bo_botao_excluir('usuarios', $u['id']); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <!-- Linha exibida pelo JS quando o filtro não encontra nada -->
-                    <tr class="bo-empty-row" style="display:none">
-                        <td colspan="9"><?php echo of_t('Nenhum usuário encontrado para os filtros selecionados.'); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php foreach ($usuarios as $u): ?>
-        <?php bo_modal_usuario($u, 'usuarios', $planos); ?>
-        <?php bo_modal_confirmar_exclusao('usuarios', $u['id'], $u['nome'], 'usuarios'); ?>
-    <?php endforeach; ?>
-</section>
+<?php require __DIR__ . '/section-alunos.php'; ?>
 
 <?php require __DIR__ . '/section-funcionarios.php'; ?>
 
@@ -159,179 +88,9 @@ require __DIR__ . '/section-fotos-faciais.php';
      usuarios.tipo_usuario (config/papeis.php). As tabelas `permissoes` e
      `funcao` continuam no banco, sem alteração. -->
 
-<!-- ===== ADMIN · Pagamentos (recebimentos de mensalidade/produtos/taxas) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="pagamentos">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Pagamentos'); ?></h1>
-            <p><?php echo of_t('Acompanhe e registre os pagamentos recebidos.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalPagamentoNovo">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Registrar Pagamento'); ?>
-        </button>
-    </div>
-    <?php bo_modal_pagamento(null, 'pagamentos'); ?>
+<?php require __DIR__ . '/section-pagamentos.php'; ?>
 
-    <!-- Filtros: busca por ID, tipo de pagamento e intervalo de datas -->
-    <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:200px" placeholder="<?php echo of_t('Buscar por ID'); ?>"
-            data-bo-filter="search" data-bo-target="pagamentos">
-        <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="pagamentos">
-            <option value=""><?php echo of_t('Todos os tipos'); ?></option>
-            <option value="PIX">PIX</option>
-            <option value="Cartão"><?php echo of_t('Cartão'); ?></option>
-        </select>
-        <div class="bo-daterange">
-            <?php echo of_t('De'); ?> <input type="date" class="form-control" data-bo-filter="date-from" data-bo-target="pagamentos">
-            <?php echo of_t('até'); ?> <input type="date" class="form-control" data-bo-filter="date-to" data-bo-target="pagamentos">
-        </div>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table" data-bo-table="pagamentos">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th><?php echo of_t('Data'); ?></th>
-                        <th><?php echo of_t('Tipo'); ?></th>
-                        <th><?php echo of_t('Valor'); ?></th>
-                        <th><?php echo of_t('ID usuário'); ?></th>
-                        <th><?php echo of_t('Observação'); ?></th>
-                        <th><?php echo of_t('Ações'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($pagamentos as $p): ?>
-                        <tr data-type="<?php echo $p['tipo']; ?>" data-date="<?php echo substr($p['data'], 0, 10); ?>"
-                            data-search="<?php echo strtolower('#' . str_pad($p['id'], 4, '0', STR_PAD_LEFT) . ' ' . $p['id']); ?>">
-                            <td>#<?php echo str_pad($p['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo onefitData('d/m/Y', strtotime($p['data'])); ?></td>
-                            <td><?php echo $p['tipo']; ?></td>
-                            <td><?php echo bo_money($p['valor']); ?></td>
-                            <td>#<?php echo str_pad($p['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo $p['observacao']; ?></td>
-                            <td>
-                                <div class="bo-table-actions">
-                                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalPagamentoEditar<?php echo $p['id']; ?>">
-                                        <i class="bi bi-pencil"></i>
-                                    </button>
-                                    <?php echo bo_botao_excluir('pagamentos', $p['id']); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <tr class="bo-empty-row" style="display:none">
-                        <td colspan="7"><?php echo of_t('Nenhum pagamento encontrado para os filtros selecionados.'); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php foreach ($pagamentos as $p): ?>
-        <?php bo_modal_pagamento($p, 'pagamentos'); ?>
-        <?php bo_modal_confirmar_exclusao('pagamentos', $p['id'], 'o pagamento #' . $p['id'], 'pagamentos'); ?>
-    <?php endforeach; ?>
-</section>
-
-<!-- ===== ADMIN · Cashbacks (saldo geral + lançamentos manuais) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="cashbacks">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Cashbacks'); ?></h1>
-            <p><?php echo of_t('Acompanhe saldo, distribuição e lançamentos de cashback.'); ?></p>
-        </div>
-        <div class="bo-actions">
-            <button type="button" class="btn-bo-outline" data-bs-toggle="modal" data-bs-target="#modalCashbackMassa">
-                <i class="bi bi-people"></i> <?php echo of_t('Distribuição em Massa'); ?>
-            </button>
-            <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalCashbackLancar">
-                <i class="bi bi-plus-lg"></i> <?php echo of_t('Lançar Cashback'); ?>
-            </button>
-        </div>
-    </div>
-    <?php bo_modal_cashback_massa('cashbacks'); ?>
-    <?php bo_modal_cashback_lancar('cashbacks'); ?>
-
-    <!-- Cards de resumo: saldo total / distribuídos / debitado / creditado -->
-    <div class="row g-3 mb-3">
-        <div class="col-6 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Saldo total'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($cashbackResumo['saldoTotal']); ?></div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Distribuídos'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($cashbackResumo['distribuidos']); ?></div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Debitado'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($cashbackResumo['debitado']); ?></div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3">
-            <div class="bo-card">
-                <div class="bo-card-label"><?php echo of_t('Creditado'); ?></div>
-                <div class="bo-card-value"><?php echo bo_money($cashbackResumo['creditado']); ?></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bo-filters">
-        <input type="text" class="form-control" style="max-width:200px" placeholder="<?php echo of_t('Buscar por ID'); ?>"
-            data-bo-filter="search" data-bo-target="cashbacks">
-        <select class="form-select" style="max-width:180px" data-bo-filter="type" data-bo-target="cashbacks">
-            <option value=""><?php echo of_t('Todos os tipos'); ?></option>
-            <option value="credito"><?php echo of_t('Crédito'); ?></option>
-            <option value="debito"><?php echo of_t('Débito'); ?></option>
-        </select>
-    </div>
-
-    <div class="bo-table-wrap">
-        <div class="table-responsive">
-            <table class="bo-table" data-bo-table="cashbacks">
-                <thead>
-                    <tr>
-                        <th><?php echo of_t('ID transação'); ?></th>
-                        <th><?php echo of_t('Data'); ?></th>
-                        <th><?php echo of_t('Tipo'); ?></th>
-                        <th><?php echo of_t('Valor'); ?></th>
-                        <th><?php echo of_t('ID usuário'); ?></th>
-                        <th><?php echo of_t('Motivo'); ?></th>
-                        <th><?php echo of_t('Ações'); ?></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($cashbackTransacoes as $c): ?>
-                        <tr data-type="<?php echo $c['tipo']; ?>" data-search="<?php echo strtolower('#' . str_pad($c['id'], 4, '0', STR_PAD_LEFT) . ' ' . $c['id']); ?>">
-                            <td>#<?php echo str_pad($c['id'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo onefitData('d/m/Y', strtotime($c['data'])); ?></td>
-                            <td><?php echo $c['tipo'] === 'credito' ? onefitTraduzir('Crédito') : onefitTraduzir('Débito'); ?></td>
-                            <td><?php echo bo_money($c['valor']); ?></td>
-                            <td>#<?php echo str_pad($c['usuarioId'], 4, '0', STR_PAD_LEFT); ?></td>
-                            <td><?php echo $c['motivo']; ?></td>
-                            <td>
-                                <div class="bo-table-actions">
-                                    <?php echo bo_botao_excluir('cashbacks', $c['id']); ?>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                    <tr class="bo-empty-row" style="display:none">
-                        <td colspan="7"><?php echo of_t('Nenhuma transação encontrada para os filtros selecionados.'); ?></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <?php foreach ($cashbackTransacoes as $c): ?>
-        <?php bo_modal_confirmar_exclusao('cashbacks', $c['id'], 'a transação #' . $c['id'], 'cashbacks'); ?>
-    <?php endforeach; ?>
-</section>
+<?php require __DIR__ . '/section-cashbacks.php'; ?>
 
 <!-- ===== ADMIN · Comentários (moderação dos depoimentos enviados pelos alunos) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="comentarios">
@@ -408,35 +167,7 @@ require __DIR__ . '/section-fotos-faciais.php';
     <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Categorias (organização dos produtos da loja) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="categorias">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Categorias'); ?></h1>
-            <p><?php echo of_t('Organize as categorias de produtos da loja.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalCategoriaNova">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Nova Categoria'); ?>
-        </button>
-    </div>
-    <?php bo_modal_categoria(null, 'categorias'); ?>
-
-    <div class="bo-list">
-        <?php foreach ($categorias as $c): ?>
-            <div class="bo-list-item">
-                <div class="bo-list-title"><?php echo $c['nome']; ?></div>
-                <div class="bo-table-actions">
-                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalCategoriaEditar<?php echo $c['id']; ?>">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <?php echo bo_botao_excluir('categorias', $c['id']); ?>
-                </div>
-            </div>
-            <?php bo_modal_categoria($c, 'categorias'); ?>
-            <?php bo_modal_confirmar_exclusao('categorias', $c['id'], $c['nome'], 'categorias'); ?>
-        <?php endforeach; ?>
-    </div>
-</section>
+<?php require __DIR__ . '/section-categorias.php'; ?>
 
 <!-- ===== ADMIN · Produtos (catálogo da loja) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="produtos">
@@ -893,36 +624,4 @@ require __DIR__ . '/section-fotos-faciais.php';
     <?php endforeach; ?>
 </section>
 
-<!-- ===== ADMIN · Modalidades (tabela `modalidades`, usada no cadastro de profissionais) ===== -->
-<section class="bo-content-section" data-perfil="admin" data-section="modalidades">
-    <div class="bo-page-title">
-        <div>
-            <h1><?php echo of_t('Modalidades'); ?></h1>
-            <p><?php echo of_t('Gerencie as modalidades oferecidas pela academia.'); ?></p>
-        </div>
-        <button type="button" class="btn-bo-gold" data-bs-toggle="modal" data-bs-target="#modalModalidadeNova">
-            <i class="bi bi-plus-lg"></i> <?php echo of_t('Nova Modalidade'); ?>
-        </button>
-    </div>
-    <?php bo_modal_modalidade(null, 'modalidades'); ?>
-
-    <div class="bo-list">
-        <?php foreach ($modalidadesAdm as $m): ?>
-            <div class="bo-list-item">
-                <div>
-                    <div class="bo-list-title"><?php echo $m['nome']; ?> <?php echo bo_badge($m['status'] === 'ativo', onefitTraduzir('Ativo'), onefitTraduzir('Inativo')); ?></div>
-                    <?php if ($m['descricao']): ?><div class="bo-list-sub"><?php echo htmlspecialchars($m['descricao']); ?></div><?php endif; ?>
-                </div>
-                <div class="bo-table-actions">
-                    <?php bo_form_toggle('modalidades', $m['id'], 'modalidades', $m['status'] === 'ativo'); ?>
-                    <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalModalidadeEditar<?php echo $m['id']; ?>">
-                        <i class="bi bi-pencil"></i>
-                    </button>
-                    <?php echo bo_botao_excluir('modalidades', $m['id']); ?>
-                </div>
-            </div>
-            <?php bo_modal_modalidade($m, 'modalidades'); ?>
-            <?php bo_modal_confirmar_exclusao('modalidades', $m['id'], 'a modalidade ' . $m['nome'], 'modalidades'); ?>
-        <?php endforeach; ?>
-    </div>
-</section>
+<?php require __DIR__ . '/section-modalidades.php'; ?>

@@ -207,6 +207,8 @@ if ($perfilLogado === 'admin') {
             require __DIR__ . '/components/section-vendedor.php';
         } elseif ($perfilLogado === 'aluno') {
             require __DIR__ . '/components/section-aluno.php';
+        } elseif ($perfilLogado === 'recepcionista') {
+            require __DIR__ . '/components/section-recepcao.php';
         }
         // Painel sem seção própria não recebe a do aluno: nada é exibido.
         require __DIR__ . '/components/section-configuracoes.php';

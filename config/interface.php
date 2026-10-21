@@ -98,7 +98,7 @@ function onefitCarregarInterface(mysqli $db): void {
     }
 }
 function onefitAdminAutorizado(mysqli $db, int $id): bool {
-    $stmt = $db->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario = 'admin' AND status = 'ativo'");
+    $stmt = $db->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ? AND tipo_usuario IN ('admin', 'diretor') AND status = 'ativo'");
     $stmt->bind_param('i', $id);
     $stmt->execute();
     $ok = (bool) $stmt->get_result()->fetch_assoc();

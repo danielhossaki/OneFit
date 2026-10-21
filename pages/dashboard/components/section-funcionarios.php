@@ -16,6 +16,8 @@ $motivosCatraca = [
 ];
 $rotulosStatus = ['ativo' => 'Ativo', 'inativo' => 'Inativo', 'bloqueado' => 'Bloqueado'];
 $podeGravar = $funcionariosMigracao['ok'] && !$funcionariosErro;
+$operadorDiretor = onefitPapelDiretor($_SESSION['tipo_usuario'] ?? null);
+$idOperadorTela = (int) ($_SESSION['id_usuario'] ?? 0);
 ?>
 <!-- ===== ADMIN · Funcionários (contas da equipe em usuarios.tipo_usuario) ===== -->
 <section class="bo-content-section" data-perfil="admin" data-section="funcionarios">
@@ -48,8 +50,10 @@ $podeGravar = $funcionariosMigracao['ok'] && !$funcionariosErro;
     <div class="bo-notice">
         <i class="bi bi-shield-lock"></i>
         <div>
-            <strong><?php echo of_t('Contas de administrador'); ?></strong>
-            <span><?php echo of_t('Aparecem aqui só para consulta. Criar, promover ou alterar administradores é exclusivo dos administradores autorizados, lista que ainda não foi definida.'); ?></span>
+            <strong><?php echo of_t('Contas de administrador e de diretor'); ?></strong>
+            <span><?php echo of_t($operadorDiretor
+                ? 'Como Diretor, você também cria e altera contas de administrador e de diretor. O sistema mantém sempre pelo menos um Diretor ativo, e a sua própria conta não é alterada nesta tela.'
+                : 'Aparecem aqui só para consulta. Criar, promover ou alterar administradores e diretores é exclusivo de um Diretor.'); ?></span>
         </div>
     </div>
 
@@ -58,7 +62,7 @@ $podeGravar = $funcionariosMigracao['ok'] && !$funcionariosErro;
             data-bo-filter="search" data-bo-target="funcionarios" aria-label="<?php echo of_t('Buscar por nome ou e-mail'); ?>">
         <select class="form-select" style="max-width:200px" data-bo-filter="type" data-bo-target="funcionarios" aria-label="<?php echo of_t('Cargo'); ?>">
             <option value=""><?php echo of_t('Todos os cargos'); ?></option>
-            <?php foreach (array_merge(onefitCargosAtribuiveisPorAdmin(), ['admin']) as $cargo): ?>
+            <?php foreach (array_diff(onefitPapeisFuncionarios(), ['profissional']) as $cargo): ?>
                 <option value="<?php echo bo_val($cargo); ?>"><?php echo of_t($rotulosCargo[$cargo]); ?></option>
             <?php endforeach; ?>
         </select>
@@ -115,7 +119,7 @@ $podeGravar = $funcionariosMigracao['ok'] && !$funcionariosErro;
                             <td>
                                 <div class="bo-table-actions">
                                     <?php if (!$f['gerenciavel']): ?>
-                                        <span class="btn-bo-icon" title="<?php echo of_t('Somente administradores autorizados podem alterar esta conta.'); ?>"><i class="bi bi-lock"></i></span>
+                                        <span class="btn-bo-icon" title="<?php echo of_t($f['id'] === $idOperadorTela ? 'Sua própria conta não é alterada nesta tela.' : 'Somente um Diretor pode alterar esta conta.'); ?>"><i class="bi bi-lock"></i></span>
                                     <?php elseif ($podeGravar): ?>
                                         <button type="button" class="btn-bo-icon" title="<?php echo of_t('Editar'); ?>" data-bs-toggle="modal" data-bs-target="#modalFuncionarioEditar<?php echo (int) $f['id']; ?>">
                                             <i class="bi bi-pencil"></i>
@@ -147,10 +151,10 @@ $podeGravar = $funcionariosMigracao['ok'] && !$funcionariosErro;
     </div>
 
     <?php if ($podeGravar): ?>
-        <?php bo_modal_funcionario(null, $cadastrosProfissionaisLivres, 'funcionarios'); ?>
+        <?php bo_modal_funcionario(null, $cadastrosProfissionaisLivres, 'funcionarios', $funcionariosCargos); ?>
         <?php foreach ($funcionarios as $f): ?>
             <?php if (!$f['gerenciavel']) continue; ?>
-            <?php bo_modal_funcionario($f, $cadastrosProfissionaisLivres, 'funcionarios'); ?>
+            <?php bo_modal_funcionario($f, $cadastrosProfissionaisLivres, 'funcionarios', $funcionariosCargos); ?>
             <?php bo_modal_funcionario_status($f, 'funcionarios'); ?>
             <?php if ($f['painel'] && $f['status'] === 'ativo'): ?>
                 <?php bo_modal_funcionario_acesso($f, 'funcionarios'); ?>

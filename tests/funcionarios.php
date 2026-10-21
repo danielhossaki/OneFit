@@ -116,14 +116,13 @@ foreach (['vendedor', 'recepcionista', 'faxineira'] as $cargo) {
     fCheck(password_get_info($conta['senha'])['algo'] !== null && !password_verify('', $conta['senha'])
         && !password_verify($dados['cpf'], $conta['senha']) && !password_verify($dados['email'], $conta['senha']) && !password_verify('123456', $conta['senha']), "Senha de $cargo aleatória e desconhecida");
     $criados[$cargo] = $r['id'];
-    $esperado = $cargo === 'vendedor' ? 'enviado' : 'sem_acesso';
+    $esperado = $cargo === 'faxineira' ? 'sem_acesso' : 'enviado';
     fCheck($r['acesso'] === $esperado, "Acesso de $cargo: $esperado");
 }
-fCheck(count($enviados) === 1 && $enviados[0]['email'] === fUsuario($db, $criados['vendedor'])['email'], 'Só o vendedor (com painel) recebe link');
+fCheck(count($enviados) === 2 && array_column($enviados, 'email') === [fUsuario($db, $criados['vendedor'])['email'], fUsuario($db, $criados['recepcionista'])['email']], 'Vendedor e recepcionista (com painel) recebem link; faxineira não');
 fCheck(preg_match('/^[a-f0-9]{64}$/', $enviados[0]['tokens']['senha']) && preg_match('/^[a-f0-9]{64}$/', $enviados[0]['tokens']['verificacao']), 'Links de senha e de confirmação de e-mail gerados');
-foreach (['faxineira', 'recepcionista'] as $semPainel) {
-    fCheck(fContar($db, 'SELECT COUNT(*) FROM recuperacao_senha_tokens WHERE usuario_id = ' . $criados[$semPainel]) === 0, "$semPainel sem link de acesso");
-}
+fCheck(fContar($db, 'SELECT COUNT(*) FROM recuperacao_senha_tokens WHERE usuario_id = ' . $criados['faxineira']) === 0, 'faxineira sem link de acesso');
+fCheck(fContar($db, 'SELECT COUNT(*) FROM recuperacao_senha_tokens WHERE usuario_id = ' . $criados['recepcionista']) === 1, 'recepcionista com um link de acesso');
 fCheck(onefitPainelDoPapel(fUsuario($db, $criados['faxineira'])['tipo_usuario']) === null, 'Faxineira sem acesso ao login pela política');
 $tokenSenhaVendedor = hash('sha256', $enviados[0]['tokens']['senha']);
 fCheck(fContar($db, "SELECT COUNT(*) FROM recuperacao_senha_tokens WHERE usuario_id = {$criados['vendedor']} AND usado_em IS NULL AND token_hash = '$tokenSenhaVendedor'") === 1, 'Token guardado só como hash');
@@ -142,7 +141,7 @@ fCheck(fContar($db, 'SELECT COUNT(*) FROM matricula WHERE id_usuario IN (' . imp
 
 // --- Cargos inválidos e manipulação do cargo ---------------------------------
 $totalUsuarios = fContar($db, 'SELECT COUNT(*) FROM usuarios');
-foreach (['admin', 'aluno', 'profissional', '', 'superadmin', 'Admin', 'VENDEDOR', "vendedor'", 'vendedor;admin'] as $cargoInvalido) {
+foreach (['admin', 'diretor', 'aluno', 'profissional', '', 'superadmin', 'Admin', 'Diretor', 'VENDEDOR', "vendedor'", 'vendedor;admin'] as $cargoInvalido) {
     fRecusa(static fn() => bo_funcionario_criar($db, $ADMIN, $entrada($cargoInvalido), $enviar), $cargoInvalido === '' ? 'Preencha' : 'cargo permitido', 'Cargo recusado: ' . var_export($cargoInvalido, true));
 }
 fCheck(fContar($db, 'SELECT COUNT(*) FROM usuarios') === $totalUsuarios, 'Nenhuma conta criada com cargo inválido');
@@ -214,7 +213,7 @@ fCheck($r['email_alterado'] && (int) fUsuario($db, $idVend)['email_verificado'] 
 fCheck(fContar($db, "SELECT COUNT(*) FROM recuperacao_senha_tokens WHERE usuario_id = $idVend AND usado_em IS NULL") === 0
     && fContar($db, "SELECT COUNT(*) FROM verificacao_email_tokens WHERE usuario_id = $idVend AND usado_em IS NULL") === 0, 'Links enviados ao e-mail antigo cancelados');
 fRecusa(static fn() => bo_funcionario_atualizar($db, $ADMIN, $idVend, $formulario(fUsuario($db, $idVend), ['email' => 'fixture3@example.test'])), 'Já existe', 'Edição não toma e-mail de outra conta');
-foreach (['admin', 'aluno', 'profissional'] as $cargoProibido) {
+foreach (['admin', 'diretor', 'aluno', 'profissional'] as $cargoProibido) {
     fRecusa(static fn() => bo_funcionario_atualizar($db, $ADMIN, $idVend, $formulario(fUsuario($db, $idVend), ['cargo' => $cargoProibido])), 'cargo permitido', "Promoção a $cargoProibido recusada");
 }
 fCheck(fUsuario($db, $idVend)['tipo_usuario'] === 'vendedor', 'Cargo do vendedor intacto após tentativas');
@@ -247,9 +246,9 @@ fRecusa(static fn() => bo_funcionario_reenviar_acesso($db, $ADMIN, $criados['fax
 
 // --- Contas protegidas e operadores sem permissão -----------------------------
 $admin2 = fUsuario($db, 2);
-fRecusa(static fn() => bo_funcionario_atualizar($db, $ADMIN, 2, $formulario($admin2, ['cargo' => 'vendedor'])), 'administradores autorizados', 'Conta admin não é editada (nem rebaixada)');
-fRecusa(static fn() => bo_funcionario_alterar_status($db, $ADMIN, 2, 'inativo'), 'administradores autorizados', 'Conta admin não é inativada');
-fRecusa(static fn() => bo_funcionario_reenviar_acesso($db, $ADMIN, 2, $enviar), 'administradores autorizados', 'Acesso de admin não é gerenciado');
+fRecusa(static fn() => bo_funcionario_atualizar($db, $ADMIN, 2, $formulario($admin2, ['cargo' => 'vendedor'])), 'por um Diretor', 'Conta admin não é editada (nem rebaixada) por admin');
+fRecusa(static fn() => bo_funcionario_alterar_status($db, $ADMIN, 2, 'inativo'), 'por um Diretor', 'Conta admin não é inativada por admin');
+fRecusa(static fn() => bo_funcionario_reenviar_acesso($db, $ADMIN, 2, $enviar), 'por um Diretor', 'Acesso de admin não é gerenciado por admin');
 fRecusa(static fn() => bo_funcionario_alterar_status($db, $ADMIN, $ADMIN, 'inativo'), 'própria conta', 'Operador não altera a própria conta');
 fRecusa(static fn() => bo_funcionario_alterar_status($db, $ADMIN, 3, 'inativo'), 'não é de um funcionário', 'Aluno não é gerenciado nesta tela');
 fRecusa(static fn() => bo_funcionario_alterar_status($db, $ADMIN, 999999, 'inativo'), 'não encontrado', 'Conta inexistente');
